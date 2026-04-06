@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3 uid="uid://npc_character"]
+
+[ext_resource type="Script" path="res://scripts/npc_character.gd" id="1_npc"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/npc_pierre.png" id="2_pierre"]
+
+[node name="NPCCharacter" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_npc")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -32)
+texture = ExtResource("2_pierre")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -40.0
+offset_top = -80.0
+offset_right = 40.0
+offset_bottom = -60.0
+text = "Pierre"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_npc")
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_npc"]
+radius = 24.0

@@ -1,20 +1,35 @@
 extends Node2D
 
 # 小镇广场场景控制器
-# 管理环境互动、音效、动态元素
+# 管理环境互动、音效、动态元素、对话、拾取
 
 @onready var player = $Player
 @onready var interactables = $Interactables
 @onready var ambient_audio = $AmbientAudio
 @onready var birds_audio = $BirdsAudio
+@onready var dialogue_system = $DialogueSystem
+@onready var pickup_system = $PickupSystem
+@onready var npcs = $NPCs
 
 var nearby_interactable = null
+var nearby_npc = null
 
 func _ready():
 	print("小镇广场加载完成")
 	setup_ground()
 	play_ambient_sounds()
 	setup_living_world()
+	setup_pickup_items()
+	connect_signals()
+
+func connect_signals():
+	"""连接信号"""
+	if pickup_system:
+		pickup_system.item_picked_up.connect(_on_item_picked_up)
+
+	if dialogue_system:
+		dialogue_system.dialogue_started.connect(_on_dialogue_started)
+		dialogue_system.dialogue_ended.connect(_on_dialogue_ended)
 
 func setup_ground():
 	# 这里应该用TileMap铺设鹅卵石地面
@@ -81,6 +96,37 @@ func spawn_bird():
 
 func _process(delta):
 	check_nearby_interactables()
+	check_nearby_npcs()
+
+func check_nearby_npcs():
+	"""检测玩家附近的NPC"""
+	if not npcs:
+		return
+
+	var min_distance = 60.0
+	var closest_npc = null
+
+	for npc in npcs.get_children():
+		if npc is Area2D:
+			var distance = player.global_position.distance_to(npc.global_position)
+			if distance < min_distance:
+				min_distance = distance
+				closest_npc = npc
+
+	if closest_npc != nearby_npc:
+		nearby_npc = closest_npc
+		if closest_npc and not dialogue_system.is_dialogue_active:
+			get_parent().show_interaction_prompt("按 E 与 " + closest_npc.npc_name + " 对话")
+		elif not closest_npc:
+			if not nearby_interactable:
+				get_parent().hide_interaction_prompt()
+
+func setup_pickup_items():
+	"""初始化时生成一些可拾取物品"""
+	if pickup_system:
+		# 在广场周围随机生成物品
+		pickup_system.spawn_random_items(Vector2(400, 300), 5)
+		print("已生成测试物品")
 
 func check_nearby_interactables():
 	# 检测玩家附近是否有可互动对象
@@ -100,11 +146,20 @@ func check_nearby_interactables():
 		if closest:
 			get_parent().show_interaction_prompt(closest.interaction_text)
 		else:
-			get_parent().hide_interaction_prompt()
+			if not nearby_npc:
+				get_parent().hide_interaction_prompt()
 
 func _input(event):
-	if event.is_action_pressed("interact") and nearby_interactable:
-		interact_with_object(nearby_interactable)
+	if event.is_action_pressed("interact"):
+		if nearby_npc and not dialogue_system.is_dialogue_active:
+			# 与NPC对话
+			nearby_npc.interact()
+		elif nearby_interactable:
+			# 与环境互动
+			interact_with_object(nearby_interactable)
+		elif pickup_system:
+			# 尝试拾取物品
+			pickup_system.try_pickup(player.global_position)
 
 func interact_with_object(obj):
 	print("互动: ", obj.interact_name, " (", obj.interact_type, ")")
