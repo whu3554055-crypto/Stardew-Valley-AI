@@ -1,0 +1,58 @@
+{
+  "name": "Stardew Valley Clone - Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
+
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers-contrib/features/godot:2": {
+      "version": "4.2.1"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "godotengine.godot-tools",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "streetsidesoftware.code-spell-checker",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [8080, 5678],
+
+  "postCreateCommand": "cd hello_agent_backend && pip install -r requirements.txt",
+
+  "remoteEnv": {
+    "GODOT_BIN": "/usr/local/bin/godot",
+    "PYTHONPATH": "${workspaceFolder}/hello_agent_backend"
+  },
+
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-backend-data,target=${containerWorkspaceFolder}/hello_agent_backend/data,type=volume"
+  ],
+
+  "containerEnv": {
+    "DEBUG": "true",
+    "HOST": "0.0.0.0",
+    "PORT": "8080"
+  }
+}

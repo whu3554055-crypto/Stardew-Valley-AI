@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3 uid="uid://npc_abigail"]
+
+[ext_resource type="Script" path="res://scripts/npc.gd" id="1_npc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_npc"]
+size = Vector2(32, 32)
+
+[node name="Abigail" type="CharacterBody2D"]
+position = Vector2(400.0, 300.0)
+script = ExtResource("1_npc")
+npc_id = "abigail"
+npc_name = "Abigail"
+use_ai_dialogue = true
+ai_personality = {
+"traits": ["adventurous", "energetic", "mysterious", "independent"],
+"occupation": "Shopkeeper's Daughter / Adventurer",
+"backstory": "Abigail is Pierre and Caroline's daughter. Unlike her parents, she's fascinated by adventure, the occult, and exploring the dangerous areas around town. She plays the flute, dyes her hair purple, and dreams of becoming a great adventurer.",
+"speech_style": "energetic",
+"interests": ["adventure", "music", "the occult", "exploring caves", "video games"]
+}
+dialogue_lines = ["Have you tried fishing at the mountain lake?", "I love exploring the caves!", "Do you play any instruments?"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -16)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_npc")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -30.0
+offset_top = -50.0
+offset_right = 70.0
+offset_bottom = -30.0
+text = "Abigail"
+horizontal_alignment = 1
+visible = false
+
+[node name="InteractionArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("RectangleShape2D_npc")

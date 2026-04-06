@@ -1,0 +1,97 @@
+========================================
+  高级多智能体 NPC 系统 - 快速参考
+========================================
+
+🎯 核心概念
+   • 每个 NPC = 独立 AI 智能体
+   • 并行执行（最多 3 个并发）
+   • NPC 之间可以自动互动
+   • 感知环境（时间/天气/位置）
+
+📁 关键文件
+   advanced_ai_manager.gd       - AI 管理器（中央控制器）
+   npc_behavior_controller.gd   - 行为控制器（自主决策）
+   advanced_npc.gd              - NPC 脚本（个体实现）
+   ADVANCED_AI_SYSTEM.md        - 完整文档
+
+🚀 快速启动
+   1. ollama serve
+   2. 双击 start_game.bat
+   3. 按 F5 运行游戏
+   4. 观察 NPC 自主行为
+
+🎮 游戏中体验
+   • Pierre (700,400) - 早上 8 点开店
+   • Abigail (400,300) - 经常去山区探险
+   • Lewis (500,250) - 在城镇巡视
+   
+   等待观察：
+   - NPC 会自动互相聊天
+   - 根据时间改变位置
+   - 对天气做出反应
+   - 累了会休息
+
+💬 对话格式
+   [DIALOGUE: 说出的话]
+   [ACTION: 做的动作]
+   [EMOTION: 情绪状态]
+   [THOUGHT: 内心想法]
+
+🎭 说话风格
+   casual     - 随意亲切
+   formal     - 正式礼貌
+   shy        - 害羞犹豫
+   energetic  - 充满活力
+   mysterious - 神秘cryptic
+   gruff      - 粗鲁直接
+   warm       - 温暖关怀
+   sarcastic  - 讽刺幽默
+
+🧠 NPC 个性要素
+   traits     - 性格特质
+   values     - 价值观
+   fears      - 恐惧
+   dreams     - 梦想
+   quirks     - 怪癖
+
+📅 日程示例
+   {
+     6.0: {"action": "wake_up", "location": "home"},
+     8.0: {"action": "work", "location": "shop"},
+     18.0: {"action": "go_home", "location": "home"}
+   }
+
+🔧 配置性能
+   max_concurrent_requests: 3  # 并发数
+   max_tokens: 300              # 响应长度
+   temperature: 0.85            # 创意程度
+
+📊 社交网络
+   type: parent_child / business / friend / acquaintance
+   strength: 0.0 - 1.0  # 关系强度
+   history: "关系历史描述"
+
+⚡ 并行执行
+   优先级 10: 玩家互动（立即）
+   优先级 5:  NPC 互动
+   优先级 2:  自发行为
+   优先级 1:  环境反应
+
+🐛 调试命令
+   # 查看所有 NPC 状态
+   NPCBehaviorController.get_all_npc_states()
+   
+   # 查看活跃请求
+   print(AdvancedAIAgentManager.active_requests)
+   
+   # 强制 NPC 互动
+   NPCBehaviorController.force_interaction("pierre", "abigail")
+
+📚 完整文档
+   ADVANCED_AI_SYSTEM.md  - 技术详解
+   高级系统总结.md         - 功能总结
+
+========================================
+  真正的多智能体社会！
+  每个 NPC 都是独立的 AI！
+========================================

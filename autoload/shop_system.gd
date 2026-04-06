@@ -1,0 +1,77 @@
+extends Node
+
+class_name ShopSystem
+
+# Shop inventory
+var shop_stock = {}
+
+signal shop_opened
+signal item_purchased(item_id, quantity)
+signal item_sold(item_id, quantity)
+
+func _ready():
+	initialize_shop()
+
+func initialize_shop():
+	# Pierre's General Store stock
+	shop_stock = {
+		"parsnip_seeds": {"price": 20, "stock": 99},
+		"cauliflower_seeds": {"price": 80, "stock": 99},
+		"potato_seeds": {"price": 50, "stock": 99}
+	}
+
+func open_shop():
+	shop_opened.emit()
+	return shop_stock
+
+func purchase_item(item_id: String, quantity: int = 1) -> bool:
+	if not shop_stock.has(item_id):
+		return false
+
+	var item_data = shop_stock[item_id]
+	var total_cost = item_data.price * quantity
+
+	if GameManager.player_data.gold < total_cost:
+		return false
+
+	if item_data.stock < quantity:
+		return false
+
+	# Process transaction
+	GameManager.player_data.gold -= total_cost
+	item_data.stock -= quantity
+
+	# Add to player inventory
+	var item_template = ItemDatabase.get_item(item_id)
+	if item_template.is_empty():
+		return false
+
+	for i in range(quantity):
+		InventoryManager.add_item(item_template.duplicate(true))
+
+	item_purchased.emit(item_id, quantity)
+	return true
+
+func sell_item(item_id: String, quantity: int = 1) -> bool:
+	var item_template = ItemDatabase.get_item(item_id)
+	if item_template.is_empty():
+		return false
+
+	var sell_price = item_template.get("sell_price", 0) * quantity
+
+	# Remove from inventory and add gold
+	for i in range(quantity):
+		# Find and remove item from inventory
+		for slot in range(InventoryManager.INVENTORY_SIZE):
+			var item = InventoryManager.get_item(slot)
+			if item and item.id == item_id:
+				InventoryManager.remove_item(slot)
+				break
+
+	GameManager.player_data.gold += sell_price
+	item_sold.emit(item_id, quantity)
+	return true
+
+func get_sell_value(item_id: String) -> int:
+	var item_template = ItemDatabase.get_item(item_id)
+	return item_template.get("sell_price", 0)

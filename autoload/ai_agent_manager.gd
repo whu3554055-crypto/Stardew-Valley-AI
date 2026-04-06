@@ -1,0 +1,314 @@
+extends Node
+
+class_name AIAgentManager
+
+# AI Agent configuration - Updated for multi-LLM backend
+var api_config = {
+	"backend_url": "http://localhost:8080",  # FastAPI backend endpoint
+	"base_url": "http://localhost:11434",  # Ollama (fallback)
+	"model": "qwen3.5:9b",
+	"temperature": 0.7,
+	"max_tokens": 256,
+	"timeout": 30,
+	"use_backend": true,  # Use Python backend with multi-LLM router
+	"task_type": "npc_dialogue"  # For smart routing
+}
+
+# Request cache to avoid repeated calls
+var response_cache = {}
+const CACHE_EXPIRY = 300  # 5 minutes
+
+# Current pending requests
+var pending_requests = {}
+
+signal dialogue_generated(npc_id, dialogue)
+signal agent_error(npc_id, error_message)
+signal backend_status_changed(available: bool)
+
+var _backend_available: bool = false
+
+func _ready():
+	load_config()
+	# Check backend availability on startup
+	check_backend_status()
+
+func check_backend_status() -> void:
+	"""Check if Python backend is available"""
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/health" % api_config.backend_url
+	var error = http.request(url, [], HTTPClient.METHOD_GET)
+	
+	if error == OK:
+		var result = await http.request_completed
+		_backend_available = (result[1] == 200)
+		emit_signal("backend_status_changed", _backend_available)
+		print("[AIAgentManager] Backend status: ", "✓ Available" if _backend_available else "✗ Unavailable")
+	else:
+		_backend_available = false
+		emit_signal("backend_status_changed", false)
+		print("[AIAgentManager] Backend unavailable: ", error)
+	
+	http.queue_free()
+
+func load_config():
+	var config_path = "user://ai_agent_config.json"
+	if FileAccess.file_exists(config_path):
+		var file = FileAccess.open(config_path, FileAccess.READ)
+		var data = JSON.parse_string(file.get_as_text())
+		if data:
+			api_config.merge(data)
+		file.close()
+
+func save_config():
+	var config_path = "user://ai_agent_config.json"
+	var file = FileAccess.open(config_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(api_config))
+	file.close()
+
+func configure_api(base_url: String, model: String, temperature: float = 0.8):
+	api_config.base_url = base_url
+	api_config.model = model
+	api_config.temperature = temperature
+	save_config()
+
+# Generate dialogue using AI agent
+func generate_dialogue(
+	npc_id: String,
+	npc_name: String,
+	personality: Dictionary,
+	context: Dictionary,
+	player_history: Array,
+	prompt_template: String = ""
+) -> void:
+	
+	var cache_key = "%s_%s_%d" % [npc_id, str(context), len(player_history)]
+	
+	# Check cache first
+	if response_cache.has(cache_key):
+		var cached = response_cache[cache_key]
+		if Time.get_unix_time_from_system() - cached.timestamp < CACHE_EXPIRY:
+			dialogue_generated.emit(npc_id, cached.response)
+			return
+	
+	# Build the prompt
+	var full_prompt = build_npc_prompt(
+		npc_name, personality, context, player_history, prompt_template
+	)
+	
+	# Make async request
+	make_llm_request(npc_id, full_prompt, cache_key)
+
+# Build comprehensive NPC prompt
+func build_npc_prompt(
+	npc_name: String,
+	personality: Dictionary,
+	context: Dictionary,
+	player_history: Array,
+	custom_template: String
+) -> String:
+	
+	var time_info = context.get("time", "morning")
+	var weather = context.get("weather", "sunny")
+	var season = context.get("season", "spring")
+	var location = context.get("location", "town")
+	var relationship = context.get("relationship", 0)
+	var recent_interactions = context.get("recent_interactions", [])
+	
+	# Personality traits
+	var traits = personality.get("traits", ["friendly"])
+	var occupation = personality.get("occupation", "villager")
+	var backstory = personality.get("backstory", "")
+	var speech_style = personality.get("speech_style", "normal")
+	var interests = personality.get("interests", [])
+	var mood = personality.get("current_mood", "neutral")
+	
+	var prompt = """You are roleplaying as %s, an NPC in a farming simulation game similar to Stardew Valley.
+
+## CHARACTER PROFILE
+**Name:** %s
+**Occupation:** %s
+**Personality Traits:** %s
+**Speech Style:** %s
+**Interests:** %s
+**Current Mood:** %s
+
+## BACKSTORY
+%s
+
+## CURRENT CONTEXT
+- **Time:** %s
+- **Weather:** %s
+- **Season:** %s
+- **Location:** %s
+- **Relationship with Player:** %d/10 (0=stranger, 10=best friend)
+
+## RECENT INTERACTIONS WITH PLAYER
+%s
+
+## INSTRUCTIONS
+1. Respond in character as %s
+2. Keep responses concise (1-3 sentences max)
+3. Reflect your personality traits and current mood
+4. Consider the time, weather, and your relationship level
+5. Reference past interactions naturally if relevant
+6. Show emotion through word choice and tone
+7. If you have interests, mention them when appropriate
+8. Be consistent with your occupation and backstory
+
+## SPEECH STYLE GUIDE
+%s
+
+Respond with ONLY the dialogue text, no quotes or explanations.""" % [
+		npc_name, npc_name, occupation, 
+		str(traits), speech_style, str(interests), mood,
+		backstory,
+		time_info, weather, season, location, relationship,
+		format_interaction_history(recent_interactions),
+		npc_name,
+		get_speech_style_guide(speech_style)
+	]
+	
+	if custom_template != "":
+		prompt += "\n\n" + custom_template
+	
+	return prompt
+
+func format_interaction_history(history: Array) -> String:
+	if history.is_empty():
+		return "(No previous interactions)"
+	
+	var formatted = ""
+	for i in range(max(0, history.size() - 5), history.size()):  # Last 5 interactions
+		var interaction = history[i]
+		formatted += "- Day %d: %s\n" % [interaction.get("day", 0), interaction.get("summary", "")]
+	
+	return formatted
+
+func get_speech_style_guide(style: String) -> String:
+	match style:
+		"formal":
+			return "Use proper grammar, sophisticated vocabulary, polite expressions"
+		"casual":
+			return "Use contractions, slang, relaxed language, friendly tone"
+		"shy":
+			return "Use hesitant language, ellipses..., softer expressions, self-doubt"
+		"energetic":
+			return "Use exclamation marks!, enthusiastic language, dynamic expressions"
+		"mysterious":
+			return "Use cryptic language, hints, incomplete thoughts, enigmatic phrases"
+		"gruff":
+			return "Use short sentences, blunt language, minimal words, rough tone"
+		_:
+			return "Use natural, conversational language"
+
+# Make HTTP request to LLM API
+func make_llm_request(npc_id: String, prompt: String, cache_key: String) -> void:
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/api/generate" % api_config.base_url
+	var headers = ["Content-Type: application/json"]
+	
+	var body = {
+		"model": api_config.model,
+		"prompt": prompt,
+		"stream": false,
+		"options": {
+			"temperature": api_config.temperature,
+			"num_predict": api_config.max_tokens
+		}
+	}
+	
+	var json_body = JSON.stringify(body)
+	var error = http.request(url, headers, HTTPClient.METHOD_POST, json_body)
+	
+	if error != OK:
+		agent_error.emit(npc_id, "Failed to send request: " + str(error))
+		http.queue_free()
+		return
+	
+	# Wait for response
+	var result = await http.request_completed
+	
+	if result[1] != 200:
+		agent_error.emit(npc_id, "HTTP Error: %d" % result[1])
+		http.queue_free()
+		return
+	
+	var response_text = result[3].get_string_from_utf8()
+	var json = JSON.new()
+	var parse_result = json.parse(response_text)
+	
+	if parse_result != OK:
+		agent_error.emit(npc_id, "JSON Parse Error")
+		http.queue_free()
+		return
+	
+	var data = json.data
+	var generated_text = data.get("response", "...")
+	
+	# Cache the response
+	response_cache[cache_key] = {
+		"response": generated_text,
+		"timestamp": Time.get_unix_time_from_system()
+	}
+	
+	dialogue_generated.emit(npc_id, generated_text)
+	http.queue_free()
+
+# Quick chat function for simple interactions
+func quick_chat(
+	npc_id: String,
+	npc_name: String,
+	message: String,
+	personality: Dictionary = {},
+	context: Dictionary = {}
+) -> void:
+	
+	var default_personality = {
+		"traits": ["friendly"],
+		"occupation": "villager",
+		"backstory": "A friendly villager living in the town.",
+		"speech_style": "casual",
+		"interests": ["farming"],
+		"current_mood": "happy"
+	}
+	
+	var final_personality = default_personality
+	final_personality.merge(personality)
+	
+	var default_context = {
+		"time": "morning",
+		"weather": "sunny",
+		"season": "spring",
+		"location": "town",
+		"relationship": 5,
+		"recent_interactions": []
+	}
+	
+	var final_context = default_context
+	final_context.merge(context)
+	
+	generate_dialogue(
+		npc_id,
+		npc_name,
+		final_personality,
+		final_context,
+		[],
+		"Player says: " + message
+	)
+
+# Update NPC mood based on events
+func update_npc_mood(
+	npc_id: String,
+	mood_change: Dictionary
+) -> Dictionary:
+	# This would integrate with the NPC's emotion system
+	# For now, return a sample mood
+	return {
+		"mood": mood_change.get("mood", "neutral"),
+		"intensity": mood_change.get("intensity", 0.5),
+		"duration": mood_change.get("duration", 60.0)
+	}

@@ -1,0 +1,69 @@
+extends Node
+
+# Game state management
+var player_data = {
+	"gold": 500,
+	"day": 1,
+	"season": "spring",
+	"year": 1
+}
+
+# Time system
+var current_time = 6.0  # Start at 6 AM
+var time_speed = 10.0  # Seconds per game minute
+var day_length = 20.0  # Minutes per game day (real time)
+
+# Game signals
+signal time_changed(new_time)
+signal day_changed(new_day)
+signal season_changed(new_season)
+
+func _ready():
+	pass
+
+func _process(delta):
+	# Update time
+	current_time += delta / 60.0 * time_speed
+
+	if current_time >= 24.0:
+		current_time = 0.0
+		advance_day()
+
+	time_changed.emit(current_time)
+
+func advance_day():
+	player_data.day += 1
+	day_changed.emit(player_data.day)
+
+	if player_data.day > 28:
+		player_data.day = 1
+		advance_season()
+
+func advance_season():
+	var seasons = ["spring", "summer", "fall", "winter"]
+	var current_index = seasons.find(player_data.season)
+	current_index = (current_index + 1) % 4
+	player_data.season = seasons[current_index]
+	player_data.year += 1
+	season_changed.emit(player_data.season)
+
+func get_time_string() -> String:
+	var hours = int(current_time)
+	var minutes = int((current_time - hours) * 60)
+	var am_pm = "AM" if hours < 12 else "PM"
+	var display_hours = hours if hours <= 12 else hours - 12
+	display_hours = 12 if display_hours == 0 else display_hours
+	return "%02d:%02d %s" % [display_hours, minutes, am_pm]
+
+func save_game():
+	var save_file = FileAccess.open("user://savegame.save", FileAccess.WRITE)
+	save_file.store_var(player_data)
+	save_file.close()
+
+func load_game():
+	if FileAccess.file_exists("user://savegame.save"):
+		var save_file = FileAccess.open("user://savegame.save", FileAccess.READ)
+		player_data = save_file.get_var()
+		save_file.close()
+		return true
+	return false

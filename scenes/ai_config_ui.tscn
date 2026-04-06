@@ -1,0 +1,100 @@
+[gd_scene load_steps=2 format=3 uid="uid://ai_config_ui"]
+
+[ext_resource type="Script" path="res://scripts/ai_agent_config_ui.gd" id="1_aiconfig"]
+
+[node name="AIConfigUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_aiconfig")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.1, 0.15, 0.95)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 550.0
+offset_bottom = 500.0
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "AI Agent Configuration"
+horizontal_alignment = 1
+
+[node name="HSeparator1" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="BaseUrlLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "API Base URL:"
+
+[node name="BaseUrlInput" type="LineEdit" parent="VBoxContainer"]
+layout_mode = 2
+text = "http://localhost:11434"
+placeholder_text = "Enter API endpoint"
+
+[node name="ModelLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Model Name:"
+
+[node name="ModelInput" type="LineEdit" parent="VBoxContainer"]
+layout_mode = 2
+text = "qwen2.5:7b"
+placeholder_text = "e.g., llama2, qwen2.5:7b"
+
+[node name="TemperatureLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Temperature: 0.80"
+
+[node name="TemperatureSlider" type="HSlider" parent="VBoxContainer"]
+layout_mode = 2
+min_value = 0.1
+max_value = 1.5
+step = 0.05
+value = 0.8
+
+[node name="MaxTokensLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Max Tokens:"
+
+[node name="MaxTokensInput" type="LineEdit" parent="VBoxContainer"]
+layout_mode = 2
+text = "256"
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Status: Not connected"
+horizontal_alignment = 1
+
+[node name="TestButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Test Connection"
+
+[node name="SaveButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Save Configuration"
+
+[node name="CloseButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Close"
+
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 520.0
+offset_right = 550.0
+offset_bottom = 600.0
+text = "Supported APIs: Ollama (local), OpenAI-compatible endpoints\nFor Ollama: Install from ollama.com and run 'ollama pull qwen2.5:7b'"
+modulate = Color(0.7, 0.7, 0.7, 1)
+
+[connection signal="pressed" from="CloseButton" to="." method="close_config"]

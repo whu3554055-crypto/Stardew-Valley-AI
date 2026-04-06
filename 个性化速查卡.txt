@@ -1,0 +1,87 @@
+========================================
+  NPC 个性化系统 - 速查卡
+========================================
+
+🗣️ 口头禅 (自动显示)
+   
+   Pierre:
+   "Welcome to my store!" / "Absolutely!" / "Oh dear..."
+   
+   Abigail:
+   "Hey!" / "AWESOME!!!" / "Totally!"
+   
+   Lewis:
+   "Good day." / "Indeed." / "As mayor..."
+
+❤️ 最爱礼物 (送这些加最多好感)
+   
+   Pierre:    金条、钻石、食谱 (+80)
+   Abigail:   紫水晶、怪物战利品、剑 (+80)
+   Lewis:     古代神器、书籍、葡萄酒 (+80)
+
+🎭 习惯动作 (空闲时自动做)
+   
+   Pierre:    擦拭柜台、整理货架、哼曲
+   Abigail:   练剑、检查宝石、玩掌机
+   Lewis:     视察城镇、打理花园、审阅
+
+⚡ 特殊反应
+   
+   下雨:
+   Pierre  → "The crops will love this!"
+   Abigail → *(无所谓)*
+   Lewis   → "Hope everyone's safe..."
+   
+   暴风雨:
+   Pierre  → "Stay inside, dear!"
+   Abigail → "YES! Perfect for adventure!"
+   Lewis   → "This is concerning..."
+
+📝 说话风格
+   
+   Pierre:    温暖亲切，常用 "dear", "wonderful"
+   Abigail:   活力爆表，常用 "AWESOME", "totally"
+   Lewis:     正式礼貌，常用 "indeed", "citizen"
+
+🎯 讨厌话题 (别聊这些!)
+   
+   Pierre:    JojaMart、危险、丑闻
+   Abigail:   家务、无聊的事、婚姻
+   Lewis:     丑闻、Marnie秘密、抱怨
+
+🌤️ 最爱环境
+   
+   Pierre:    晴天 + 早上 + 商店
+   Abigail:   暴风雨 + 夜晚 + 山区
+   Lewis:     晴天 + 下午 + 城镇广场
+
+💡 使用技巧
+   
+   1. 送最爱礼物 → +80 关系点
+   2. 聊喜欢的话题 → 解锁更多对话
+   3. 观察习惯动作 → 了解 NPC 心情
+   4. 听口头禅 → 快速识别 NPC
+
+🔧 开发者 API
+   
+   # 获取口头禅
+   get_catchphrase("pierre", "greeting")
+   
+   # 检查礼物喜好
+   check_gift_preference("abigail", "amethyst")
+   
+   # 获取习惯动作
+   get_habitual_action("lewis", "happy")
+   
+   # 检查话题喜好
+   loves_topic("pierre", "farming") → true/false
+
+📁 关键文件
+   
+   npc_personality_system.gd      - 核心系统
+   NPC_PERSONALITY_GUIDE.md       - 完整文档
+   个性化系统总结.md               - 功能总结
+
+========================================
+  每个 NPC 都是独特的个体！
+========================================

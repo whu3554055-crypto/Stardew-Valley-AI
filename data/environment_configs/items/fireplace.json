@@ -1,0 +1,55 @@
+{
+  "item_id": "fireplace",
+  "name": "Cozy Fireplace",
+  "description": "A warm fireplace that creates a cozy atmosphere",
+  "category": "heating",
+  "temperature_delta": 5.0,
+  "humidity_delta": -2.0,
+  "light_radius": 150.0,
+  "light_intensity": 1.2,
+  "comfort_bonus": 8.0,
+  "aesthetic_value": 6.0,
+  "requires_energy": true,
+  "energy_consumption_rate": 2.0,
+  "max_energy_capacity": 50.0,
+  "has_durability": true,
+  "max_durability": 500,
+  "durability_degradation_rate": 0.5,
+  "proximity_radius": 200.0,
+  "triggers_on_proximity": false,
+  "season_modifiers": {
+    "winter": {
+      "temperature_multiplier": 1.5,
+      "comfort_multiplier": 1.3
+    },
+    "fall": {
+      "temperature_multiplier": 1.2,
+      "comfort_multiplier": 1.1
+    },
+    "spring": {
+      "temperature_multiplier": 0.8,
+      "comfort_multiplier": 0.9
+    },
+    "summer": {
+      "temperature_multiplier": 0.5,
+      "comfort_multiplier": 0.7
+    }
+  },
+  "weather_modifiers": {
+    "rainy": {
+      "temperature_modifier": 1.0,
+      "efficiency_multiplier": 1.1
+    },
+    "stormy": {
+      "temperature_modifier": 1.5,
+      "efficiency_multiplier": 1.2
+    },
+    "snowy": {
+      "temperature_modifier": 2.0,
+      "efficiency_multiplier": 1.3
+    },
+    "foggy": {
+      "light_intensity_bonus": 0.2
+    }
+  }
+}

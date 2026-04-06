@@ -1,0 +1,142 @@
+[gd_scene load_steps=2 format=3 uid="uid://daily_narrative_admin"]
+
+[ext_resource type="Script" path="res://scripts/daily_narrative_admin_ui.gd" id="1_script"]
+
+[node name="DailyNarrativeAdminUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HSplitContainer" type="HSplitContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 400
+
+[node name="ThemePanel" type="PanelContainer" parent="VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 1
+
+[node name="ThemeList" type="ItemList" parent="VBoxContainer/HSplitContainer/ThemePanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/ThemePanel"]
+layout_mode = 2
+
+[node name="ToggleThemeBtn" type="Button" parent="VBoxContainer/HSplitContainer/ThemePanel/VBoxContainer"]
+layout_mode = 2
+text = "Block/Unblock Theme"
+
+[node name="PreferThemeBtn" type="Button" parent="VBoxContainer/HSplitContainer/ThemePanel/VBoxContainer"]
+layout_mode = 2
+text = "Add to Preferences"
+
+[node name="ScenarioPanel" type="PanelContainer" parent="VBoxContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ScenarioList" type="ItemList" parent="VBoxContainer/HSplitContainer/ScenarioPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+
+[node name="ScenarioEditor" type="TextEdit" parent="VBoxContainer/HSplitContainer/ScenarioPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/ScenarioPanel"]
+layout_mode = 2
+
+[node name="AddScenarioBtn" type="Button" parent="VBoxContainer/HSplitContainer/ScenarioPanel/VBoxContainer"]
+layout_mode = 2
+text = "Add New Scenario"
+
+[node name="RemoveScenarioBtn" type="Button" parent="VBoxContainer/HSplitContainer/ScenarioPanel/VBoxContainer"]
+layout_mode = 2
+text = "Remove Selected"
+
+[node name="ConfigPanel" type="PanelContainer" parent="VBoxContainer/HSplitContainer"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/ConfigPanel"]
+layout_mode = 2
+
+[node name="EnabledCheck" type="CheckBox" parent="VBoxContainer/HSplitContainer/ConfigPanel/VBoxContainer"]
+layout_mode = 2
+text = "System Enabled"
+button_pressed = true
+
+[node name="AutoGenerateCheck" type="CheckBox" parent="VBoxContainer/HSplitContainer/ConfigPanel/VBoxContainer"]
+layout_mode = 2
+text = "Auto-Generate Daily"
+button_pressed = true
+
+[node name="ImmersiveCheck" type="CheckBox" parent="VBoxContainer/HSplitContainer/ConfigPanel/VBoxContainer"]
+layout_mode = 2
+text = "Immersive Transitions"
+button_pressed = true
+
+[node name="RotationCheck" type="CheckBox" parent="VBoxContainer/HSplitContainer/ConfigPanel/VBoxContainer"]
+layout_mode = 2
+text = "Theme Rotation"
+button_pressed = true
+
+[node name="GenerateNowBtn" type="Button" parent="VBoxContainer/HSplitContainer/ConfigPanel/VBoxContainer"]
+layout_mode = 2
+text = "Generate Narrative Now"
+
+[node name="TestPresentationBtn" type="Button" parent="VBoxContainer/HSplitContainer/ConfigPanel/VBoxContainer"]
+layout_mode = 2
+text = "Test Presentation"
+
+[node name="HSplitContainer2" type="HSplitContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 600
+
+[node name="PreviewPanel" type="PanelContainer" parent="VBoxContainer/HSplitContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HSplitContainer2/PreviewPanel"]
+layout_mode = 2
+
+[node name="NarrativeTitle" type="Label" parent="VBoxContainer/HSplitContainer2/PreviewPanel/VBoxContainer"]
+layout_mode = 2
+text = "No Active Narrative"
+
+[node name="NarrativeTheme" type="Label" parent="VBoxContainer/HSplitContainer2/PreviewPanel/VBoxContainer"]
+layout_mode = 2
+text = ""
+
+[node name="CastList" type="TextEdit" parent="VBoxContainer/HSplitContainer2/PreviewPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+editable = false
+
+[node name="ScriptPreview" type="TextEdit" parent="VBoxContainer/HSplitContainer2/PreviewPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+editable = false

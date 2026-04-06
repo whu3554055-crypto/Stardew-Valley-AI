@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3 uid="uid://npc_lewis"]
+
+[ext_resource type="Script" path="res://scripts/npc.gd" id="1_npc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_npc"]
+size = Vector2(32, 32)
+
+[node name="Lewis" type="CharacterBody2D"]
+position = Vector2(500.0, 250.0)
+script = ExtResource("1_npc")
+npc_id = "lewis"
+npc_name = "Mayor Lewis"
+use_ai_dialogue = true
+ai_personality = {
+"traits": ["responsible", "dignified", "caring", "diplomatic"],
+"occupation": "Town Mayor",
+"backstory": "Lewis has been the mayor of Pelican Town for many years. He takes his responsibilities seriously and genuinely cares about the town's wellbeing. He organizes festivals and tries to maintain harmony in the community.",
+"speech_style": "formal",
+"interests": ["town governance", "festivals", "community welfare", "agriculture"]
+}
+dialogue_lines = ["Welcome to Pelican Town!", "Please take care of our community.", "The festival is coming up soon!"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -16)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_npc")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -40.0
+offset_top = -50.0
+offset_right = 80.0
+offset_bottom = -30.0
+text = "Mayor Lewis"
+horizontal_alignment = 1
+visible = false
+
+[node name="InteractionArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("RectangleShape2D_npc")

@@ -1,0 +1,141 @@
+{
+  "weather_types": {
+    "sunny": {
+      "name": "Sunny",
+      "name_zh": "晴天",
+      "icon": "res://assets/ui/icons/weather_sunny.png",
+      "crop_watering": false,
+      "npc_outdoor_activity_multiplier": 1.0,
+      "npc_mood_delta": 0.1,
+      "player_energy_consumption_modifier": 1.0,
+      "visual_effects": {
+        "light_intensity": 1.2,
+        "shadow_enabled": true,
+        "bloom_strength": 0.3,
+        "particle_effect": ""
+      },
+      "audio_override": ""
+    },
+    "cloudy": {
+      "name": "Cloudy",
+      "name_zh": "多云",
+      "icon": "res://assets/ui/icons/weather_cloudy.png",
+      "crop_watering": false,
+      "npc_outdoor_activity_multiplier": 0.8,
+      "npc_mood_delta": 0.0,
+      "player_energy_consumption_modifier": 1.0,
+      "visual_effects": {
+        "light_intensity": 0.9,
+        "shadow_enabled": true,
+        "bloom_strength": 0.1,
+        "particle_effect": ""
+      },
+      "audio_override": ""
+    },
+    "rainy": {
+      "name": "Rainy",
+      "name_zh": "雨天",
+      "icon": "res://assets/ui/icons/weather_rainy.png",
+      "crop_watering": true,
+      "npc_outdoor_activity_multiplier": 0.3,
+      "npc_mood_delta": -0.05,
+      "player_energy_consumption_modifier": 0.9,
+      "damage_risk": 0.0,
+      "visual_effects": {
+        "light_intensity": 0.7,
+        "shadow_enabled": false,
+        "bloom_strength": 0.0,
+        "particle_effect": "res://scenes/effects/rain_particles.tscn",
+        "puddle_reflections": true
+      },
+      "audio_override": "res://audio/sfx/rain_ambient.ogg"
+    },
+    "stormy": {
+      "name": "Stormy",
+      "name_zh": "暴风雨",
+      "icon": "res://assets/ui/icons/weather_stormy.png",
+      "crop_watering": true,
+      "npc_outdoor_activity_multiplier": 0.0,
+      "npc_mood_delta": -0.2,
+      "player_energy_consumption_modifier": 1.3,
+      "damage_risk": 0.15,
+      "visual_effects": {
+        "light_intensity": 0.4,
+        "shadow_enabled": false,
+        "bloom_strength": 0.0,
+        "particle_effect": "res://scenes/effects/heavy_rain_particles.tscn",
+        "lightning_flash": true,
+        "wind_effect": true
+      },
+      "audio_override": "res://audio/sfx/storm_ambient.ogg"
+    },
+    "snowy": {
+      "name": "Snowy",
+      "name_zh": "雪天",
+      "icon": "res://assets/ui/icons/weather_snowy.png",
+      "crop_watering": false,
+      "npc_outdoor_activity_multiplier": 0.2,
+      "npc_mood_delta": 0.05,
+      "player_energy_consumption_modifier": 1.4,
+      "damage_risk": 0.0,
+      "visual_effects": {
+        "light_intensity": 0.9,
+        "shadow_enabled": true,
+        "bloom_strength": 0.2,
+        "particle_effect": "res://scenes/effects/snow_particles.tscn",
+        "ground_snow_cover": true
+      },
+      "audio_override": "res://audio/sfx/wind_ambient.ogg"
+    },
+    "foggy": {
+      "name": "Foggy",
+      "name_zh": "雾天",
+      "icon": "res://assets/ui/icons/weather_foggy.png",
+      "crop_watering": false,
+      "npc_outdoor_activity_multiplier": 0.5,
+      "npc_mood_delta": -0.1,
+      "player_energy_consumption_modifier": 1.0,
+      "damage_risk": 0.0,
+      "visual_effects": {
+        "light_intensity": 0.6,
+        "shadow_enabled": false,
+        "bloom_strength": 0.0,
+        "fog_density": 0.5,
+        "particle_effect": ""
+      },
+      "audio_override": ""
+    }
+  },
+
+  "season_probabilities": {
+    "spring": {
+      "sunny": 0.40,
+      "cloudy": 0.25,
+      "rainy": 0.30,
+      "stormy": 0.05
+    },
+    "summer": {
+      "sunny": 0.50,
+      "cloudy": 0.20,
+      "rainy": 0.15,
+      "stormy": 0.15
+    },
+    "fall": {
+      "sunny": 0.45,
+      "cloudy": 0.30,
+      "rainy": 0.20,
+      "foggy": 0.05
+    },
+    "winter": {
+      "sunny": 0.30,
+      "cloudy": 0.30,
+      "snowy": 0.35,
+      "stormy": 0.05
+    }
+  },
+
+  "duration_range": {
+    "min_hours": 4.0,
+    "max_hours": 12.0
+  }
+}

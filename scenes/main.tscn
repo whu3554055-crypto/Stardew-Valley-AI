@@ -1,0 +1,108 @@
+[gd_scene load_steps=10 format=3 uid="uid://main_scene"]
+
+[ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
+[ext_resource type="Script" path="res://autoload/game_manager.gd" id="3_gamemanager"]
+[ext_resource type="Script" path="res://autoload/inventory_manager.gd" id="4_inventory"]
+[ext_resource type="Script" path="res://scripts/farm_manager.gd" id="5_farm"]
+[ext_resource type="PackedScene" path="res://scenes/npc_pierre.tscn" id="6_pierre"]
+[ext_resource type="PackedScene" path="res://scenes/npc_abigail.tscn" id="7_abigail"]
+[ext_resource type="PackedScene" path="res://scenes/npc_lewis.tscn" id="8_lewis"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(32, 32)
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = null
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(640, 360)
+script = ExtResource("2_player")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+texture = null
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("RectangleShape2D_player")
+
+[node name="InteractionArea" type="Area2D" parent="Player"]
+
+[node name="FarmManager" type="Node2D" parent="."]
+script = ExtResource("5_farm")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="TimeLabel" type="Label" parent="UILayer"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 200.0
+offset_bottom = 40.0
+text = "06:00 AM"
+
+[node name="GoldLabel" type="Label" parent="UILayer"]
+offset_left = 10.0
+offset_top = 45.0
+offset_right = 200.0
+offset_bottom = 75.0
+text = "Gold: 500"
+
+[node name="DayLabel" type="Label" parent="UILayer"]
+offset_left = 10.0
+offset_top = 80.0
+offset_right = 200.0
+offset_bottom = 110.0
+text = "Day 1, Year 1"
+
+[node name="SeasonLabel" type="Label" parent="UILayer"]
+offset_left = 10.0
+offset_top = 115.0
+offset_right = 200.0
+offset_bottom = 145.0
+text = "Season: Spring"
+
+[node name="WeatherLabel" type="Label" parent="UILayer"]
+offset_left = 10.0
+offset_top = 150.0
+offset_right = 200.0
+offset_bottom = 180.0
+text = "Weather: Sunny"
+
+[node name="DialogueBox" type="Panel" parent="UILayer"]
+visible = false
+offset_left = 100.0
+offset_top = 500.0
+offset_right = 1180.0
+offset_bottom = 650.0
+
+[node name="Label" type="Label" parent="UILayer/DialogueBox"]
+layout_mode = 0
+offset_right = 1080.0
+offset_bottom = 150.0
+text = "Dialogue text here..."
+autowrap_mode = 2
+
+[node name="InventoryUI" type="Panel" parent="UILayer"]
+visible = false
+offset_left = 400.0
+offset_top = 200.0
+offset_right = 880.0
+offset_bottom = 520.0
+
+[node name="AIConfigButton" type="Button" parent="UILayer"]
+offset_left = 1100.0
+offset_top = 10.0
+offset_right = 1270.0
+offset_bottom = 40.0
+text = "AI Config"
+
+[node name="Pierre" parent="." instance=ExtResource("6_pierre")]
+
+[node name="Abigail" parent="." instance=ExtResource("7_abigail")]
+
+[node name="Lewis" parent="." instance=ExtResource("8_lewis")]
+
+[connection signal="time_changed" from="." to="." method="_on_time_changed"]
+[connection signal="pressed" from="AILayer/AIConfigButton" to="." method="_on_ai_config_pressed"]
