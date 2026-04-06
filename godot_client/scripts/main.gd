@@ -1,7 +1,7 @@
 extends Node2D
 
 # 主场景控制器
-# 管理游戏状态、时间系统、场景切换
+# 管理游戏状态、时间系统、场景切换、存档
 
 var game_state = {
 	"season": "spring",
@@ -15,6 +15,43 @@ var game_state = {
 
 @onready var time_display = $UI/TimeDisplay
 @onready var interaction_prompt = $UI/InteractionPrompt
+@onready var save_system = $SaveSystem
+
+func _ready():
+	print("Cyber Town - 游戏启动")
+	update_time_display()
+	start_time_system()
+
+func _input(event):
+	"""Handle global input for save/load"""
+	if event.is_action_pressed("ui_save"):
+		save_game()
+	elif event.is_action_pressed("ui_load"):
+		load_game()
+
+func save_game():
+	"""Trigger game save"""
+	if has_node("TownSquare/SaveSystem"):
+		var success = $TownSquare/SaveSystem.save_game()
+		if success:
+			show_notification("游戏已保存")
+		else:
+			show_notification("保存失败")
+
+func load_game():
+	"""Trigger game load"""
+	if has_node("TownSquare/SaveSystem"):
+		var save_data = $TownSquare/SaveSystem.load_game()
+		if not save_data.is_empty():
+			$TownSquare/SaveSystem.apply_save_data(save_data)
+			show_notification("游戏已加载")
+		else:
+			show_notification("加载失败或无存档")
+
+func show_notification(message: String):
+	"""Show notification to player"""
+	print("[通知] ", message)
+	# TODO: Implement visual notification UI
 
 func _ready():
 	print("Cyber Town - 游戏启动")
