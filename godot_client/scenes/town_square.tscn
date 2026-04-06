@@ -1,4 +1,4 @@
-、[gd_scene load_steps=24 format=3 uid="uid://town_square"]
+、[gd_scene load_steps=25 format=3 uid="uid://town_square"]
 
 [ext_resource type="Script" path="res://scripts/town_square.gd" id="1_town"]
 [ext_resource type="Texture2D" path="res://assets/sprites/environment/town/cobblestone_tile.png" id="2_cobble"]
@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://scripts/inventory_system.gd" id="20_inventory"]
 [ext_resource type="Script" path="res://scripts/shop_system.gd" id="21_shop"]
 [ext_resource type="PackedScene" uid="uid://farm_plot" path="res://scenes/farm_plot.tscn" id="22_plot"]
+[ext_resource type="Script" path="res://scripts/quest_system.gd" id="23_quest"]
 
 [node name="TownSquare" type="Node2D"]
 script = ExtResource("1_town")
@@ -147,6 +148,50 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 
+# Abigail NPC
+[node name="Abigail" parent="NPCs" instance=ExtResource("12_npc")]
+position = Vector2(350, 350)
+npc_id = "abigail"
+npc_name = "Abigail"
+
+[node name="AbigailSprite" type="Sprite2D" parent="NPCs/Abigail"]
+position = Vector2(0, -32)
+texture = ExtResource("15_pierre")
+modulate = Color(0.8, 0.6, 1, 1)
+
+[node name="AbigailName" type="Label" parent="NPCs/Abigail"]
+offset_left = -40.0
+offset_top = -80.0
+offset_right = 40.0
+offset_bottom = -60.0
+text = "Abigail"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+
+# Lewis Mayor NPC
+[node name="Lewis" parent="NPCs" instance=ExtResource("12_npc")]
+position = Vector2(450, 280)
+npc_id = "lewis"
+npc_name = "Lewis镇长"
+
+[node name="LewisSprite" type="Sprite2D" parent="NPCs/Lewis"]
+position = Vector2(0, -32)
+texture = ExtResource("15_pierre")
+modulate = Color(1, 0.8, 0.6, 1)
+
+[node name="LewisName" type="Label" parent="NPCs/Lewis"]
+offset_left = -50.0
+offset_top = -80.0
+offset_right = 50.0
+offset_bottom = -60.0
+text = "Lewis镇长"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+
 [node name="PierreCollision" type="CollisionShape2D" parent="NPCs/Pierre"]
 shape = SubResource("CircleShape2D_pierre")
 
@@ -200,6 +245,10 @@ script = ExtResource("20_inventory")
 # 商店系统
 [node name="ShopSystem" type="CanvasLayer" parent="."]
 script = ExtResource("21_shop")
+
+# 任务系统
+[node name="QuestSystem" type="Node" parent="."]
+script = ExtResource("23_quest")
 
 # 环境音效
 [node name="AmbientAudio" type="AudioStreamPlayer" parent="."]

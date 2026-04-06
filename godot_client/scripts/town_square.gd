@@ -13,6 +13,7 @@ extends Node2D
 @onready var farming_system = $FarmingSystem
 @onready var inventory_system = $InventorySystem
 @onready var shop_system = $ShopSystem
+@onready var quest_system = $QuestSystem
 
 var nearby_interactable = null
 var nearby_npc = null
@@ -197,3 +198,45 @@ func register_npcs_with_schedule_system():
 			if npc is Area2D and npc.has_method("get_npc_id"):
 				schedule_system.register_npc(npc.get_npc_id(), npc)
 				print("已注册NPC到日程系统: ", npc.npc_name)
+
+func setup_farm_plots():
+	"""Setup farm plots in the farming area"""
+	if not farming_system:
+		return
+
+	# Create 8x8 grid of farm plots
+	var plot_scene = load("res://scenes/farm_plot.tscn")
+	var start_pos = Vector2(800, 100)
+
+	for x in range(8):
+		for y in range(8):
+			var plot = plot_scene.instantiate()
+			plot.tile_position = Vector2i(x, y)
+			plot.position = start_pos + Vector2(x * 64, y * 64)
+			farming_system.add_child(plot)
+
+	print("Created 64 farm plots")
+
+func setup_shop_integration():
+	"""Connect shop to NPC Pierre"""
+	if not npcs or not shop_system:
+		return
+
+	var pierre = npcs.get_node_or_null("Pierre")
+	if pierre:
+		pierre.shop_opened.connect(func(): shop_system.open_shop("buy"))
+		print("Shop integration ready - talk to Pierre to open shop")
+
+func _on_item_picked_up(item_id: String, quantity: int):
+	"""Handle item pickup"""
+	if inventory_system:
+		inventory_system.add_item(item_id, quantity)
+		print("Picked up: ", item_id, " x", quantity)
+
+func _on_dialogue_started(npc_id: String):
+	"""Handle dialogue start"""
+	print("Dialogue started with: ", npc_id)
+
+func _on_dialogue_ended(npc_id: String):
+	"""Handle dialogue end"""
+	print("Dialogue ended with: ", npc_id)
