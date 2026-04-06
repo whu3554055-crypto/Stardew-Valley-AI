@@ -1,0 +1,68 @@
+{
+  "characters": {
+    "player": {
+      "filename": "player.png",
+      "frames": {
+        "idle": 4,
+        "walk": 8,
+        "talk": 4,
+        "work": 6
+      },
+      "directions": 4,
+      "size": [
+        64,
+        64
+      ],
+      "status": "placeholder"
+    }
+  },
+  "items": {
+    "crops": [
+      "parsnip",
+      "potato",
+      "carrot",
+      "tomato",
+      "corn",
+      "pumpkin"
+    ],
+    "tools": [
+      "hoe",
+      "watering_can",
+      "scythe",
+      "axe"
+    ],
+    "resources": [
+      "wood",
+      "stone",
+      "iron_ore",
+      "gold_ore"
+    ],
+    "consumables": [
+      "health_potion",
+      "energy_drink",
+      "bread",
+      "salad"
+    ]
+  },
+  "ui": {
+    "dialogue_box": {
+      "size": [
+        800,
+        200
+      ]
+    },
+    "inventory_slot": {
+      "size": [
+        64,
+        64
+      ]
+    },
+    "emotion_icons": [
+      "happy",
+      "sad",
+      "angry",
+      "excited",
+      "neutral"
+    ]
+  }
+}

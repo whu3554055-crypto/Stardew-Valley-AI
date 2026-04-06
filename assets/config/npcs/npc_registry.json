@@ -1,0 +1,261 @@
+{
+  "npcs": [
+    {
+      "id": "pierre",
+      "name": "Pierre",
+      "title": "杂货店老板",
+      "age": 45,
+      "gender": "male",
+      "occupation": "shopkeeper",
+      "location": "general_store",
+      "schedule": {
+        "spring": {
+          "morning": {"location": "general_store", "activity": "open_shop"},
+          "afternoon": {"location": "town_square", "activity": "chat"},
+          "evening": {"location": "home", "activity": "rest"}
+        },
+        "summer": {
+          "morning": {"location": "general_store", "activity": "open_shop"},
+          "afternoon": {"location": "beach", "activity": "relax"},
+          "evening": {"location": "home", "activity": "family_time"}
+        }
+      },
+      "personality": {
+        "traits": ["friendly", "hardworking", "family_oriented"],
+        "likes": ["farming", "family", "community"],
+        "dislikes": ["waste", "laziness"],
+        "goals": ["run_successful_business", "support_family"]
+      },
+      "appearance": {
+        "sprite": "npc_pierre.png",
+        "height": 64,
+        "width": 64,
+        "colors": ["green", "brown", "beige"]
+      },
+      "dialogue_style": {
+        "formal": 0.7,
+        "friendly": 0.9,
+        "humorous": 0.3
+      },
+      "relationships": {
+        "spouse": "caroline",
+        "children": ["abigail"],
+        "friends": ["lewis", "robin"]
+      }
+    },
+    {
+      "id": "abigail",
+      "name": "Abigail",
+      "title": "冒险少女",
+      "age": 20,
+      "gender": "female",
+      "occupation": "adventurer",
+      "location": "cemetery",
+      "schedule": {
+        "spring": {
+          "morning": {"location": "home", "activity": "practice_sword"},
+          "afternoon": {"location": "cemetery", "activity": "explore"},
+          "evening": {"location": "saloon", "activity": "socialize"}
+        }
+      },
+      "personality": {
+        "traits": ["adventurous", "rebellious", "curious", "brave"],
+        "likes": ["adventure", "purple", "video_games", "exploring"],
+        "dislikes": ["boredom", "restrictions", "conformity"],
+        "goals": ["become_stronger", "discover_secrets"]
+      },
+      "appearance": {
+        "sprite": "npc_abigail.png",
+        "height": 64,
+        "width": 64,
+        "colors": ["purple", "black", "white"]
+      },
+      "dialogue_style": {
+        "formal": 0.2,
+        "friendly": 0.7,
+        "humorous": 0.6
+      },
+      "relationships": {
+        "father": "pierre",
+        "mother": "caroline",
+        "friends": ["sebastian", "sam"]
+      }
+    },
+    {
+      "id": "lewis",
+      "name": "Lewis",
+      "title": "镇长",
+      "age": 58,
+      "gender": "male",
+      "occupation": "mayor",
+      "location": "town_hall",
+      "schedule": {
+        "spring": {
+          "morning": {"location": "town_hall", "activity": "work"},
+          "afternoon": {"location": "town_square", "activity": "inspect"},
+          "evening": {"location": "saloon", "activity": "relax"}
+        }
+      },
+      "personality": {
+        "traits": ["responsible", "diplomatic", "secretive", "caring"],
+        "likes": ["order", "community_events", "authority"],
+        "dislikes": ["chaos", "scandal", "conflict"],
+        "goals": ["maintain_peace", "grow_town"]
+      },
+      "appearance": {
+        "sprite": "npc_lewis.png",
+        "height": 64,
+        "width": 64,
+        "colors": ["green", "yellow", "brown"]
+      },
+      "dialogue_style": {
+        "formal": 0.8,
+        "friendly": 0.6,
+        "humorous": 0.2
+      },
+      "relationships": {
+        "friends": ["marnie", "pierre"],
+        "secret_relationship": "marnie"
+      }
+    },
+    {
+      "id": "robin",
+      "name": "Robin",
+      "title": "木匠",
+      "age": 40,
+      "gender": "female",
+      "occupation": "carpenter",
+      "location": "carpenter_shop",
+      "personality": {
+        "traits": ["creative", "practical", "outgoing", "helpful"],
+        "likes": ["building", "nature", "design"],
+        "dislikes": ["waste", "ugly_architecture"],
+        "goals": ["create_beautiful_buildings"]
+      },
+      "appearance": {
+        "sprite": "npc_robin.png",
+        "colors": ["red", "brown", "green"]
+      }
+    },
+    {
+      "id": "penny",
+      "name": "Penny",
+      "title": "教师",
+      "age": 22,
+      "gender": "female",
+      "occupation": "teacher",
+      "location": "trailer",
+      "personality": {
+        "traits": ["gentle", "intelligent", "shy", "nurturing"],
+        "likes": ["reading", "teaching", "children", "simple_life"],
+        "dislikes": ["noise", "conflict", "waste"],
+        "goals": ["educate_children", "find_love"]
+      },
+      "appearance": {
+        "sprite": "npc_penny.png",
+        "colors": ["pink", "orange", "white"]
+      }
+    },
+    {
+      "id": "sebastian",
+      "name": "Sebastian",
+      "title": "程序员",
+      "age": 23,
+      "gender": "male",
+      "occupation": "programmer",
+      "location": "basement",
+      "personality": {
+        "traits": ["introverted", "analytical", "creative", "melancholic"],
+        "likes": ["programming", "motorcycle", "fantasy", "isolation"],
+        "dislikes": ["small_talk", "crowds", "sunlight"],
+        "goals": ["escape_town", "create_game"]
+      },
+      "appearance": {
+        "sprite": "npc_sebastian.png",
+        "colors": ["black", "purple", "gray"]
+      }
+    },
+    {
+      "id": "haley",
+      "name": "Haley",
+      "title": "摄影师",
+      "age": 21,
+      "gender": "female",
+      "occupation": "photographer",
+      "location": "home",
+      "personality": {
+        "traits": ["vain", "artistic", "kind_hearted", "fashionable"],
+        "likes": ["photography", "fashion", "beauty", "sunflowers"],
+        "dislikes": ["dirt", "manual_labor", "ugly_things"],
+        "goals": ["become_famous_photographer"]
+      },
+      "appearance": {
+        "sprite": "npc_haley.png",
+        "colors": ["yellow", "blue", "blonde"]
+      }
+    },
+    {
+      "id": "alex",
+      "name": "Alex",
+      "title": "运动员",
+      "age": 22,
+      "gender": "male",
+      "occupation": "athlete",
+      "location": "home",
+      "personality": {
+        "traits": ["athletic", "confident", "loyal", "competitive"],
+        "likes": ["sports", "football", "fitness", "competition"],
+        "dislikes": ["losing", "weakness", "failure"],
+        "goals": ["become_professional_athlete"]
+      },
+      "appearance": {
+        "sprite": "npc_alex.png",
+        "colors": ["green", "white", "brown"]
+      }
+    },
+    {
+      "id": "maru",
+      "name": "Maru",
+      "title": "科学家",
+      "age": 24,
+      "gender": "female",
+      "occupation": "scientist",
+      "location": "hospital",
+      "personality": {
+        "traits": ["intelligent", "curious", "friendly", "inventive"],
+        "likes": ["science", "technology", "astronomy", "problem_solving"],
+        "dislikes": ["ignorance", "superstition"],
+        "goals": ["advance_science", "understand_universe"]
+      },
+      "appearance": {
+        "sprite": "npc_maru.png",
+        "colors": ["pink", "white", "cyan"]
+      }
+    },
+    {
+      "id": "sam",
+      "name": "Sam",
+      "title": "音乐家",
+      "age": 21,
+      "gender": "male",
+      "occupation": "musician",
+      "location": "home",
+      "personality": {
+        "traits": ["energetic", "optimistic", "loyal", "musical"],
+        "likes": ["music", "skateboarding", "friends", "adventure"],
+        "dislikes": ["boredom", "seriousness"],
+        "goals": ["form_band", "travel_world"]
+      },
+      "appearance": {
+        "sprite": "npc_sam.png",
+        "colors": ["yellow", "green", "blonde"]
+      }
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "total_npcs": 10,
+    "last_updated": "2026-04-06",
+    "notes": "所有 NPC 都需要对应的精灵图和音频素材"
+  }
+}

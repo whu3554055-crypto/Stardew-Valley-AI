@@ -1,0 +1,94 @@
+{
+  "ambience": {
+    "spring.ogg": {
+      "duration": 60,
+      "loop": true,
+      "description": "春季环境音"
+    },
+    "summer.ogg": {
+      "duration": 60,
+      "loop": true,
+      "description": "夏季环境音"
+    },
+    "fall.ogg": {
+      "duration": 60,
+      "loop": true,
+      "description": "秋季环境音"
+    },
+    "winter.ogg": {
+      "duration": 60,
+      "loop": true,
+      "description": "冬季环境音"
+    },
+    "rain.ogg": {
+      "duration": 30,
+      "loop": true,
+      "description": "雨声"
+    },
+    "storm.ogg": {
+      "duration": 45,
+      "loop": true,
+      "description": "暴风雨"
+    },
+    "night.ogg": {
+      "duration": 60,
+      "loop": true,
+      "description": "夜晚环境音"
+    }
+  },
+  "emotions": {
+    "happy.wav": {
+      "max_duration": 2,
+      "description": "开心音效"
+    },
+    "sad.wav": {
+      "max_duration": 2,
+      "description": "悲伤音效"
+    },
+    "excited.wav": {
+      "max_duration": 2,
+      "description": "兴奋音效"
+    },
+    "angry.wav": {
+      "max_duration": 2,
+      "description": "生气音效"
+    },
+    "surprised.wav": {
+      "max_duration": 2,
+      "description": "惊讶音效"
+    },
+    "neutral.wav": {
+      "max_duration": 2,
+      "description": "中性音效"
+    }
+  },
+  "activities": {
+    "farming_till.wav": "耕地音效",
+    "farming_plant.wav": "种植音效",
+    "farming_water.wav": "浇水音效",
+    "farming_harvest.wav": "收获音效",
+    "walking_grass.wav": "草地脚步声",
+    "walking_wood.wav": "木板脚步声",
+    "walking_stone.wav": "石板脚步声",
+    "chop_wood.wav": "砍树音效",
+    "mine_pickaxe.wav": "挖矿音效"
+  },
+  "locations": {
+    "shop_enter.wav": "进入商店",
+    "shop_bell.wav": "商店门铃",
+    "town_crowd.ogg": "城镇人群嘈杂声",
+    "farm_animals.ogg": "农场动物声音",
+    "forest_birds.ogg": "森林鸟鸣",
+    "beach_waves.ogg": "海滩海浪声"
+  },
+  "ui": {
+    "click.wav": "点击按钮",
+    "confirm.wav": "确认操作",
+    "cancel.wav": "取消操作",
+    "hover.wav": "鼠标悬停",
+    "notification.wav": "通知提示音",
+    "quest_complete.wav": "任务完成音效",
+    "level_up.wav": "升级音效",
+    "error.wav": "错误提示音"
+  }
+}

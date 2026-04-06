@@ -1,0 +1,154 @@
+{
+  "crops": [
+    {
+      "id": "parsnip",
+      "name": "防风草",
+      "season": "spring",
+      "grow_days": 4,
+      "sell_price": 35,
+      "energy": 13
+    },
+    {
+      "id": "potato",
+      "name": "土豆",
+      "season": "spring",
+      "grow_days": 6,
+      "sell_price": 80,
+      "energy": 26
+    },
+    {
+      "id": "carrot",
+      "name": "胡萝卜",
+      "season": "fall",
+      "grow_days": 3,
+      "sell_price": 35,
+      "energy": 15
+    },
+    {
+      "id": "tomato",
+      "name": "番茄",
+      "season": "summer",
+      "grow_days": 11,
+      "sell_price": 60,
+      "energy": 18,
+      "regrows": true
+    },
+    {
+      "id": "corn",
+      "name": "玉米",
+      "season": "summer,fall",
+      "grow_days": 14,
+      "sell_price": 50,
+      "energy": 20,
+      "regrows": true
+    },
+    {
+      "id": "pumpkin",
+      "name": "南瓜",
+      "season": "fall",
+      "grow_days": 13,
+      "sell_price": 320,
+      "energy": 36
+    }
+  ],
+  "tools": [
+    {
+      "id": "hoe",
+      "name": "锄头",
+      "type": "tool",
+      "durability": 100,
+      "energy_cost": 5
+    },
+    {
+      "id": "watering_can",
+      "name": "洒水壶",
+      "type": "tool",
+      "capacity": 40,
+      "energy_cost": 2
+    },
+    {
+      "id": "scythe",
+      "name": "镰刀",
+      "type": "tool",
+      "durability": 150,
+      "energy_cost": 3
+    },
+    {
+      "id": "axe",
+      "name": "斧头",
+      "type": "tool",
+      "durability": 100,
+      "energy_cost": 7
+    }
+  ],
+  "resources": [
+    {
+      "id": "wood",
+      "name": "木材",
+      "type": "resource",
+      "stack_size": 999,
+      "sell_price": 2
+    },
+    {
+      "id": "stone",
+      "name": "石头",
+      "type": "resource",
+      "stack_size": 999,
+      "sell_price": 3
+    },
+    {
+      "id": "iron_ore",
+      "name": "铁矿石",
+      "type": "resource",
+      "stack_size": 999,
+      "sell_price": 15
+    },
+    {
+      "id": "gold_ore",
+      "name": "金矿石",
+      "type": "resource",
+      "stack_size": 999,
+      "sell_price": 25
+    }
+  ],
+  "consumables": [
+    {
+      "id": "health_potion",
+      "name": "生命药水",
+      "type": "consumable",
+      "effect": {
+        "health": 50
+      },
+      "sell_price": 50
+    },
+    {
+      "id": "energy_drink",
+      "name": "能量饮料",
+      "type": "consumable",
+      "effect": {
+        "energy": 30
+      },
+      "sell_price": 40
+    },
+    {
+      "id": "bread",
+      "name": "面包",
+      "type": "food",
+      "effect": {
+        "energy": 25,
+        "health": 10
+      },
+      "sell_price": 60
+    },
+    {
+      "id": "salad",
+      "name": "沙拉",
+      "type": "food",
+      "effect": {
+        "energy": 35,
+        "health": 20
+      },
+      "sell_price": 110
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "terrain": {
+    "grass": {
+      "tile_size": 16,
+      "tiles_count": 256,
+      "animated": false
+    },
+    "dirt": {
+      "tile_size": 16,
+      "tiles_count": 256,
+      "animated": false
+    },
+    "water": {
+      "tile_size": 16,
+      "tiles_count": 64,
+      "animated": true,
+      "frame_count": 4
+    },
+    "sand": {
+      "tile_size": 16,
+      "tiles_count": 128,
+      "animated": false
+    },
+    "snow": {
+      "tile_size": 16,
+      "tiles_count": 128,
+      "animated": false
+    },
+    "flowers": {
+      "tile_size": 16,
+      "tiles_count": 64,
+      "animated": false
+    },
+    "rocks": {
+      "tile_size": 16,
+      "tiles_count": 32,
+      "animated": false
+    },
+    "trees": {
+      "tile_size": 16,
+      "tiles_count": 48,
+      "animated": true,
+      "frame_count": 2
+    }
+  },
+  "buildings": {
+    "pierre_shop": {
+      "size": [
+        320,
+        240
+      ],
+      "interior": true
+    },
+    "town_hall": {
+      "size": [
+        280,
+        200
+      ],
+      "interior": true
+    },
+    "carpenter_shop": {
+      "size": [
+        240,
+        200
+      ],
+      "interior": true
+    },
+    "hospital": {
+      "size": [
+        200,
+        180
+      ],
+      "interior": true
+    },
+    "saloon": {
+      "size": [
+        220,
+        180
+      ],
+      "interior": true
+    },
+    "blacksmith": {
+      "size": [
+        200,
+        160
+      ],
+      "interior": true
+    }
+  }
+}
