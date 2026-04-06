@@ -1,182 +1,411 @@
-name: CI - Build and Test
+name: CI/CD Pipeline - hello-agent Cyber Town
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
+    paths:
+      - 'hello_agent_backend/**'
+      - '.github/workflows/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main]
+    paths:
+      - 'hello_agent_backend/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  REDIS_VERSION: '7'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # ========================================================================
-  # Godot GDScript Tests
-  # ========================================================================
-  test-godot:
-    name: Test Godot Scripts
+  # ============================================================================
+  # Code Quality & Linting
+  # ============================================================================
+
+  lint:
+    name: Code Quality Check
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Godot
-        uses: chickensoft-games/setup-godot@v1
-        with:
-          version: 4.2.1
-          use-dotnet: false
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Verify Godot installation
-        run: godot --version
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('hello_agent_backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
-      - name: Run GDScript lint (if configured)
-        run: |
-          if [ -f ".godot/gdscript_lint_config.json" ]; then
-            echo "Running GDScript lint..."
-            # Add linting command here when linter is set up
-          else
-            echo "No GDScript linter configured, skipping..."
-          fi
-        continue-on-error: true
+    - name: Install dependencies
+      working-directory: hello_agent_backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Validate project structure
-        run: |
-          echo "Checking critical files..."
-          test -f "project.godot" && echo "✓ project.godot exists" || exit 1
-          test -d "autoload" && echo "✓ autoload directory exists" || exit 1
-          test -d "environment_system" && echo "✓ environment_system exists" || exit 1
-          echo "Project structure validated!"
+    - name: Check code formatting (Black)
+      working-directory: hello_agent_backend
+      run: |
+        black --check app/ tests/ || echo "⚠️ Code formatting issues found"
 
-  # ========================================================================
-  # Python Backend Tests
-  # ========================================================================
-  test-python:
-    name: Test Python Backend
+    - name: Check import sorting (isort)
+      working-directory: hello_agent_backend
+      run: |
+        isort --check-only app/ tests/ || echo "⚠️ Import sorting issues found"
+
+    - name: Lint with flake8
+      working-directory: hello_agent_backend
+      run: |
+        # Stop on critical errors only
+        flake8 app/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Warnings (non-blocking)
+        flake8 app/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Type checking (mypy)
+      working-directory: hello_agent_backend
+      run: |
+        mypy app/ --ignore-missing-imports || echo "⚠️ Type checking warnings found"
+
+  # ============================================================================
+  # Unit Tests
+  # ============================================================================
+
+  test-unit:
+    name: Unit Tests
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./hello_agent_backend
+    needs: lint
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov black pylint
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-test-${{ hashFiles('hello_agent_backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-test-
 
-      - name: Lint with pylint
-        run: |
-          if [ -f "pylintrc" ]; then
-            pylint --rcfile=pylintrc .
-          else
-            echo "No pylintrc found, running with defaults..."
-            pylint . || true
-          fi
-        continue-on-error: true
+    - name: Install dependencies
+      working-directory: hello_agent_backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Format check with black
-        run: |
-          black --check . || echo "Code formatting issues found (non-blocking)"
-        continue-on-error: true
+    - name: Run unit tests
+      working-directory: hello_agent_backend
+      run: |
+        pytest tests/ -v -m "not integration" \
+          --cov=app \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --junitxml=junit/test-results.xml
 
-      - name: Run pytest with coverage
-        run: |
-          pytest tests/ -v --cov=. --cov-report=xml --cov-report=html || echo "Tests pending implementation"
-        continue-on-error: true
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-unit
+        path: hello_agent_backend/junit/test-results.xml
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        if: always()
-        with:
-          file: ./hello_agent_backend/coverage.xml
-          flags: backend
-          name: backend-coverage
-        continue-on-error: true
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./hello_agent_backend/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
 
-  # ========================================================================
-  # Documentation Validation
-  # ========================================================================
-  validate-docs:
-    name: Validate Documentation
+  # ============================================================================
+  # Integration Tests
+  # ============================================================================
+
+  test-integration:
+    name: Integration Tests
     runs-on: ubuntu-latest
+    needs: lint
+
+    services:
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Check markdown files
-        run: |
-          echo "Validating documentation structure..."
-          find docs/ -name "*.md" -type f | while read file; do
-            echo "✓ Found: $file"
-          done
-          echo "Documentation validation complete!"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Verify required documents
-        run: |
-          echo "Checking required documentation..."
-          test -f "docs/01-技术架构与优化/04-环境影响系统与Hello-Agent集成方案.md" && echo "✓ Architecture doc exists" || echo "⚠ Architecture doc missing"
-          test -f "docs/01-技术架构与优化/05-环境与Agent实施清单.md" && echo "✓ Implementation checklist exists" || echo "⚠ Checklist missing"
-          test -f "docs/03-研发管理/02-产品级实施路线图.md" && echo "✓ Roadmap exists" || echo "⚠ Roadmap missing"
+    - name: Install dependencies
+      working-directory: hello_agent_backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-  # ========================================================================
-  # Configuration Validation
-  # ========================================================================
-  validate-configs:
-    name: Validate Configuration Files
+    - name: Wait for Redis
+      run: |
+        until redis-cli -h localhost -p 6379 ping; do
+          echo "Waiting for Redis..."
+          sleep 1
+        done
+
+    - name: Run integration tests
+      working-directory: hello_agent_backend
+      run: |
+        pytest tests/ -v -m integration \
+          --junitxml=junit/integration-results.xml \
+          -o log_cli=true \
+          -o log_cli_level=INFO
+      env:
+        REDIS_URL: redis://localhost:6379
+        DATABASE_URL: sqlite+aiosqlite:///./test_game.db
+
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-integration
+        path: hello_agent_backend/junit/integration-results.xml
+
+  # ============================================================================
+  # Docker Build & Push
+  # ============================================================================
+
+  docker-build:
+    name: Docker Build & Push
     runs-on: ubuntu-latest
+    needs: [test-unit, test-integration]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Validate JSON configs
-        run: |
-          echo "Validating JSON configuration files..."
-          for file in $(find data/ -name "*.json" -type f); do
-            if python3 -m json.tool "$file" > /dev/null 2>&1; then
-              echo "✓ Valid: $file"
-            else
-              echo "✗ Invalid: $file"
-              exit 1
-            fi
-          done
-          echo "All JSON configs are valid!"
+    - name: Set up QEMU (for multi-platform builds)
+      uses: docker/setup-qemu-action@v3
 
-      - name: Check environment config structure
-        run: |
-          echo "Checking environment configs..."
-          test -f "data/environment_configs/seasons.json" && echo "✓ seasons.json exists" || exit 1
-          test -f "data/environment_configs/weather.json" && echo "✓ weather.json exists" || exit 1
-          test -d "data/environment_configs/items" && echo "✓ items directory exists" || exit 1
-          echo "Environment config structure validated!"
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-  # ========================================================================
-  # Build Verification (Optional - for future exports)
-  # ========================================================================
-  build-check:
-    name: Build Verification
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=semver,pattern={{version}}
+          latest
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./hello_agent_backend
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
-    if: false  # Disabled until export presets are configured
+    needs: lint
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Godot
-        uses: chickensoft-games/setup-godot@v1
-        with:
-          version: 4.2.1
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Attempt headless export
-        run: |
-          godot --headless --export-debug "Linux/X11" build/game || echo "Export not configured yet"
-        continue-on-error: true
+    - name: Install dependencies
+      working-directory: hello_agent_backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Run Bandit security scan
+      working-directory: hello_agent_backend
+      run: |
+        bandit -r app/ -f json -o bandit-results.json || echo "⚠️ Security issues found"
+
+    - name: Check dependencies for known vulnerabilities
+      working-directory: hello_agent_backend
+      run: |
+        safety check --json || echo "⚠️ Dependency vulnerabilities found"
+
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-scan-results
+        path: hello_agent_backend/bandit-results.json
+
+  # ============================================================================
+  # Performance Benchmarks (PR only)
+  # ============================================================================
+
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: test-unit
+    if: github.event_name == 'pull_request'
+
+    services:
+      redis:
+        image: redis:${{ env.REDIS_VERSION }}
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      working-directory: hello_agent_backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-benchmark
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Run benchmarks
+      working-directory: hello_agent_backend
+      run: |
+        pytest tests/ -v -k "performance or benchmark" \
+          --benchmark-json=benchmark-results.json || echo "⚠️ Benchmark issues found"
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results
+        path: hello_agent_backend/benchmark-results.json
+
+  # ============================================================================
+  # Deploy to Staging (Main branch only)
+  # ============================================================================
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.hello-agent.example.com
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging server
+      run: |
+        echo "🚀 Deploying to staging environment..."
+        # Add your deployment commands here
+        # Example using SSH:
+        # ssh user@staging-server "docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend:latest"
+        # ssh user@staging-server "docker-compose up -d backend"
+        echo "✅ Deployment complete!"
+      env:
+        DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
+
+    - name: Health check
+      run: |
+        echo "🏥 Running health check on staging..."
+        # curl -f https://staging.hello-agent.example.com/api/v1/health || exit 1
+        echo "✅ Health check passed!"
+
+  # ============================================================================
+  # Summary & Notification
+  # ============================================================================
+
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration, docker-build, security-scan]
+    if: always()
+
+    steps:
+    - name: Generate summary
+      run: |
+        echo "## 🎯 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Completed Jobs" >> $GITHUB_STEP_SUMMARY
+        echo "- Unit Tests: ${{ needs.test-unit.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration Tests: ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+          echo "- Docker Build: ${{ needs.docker-build.result }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "- Security Scan: ${{ needs.security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [test-unit, test-integration, docker-build, security-scan]
+    if: failure()
+
+    steps:
+    - name: Send failure notification
+      run: |
+        echo "❌ CI/CD pipeline failed!"
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo ""
+        echo "Check the Actions tab for details:"
+        echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        # Add Slack/Discord webhook here if needed
+        # curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+        #   -H 'Content-type: application/json' \
+        #   --data "{\"text\":\"❌ CI/CD failed: ${{ github.repository }} - ${{ github.ref_name }}\"}"

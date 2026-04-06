@@ -1,0 +1,166 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Backend API Service
+  # ============================================================================
+  backend:
+    build:
+      context: ./hello_agent_backend
+      dockerfile: Dockerfile
+    container_name: hello-agent-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=sqlite+aiosqlite:///data/game.db
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - QWEN_API_KEY=${QWEN_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - backend-data:/app/data
+      - ./hello_agent_backend/logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - hello-agent-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ============================================================================
+  # Redis Cache
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: hello-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    restart: unless-stopped
+    networks:
+      - hello-agent-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ============================================================================
+  # LanceDB Vector Database (Optional - for persistent vector storage)
+  # ============================================================================
+  lancedb:
+    image: lancedb/lancedb:latest
+    container_name: hello-agent-lancedb
+    ports:
+      - "8181:8181"
+    volumes:
+      - lancedb-data:/data
+    environment:
+      - LANCEDB_URI=file:///data
+    restart: unless-stopped
+    networks:
+      - hello-agent-network
+    profiles:
+      - full  # Only start with `docker-compose --profile full up`
+
+  # ============================================================================
+  # Prometheus Monitoring (Optional)
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: hello-agent-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: unless-stopped
+    networks:
+      - hello-agent-network
+    profiles:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ============================================================================
+  # Grafana Dashboard (Optional)
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: hello-agent-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - hello-agent-network
+    profiles:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+# ================================================================================
+# Volumes
+# ================================================================================
+volumes:
+  backend-data:
+    driver: local
+  redis-data:
+    driver: local
+  lancedb-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+# ================================================================================
+# Networks
+# ================================================================================
+networks:
+  hello-agent-network:
+    driver: bridge
