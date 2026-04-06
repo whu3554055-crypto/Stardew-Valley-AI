@@ -3,92 +3,182 @@
     "spring.ogg": {
       "duration": 60,
       "loop": true,
-      "description": "春季环境音"
+      "description": "春季环境音",
+      "path": "audio/ambience/spring.ogg"
     },
     "summer.ogg": {
       "duration": 60,
       "loop": true,
-      "description": "夏季环境音"
+      "description": "夏季环境音",
+      "path": "audio/ambience/summer.ogg"
     },
     "fall.ogg": {
       "duration": 60,
       "loop": true,
-      "description": "秋季环境音"
+      "description": "秋季环境音",
+      "path": "audio/ambience/fall.ogg"
     },
     "winter.ogg": {
       "duration": 60,
       "loop": true,
-      "description": "冬季环境音"
+      "description": "冬季环境音",
+      "path": "audio/ambience/winter.ogg"
     },
     "rain.ogg": {
       "duration": 30,
       "loop": true,
-      "description": "雨声"
+      "description": "雨声",
+      "path": "audio/ambience/rain.ogg"
     },
     "storm.ogg": {
       "duration": 45,
       "loop": true,
-      "description": "暴风雨"
+      "description": "暴风雨",
+      "path": "audio/ambience/storm.ogg"
     },
     "night.ogg": {
       "duration": 60,
       "loop": true,
-      "description": "夜晚环境音"
+      "description": "夜晚环境音",
+      "path": "audio/ambience/night.ogg"
     }
   },
   "emotions": {
     "happy.wav": {
       "max_duration": 2,
-      "description": "开心音效"
+      "description": "开心音效",
+      "path": "audio/emotions/happy.wav"
     },
     "sad.wav": {
       "max_duration": 2,
-      "description": "悲伤音效"
+      "description": "悲伤音效",
+      "path": "audio/emotions/sad.wav"
     },
     "excited.wav": {
       "max_duration": 2,
-      "description": "兴奋音效"
+      "description": "兴奋音效",
+      "path": "audio/emotions/excited.wav"
     },
     "angry.wav": {
       "max_duration": 2,
-      "description": "生气音效"
+      "description": "生气音效",
+      "path": "audio/emotions/angry.wav"
     },
     "surprised.wav": {
       "max_duration": 2,
-      "description": "惊讶音效"
+      "description": "惊讶音效",
+      "path": "audio/emotions/surprised.wav"
     },
     "neutral.wav": {
       "max_duration": 2,
-      "description": "中性音效"
+      "description": "中性音效",
+      "path": "audio/emotions/neutral.wav"
     }
   },
   "activities": {
-    "farming_till.wav": "耕地音效",
-    "farming_plant.wav": "种植音效",
-    "farming_water.wav": "浇水音效",
-    "farming_harvest.wav": "收获音效",
-    "walking_grass.wav": "草地脚步声",
-    "walking_wood.wav": "木板脚步声",
-    "walking_stone.wav": "石板脚步声",
-    "chop_wood.wav": "砍树音效",
-    "mine_pickaxe.wav": "挖矿音效"
+    "farming_till.wav": {
+      "description": "耕地音效",
+      "path": "audio/activities/farming_till.wav"
+    },
+    "farming_plant.wav": {
+      "description": "种植音效",
+      "path": "audio/activities/farming_plant.wav"
+    },
+    "farming_water.wav": {
+      "description": "浇水音效",
+      "path": "audio/activities/farming_water.wav"
+    },
+    "farming_harvest.wav": {
+      "description": "收获音效",
+      "path": "audio/activities/farming_harvest.wav"
+    },
+    "walking_grass.wav": {
+      "description": "草地脚步声",
+      "path": "audio/activities/walking_grass.wav"
+    },
+    "walking_wood.wav": {
+      "description": "木板脚步声",
+      "path": "audio/activities/walking_wood.wav"
+    },
+    "walking_stone.wav": {
+      "description": "石板脚步声",
+      "path": "audio/activities/walking_stone.wav"
+    },
+    "chop_wood.wav": {
+      "description": "砍树音效",
+      "path": "audio/activities/chop_wood.wav"
+    },
+    "mine_pickaxe.wav": {
+      "description": "挖矿音效",
+      "path": "audio/activities/mine_pickaxe.wav"
+    },
+    "fish_cast.wav": {
+      "description": "钓鱼抛竿音效",
+      "path": "audio/activities/fish_cast.wav"
+    },
+    "fish_bite.wav": {
+      "description": "鱼上钩音效",
+      "path": "audio/activities/fish_bite.wav"
+    }
   },
   "locations": {
-    "shop_enter.wav": "进入商店",
-    "shop_bell.wav": "商店门铃",
-    "town_crowd.ogg": "城镇人群嘈杂声",
-    "farm_animals.ogg": "农场动物声音",
-    "forest_birds.ogg": "森林鸟鸣",
-    "beach_waves.ogg": "海滩海浪声"
+    "shop_enter.wav": {
+      "description": "进入商店",
+      "path": "audio/locations/shop_enter.wav"
+    },
+    "shop_bell.wav": {
+      "description": "商店门铃",
+      "path": "audio/locations/shop_bell.wav"
+    },
+    "town_crowd.ogg": {
+      "description": "城镇人群嘈杂声",
+      "path": "audio/locations/town_crowd.ogg"
+    },
+    "farm_animals.ogg": {
+      "description": "农场动物声音",
+      "path": "audio/locations/farm_animals.ogg"
+    },
+    "forest_birds.ogg": {
+      "description": "森林鸟鸣",
+      "path": "audio/locations/forest_birds.ogg"
+    },
+    "beach_waves.ogg": {
+      "description": "海滩海浪声",
+      "path": "audio/locations/beach_waves.ogg"
+    }
   },
   "ui": {
-    "click.wav": "点击按钮",
-    "confirm.wav": "确认操作",
-    "cancel.wav": "取消操作",
-    "hover.wav": "鼠标悬停",
-    "notification.wav": "通知提示音",
-    "quest_complete.wav": "任务完成音效",
-    "level_up.wav": "升级音效",
-    "error.wav": "错误提示音"
+    "click.wav": {
+      "description": "点击按钮",
+      "path": "audio/ui/click.wav"
+    },
+    "confirm.wav": {
+      "description": "确认操作",
+      "path": "audio/ui/confirm.wav"
+    },
+    "cancel.wav": {
+      "description": "取消操作",
+      "path": "audio/ui/cancel.wav"
+    },
+    "hover.wav": {
+      "description": "鼠标悬停",
+      "path": "audio/ui/hover.wav"
+    },
+    "notification.wav": {
+      "description": "通知提示音",
+      "path": "audio/ui/notification.wav"
+    },
+    "quest_complete.wav": {
+      "description": "任务完成音效",
+      "path": "audio/ui/quest_complete.wav"
+    },
+    "level_up.wav": {
+      "description": "升级音效",
+      "path": "audio/ui/level_up.wav"
+    },
+    "error.wav": {
+      "description": "错误提示音",
+      "path": "audio/ui/error.wav"
+    }
   }
 }

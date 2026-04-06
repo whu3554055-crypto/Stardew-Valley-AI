@@ -6,7 +6,8 @@
       "season": "spring",
       "grow_days": 4,
       "sell_price": 35,
-      "energy": 13
+      "energy": 13,
+      "sprite": "sprites/items/crops/parsnip.png"
     },
     {
       "id": "potato",
@@ -14,7 +15,8 @@
       "season": "spring",
       "grow_days": 6,
       "sell_price": 80,
-      "energy": 26
+      "energy": 26,
+      "sprite": "sprites/items/crops/potato.png"
     },
     {
       "id": "carrot",
@@ -22,7 +24,8 @@
       "season": "fall",
       "grow_days": 3,
       "sell_price": 35,
-      "energy": 15
+      "energy": 15,
+      "sprite": "sprites/items/crops/carrot.png"
     },
     {
       "id": "tomato",
@@ -31,7 +34,8 @@
       "grow_days": 11,
       "sell_price": 60,
       "energy": 18,
-      "regrows": true
+      "regrows": true,
+      "sprite": "sprites/items/crops/tomato.png"
     },
     {
       "id": "corn",
@@ -40,7 +44,8 @@
       "grow_days": 14,
       "sell_price": 50,
       "energy": 20,
-      "regrows": true
+      "regrows": true,
+      "sprite": "sprites/items/crops/corn.png"
     },
     {
       "id": "pumpkin",
@@ -48,7 +53,8 @@
       "season": "fall",
       "grow_days": 13,
       "sell_price": 320,
-      "energy": 36
+      "energy": 36,
+      "sprite": "sprites/items/crops/pumpkin.png"
     }
   ],
   "tools": [
@@ -57,28 +63,32 @@
       "name": "锄头",
       "type": "tool",
       "durability": 100,
-      "energy_cost": 5
+      "energy_cost": 5,
+      "sprite": "sprites/items/tools/hoe.png"
     },
     {
       "id": "watering_can",
       "name": "洒水壶",
       "type": "tool",
       "capacity": 40,
-      "energy_cost": 2
+      "energy_cost": 2,
+      "sprite": "sprites/items/tools/watering_can.png"
     },
     {
       "id": "scythe",
       "name": "镰刀",
       "type": "tool",
       "durability": 150,
-      "energy_cost": 3
+      "energy_cost": 3,
+      "sprite": "sprites/items/tools/scythe.png"
     },
     {
       "id": "axe",
       "name": "斧头",
       "type": "tool",
       "durability": 100,
-      "energy_cost": 7
+      "energy_cost": 7,
+      "sprite": "sprites/items/tools/axe.png"
     }
   ],
   "resources": [
@@ -87,28 +97,32 @@
       "name": "木材",
       "type": "resource",
       "stack_size": 999,
-      "sell_price": 2
+      "sell_price": 2,
+      "sprite": "sprites/items/resources/wood.png"
     },
     {
       "id": "stone",
       "name": "石头",
       "type": "resource",
       "stack_size": 999,
-      "sell_price": 3
+      "sell_price": 3,
+      "sprite": "sprites/items/resources/stone.png"
     },
     {
       "id": "iron_ore",
       "name": "铁矿石",
       "type": "resource",
       "stack_size": 999,
-      "sell_price": 15
+      "sell_price": 15,
+      "sprite": "sprites/items/resources/iron_ore.png"
     },
     {
       "id": "gold_ore",
       "name": "金矿石",
       "type": "resource",
       "stack_size": 999,
-      "sell_price": 25
+      "sell_price": 25,
+      "sprite": "sprites/items/resources/gold_ore.png"
     }
   ],
   "consumables": [
@@ -119,7 +133,8 @@
       "effect": {
         "health": 50
       },
-      "sell_price": 50
+      "sell_price": 50,
+      "sprite": "sprites/items/consumables/health_potion.png"
     },
     {
       "id": "energy_drink",
@@ -128,7 +143,8 @@
       "effect": {
         "energy": 30
       },
-      "sell_price": 40
+      "sell_price": 40,
+      "sprite": "sprites/items/consumables/energy_drink.png"
     },
     {
       "id": "bread",
@@ -138,7 +154,8 @@
         "energy": 25,
         "health": 10
       },
-      "sell_price": 60
+      "sell_price": 60,
+      "sprite": "sprites/items/consumables/bread.png"
     },
     {
       "id": "salad",
@@ -148,7 +165,8 @@
         "energy": 35,
         "health": 20
       },
-      "sell_price": 110
+      "sell_price": 110,
+      "sprite": "sprites/items/consumables/salad.png"
     }
   ]
 }
