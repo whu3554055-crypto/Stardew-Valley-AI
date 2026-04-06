@@ -13,6 +13,12 @@ hello_agent_backend/.env
 hello_agent_backend/data/vector_store/
 hello_agent_backend/data/*.db
 hello_agent_backend/data/*.sqlite
+hello_agent_backend/tests/__pycache__/
+hello_agent_backend/app/**/__pycache__/
+hello_agent_backend/llm/**/__pycache__/
+
+# Redis dump
+dump.rdb
 
 # Environment variables and secrets
 .env
