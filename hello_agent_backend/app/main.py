@@ -17,6 +17,7 @@ from app.core.config import settings
 from app.core.cache import cache
 from app.api.websocket import manager
 from app.db.models import game_db
+from app.middleware.metrics import MetricsMiddleware, create_metrics_endpoint
 from fastapi import WebSocket, WebSocketDisconnect
 
 # Configure logging
@@ -78,8 +79,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add Prometheus metrics middleware
+app.add_middleware(MetricsMiddleware)
+
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+
+# Add metrics endpoint for Prometheus scraping
+app.add_route("/metrics", create_metrics_endpoint())
 
 
 @app.get("/")
