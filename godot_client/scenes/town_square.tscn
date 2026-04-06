@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://town_square"]
+[gd_scene load_steps=20 format=3 uid="uid://town_square"]
 
 [ext_resource type="Script" path="res://scripts/town_square.gd" id="1_town"]
 [ext_resource type="Texture2D" path="res://assets/sprites/environment/town/cobblestone_tile.png" id="2_cobble"]
@@ -15,6 +15,9 @@
 [ext_resource type="Script" path="res://scripts/dialogue_system.gd" id="13_dialogue"]
 [ext_resource type="Script" path="res://scripts/pickup_system.gd" id="14_pickup"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/npc_pierre.png" id="15_pierre"]
+[ext_resource type="Script" path="res://scripts/npc_schedule_system.gd" id="16_schedule"]
+[ext_resource type="Script" path="res://scripts/weather_system.gd" id="17_weather"]
+[ext_resource type="Script" path="res://scripts/animal_ai.gd" id="18_animals"]
 
 [node name="TownSquare" type="Node2D"]
 script = ExtResource("1_town")
@@ -167,6 +170,15 @@ script = ExtResource("13_dialogue")
 
 [node name="PickupSystem" type="Node" parent="."]
 script = ExtResource("14_pickup")
+
+[node name="NPCScheduleSystem" type="Node" parent="."]
+script = ExtResource("16_schedule")
+
+[node name="WeatherSystem" type="Node" parent="."]
+script = ExtResource("17_weather")
+
+[node name="AnimalAI" type="Node2D" parent="."]
+script = ExtResource("18_animals")
 
 # 环境音效
 [node name="AmbientAudio" type="AudioStreamPlayer" parent="."]

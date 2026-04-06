@@ -46,6 +46,7 @@ func on_time_passed():
 			next_season()
 
 	update_time_display()
+	update_living_world_systems()
 
 func next_season():
 	var seasons = ["spring", "summer", "fall", "winter"]
@@ -78,3 +79,16 @@ func show_interaction_prompt(text: String = "按 E 互动"):
 
 func hide_interaction_prompt():
 	interaction_prompt.modulate.a = 0.0
+
+func update_living_world_systems():
+	# 更新NPC日程系统
+	if has_node("TownSquare/NPCScheduleSystem"):
+		$TownSquare/NPCScheduleSystem.update_time(game_state.time)
+
+	# 更新天气系统（每30分钟检查一次）
+	if has_node("TownSquare/WeatherSystem") and int(game_state.time * 2) % 1 == 0:
+		$TownSquare/WeatherSystem.check_weather_change()
+
+	# 更新动物AI（根据时间生成/移除）
+	if has_node("TownSquare/AnimalAI"):
+		$TownSquare/AnimalAI.update_game_time(game_state.time)

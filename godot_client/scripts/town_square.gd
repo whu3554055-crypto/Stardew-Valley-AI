@@ -21,6 +21,7 @@ func _ready():
 	setup_living_world()
 	setup_pickup_items()
 	connect_signals()
+	register_npcs_with_schedule_system()
 
 func connect_signals():
 	"""连接信号"""
@@ -181,3 +182,12 @@ func interact_with_object(obj):
 func play_interaction_sound():
 	# TODO: 播放 UI 点击音效
 	pass
+
+func register_npcs_with_schedule_system():
+	"""将NPC注册到日程系统"""
+	if has_node("NPCScheduleSystem") and npcs:
+		var schedule_system = $NPCScheduleSystem
+		for npc in npcs.get_children():
+			if npc is Area2D and npc.has_method("get_npc_id"):
+				schedule_system.register_npc(npc.get_npc_id(), npc)
+				print("已注册NPC到日程系统: ", npc.npc_name)
