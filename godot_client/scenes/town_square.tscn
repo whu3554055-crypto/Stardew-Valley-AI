@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://town_square"]
+、[gd_scene load_steps=24 format=3 uid="uid://town_square"]
 
 [ext_resource type="Script" path="res://scripts/town_square.gd" id="1_town"]
 [ext_resource type="Texture2D" path="res://assets/sprites/environment/town/cobblestone_tile.png" id="2_cobble"]
@@ -18,6 +18,10 @@
 [ext_resource type="Script" path="res://scripts/npc_schedule_system.gd" id="16_schedule"]
 [ext_resource type="Script" path="res://scripts/weather_system.gd" id="17_weather"]
 [ext_resource type="Script" path="res://scripts/animal_ai.gd" id="18_animals"]
+[ext_resource type="Script" path="res://scripts/farming_system.gd" id="19_farming"]
+[ext_resource type="Script" path="res://scripts/inventory_system.gd" id="20_inventory"]
+[ext_resource type="Script" path="res://scripts/shop_system.gd" id="21_shop"]
+[ext_resource type="PackedScene" uid="uid://farm_plot" path="res://scenes/farm_plot.tscn" id="22_plot"]
 
 [node name="TownSquare" type="Node2D"]
 script = ExtResource("1_town")
@@ -179,6 +183,23 @@ script = ExtResource("17_weather")
 
 [node name="AnimalAI" type="Node2D" parent="."]
 script = ExtResource("18_animals")
+
+# 农场系统
+[node name="FarmingSystem" type="Node2D" parent="."]
+script = ExtResource("19_farming")
+
+[node name="FarmTileMap" type="TileMapLayer" parent="FarmingSystem"]
+position = Vector2(800, 100)
+
+[node name="CropSprites" type="Node2D" parent="FarmingSystem"]
+
+# 背包系统
+[node name="InventorySystem" type="Node" parent="."]
+script = ExtResource("20_inventory")
+
+# 商店系统
+[node name="ShopSystem" type="CanvasLayer" parent="."]
+script = ExtResource("21_shop")
 
 # 环境音效
 [node name="AmbientAudio" type="AudioStreamPlayer" parent="."]

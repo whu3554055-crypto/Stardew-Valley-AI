@@ -47,6 +47,7 @@ func on_time_passed():
 
 	update_time_display()
 	update_living_world_systems()
+	update_farming_system()
 
 func next_season():
 	var seasons = ["spring", "summer", "fall", "winter"]
@@ -92,3 +93,11 @@ func update_living_world_systems():
 	# 更新动物AI（根据时间生成/移除）
 	if has_node("TownSquare/AnimalAI"):
 		$TownSquare/AnimalAI.update_game_time(game_state.time)
+
+func update_farming_system():
+	# 每天6点时推进农场系统
+	if int(game_state.time) == 6 and int((game_state.time - int(game_state.time)) * 60) == 0:
+		if has_node("TownSquare/FarmingSystem"):
+			$TownSquare/FarmingSystem.advance_day()
+			$TownSquare/FarmingSystem.set_season(game_state.season)
+			print("Farm day advanced")

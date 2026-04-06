@@ -10,9 +10,13 @@ extends Node2D
 @onready var dialogue_system = $DialogueSystem
 @onready var pickup_system = $PickupSystem
 @onready var npcs = $NPCs
+@onready var farming_system = $FarmingSystem
+@onready var inventory_system = $InventorySystem
+@onready var shop_system = $ShopSystem
 
 var nearby_interactable = null
 var nearby_npc = null
+var nearby_farm_plot = null
 
 func _ready():
 	print("小镇广场加载完成")
@@ -22,6 +26,8 @@ func _ready():
 	setup_pickup_items()
 	connect_signals()
 	register_npcs_with_schedule_system()
+	setup_farm_plots()
+	setup_shop_integration()
 
 func connect_signals():
 	"""连接信号"""
