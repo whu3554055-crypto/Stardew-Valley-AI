@@ -584,6 +584,128 @@ class DatabaseRepository(GameDatabase):
                 row = await cursor.fetchone()
                 return dict(row) if row else None
 
+    # ========================================================================
+    # Performance Optimization Methods
+    # ========================================================================
+
+    async def analyze_query_performance(self, query: str, params: tuple = ()) -> Dict[str, Any]:
+        """Analyze query execution plan for optimization"""
+        import time
+
+        start_time = time.time()
+        async with aiosqlite.connect(self.db_path) as db:
+            # Get query plan
+            async with db.execute(f"EXPLAIN QUERY PLAN {query}", params) as cursor:
+                plan_rows = await cursor.fetchall()
+                plan = [dict(row) for row in plan_rows]
+
+            # Execute query to measure actual time
+            db.row_factory = aiosqlite.Row
+            async with db.execute(query, params) as cursor:
+                rows = await cursor.fetchall()
+                result_count = len(rows)
+
+        duration_ms = (time.time() - start_time) * 1000
+
+        return {
+            "query": query,
+            "params": params,
+            "execution_time_ms": round(duration_ms, 2),
+            "result_count": result_count,
+            "query_plan": plan,
+            "uses_index": any("USING INDEX" in str(row) for row in plan),
+            "full_table_scan": any("SCAN TABLE" in str(row) for row in plan)
+        }
+
+    async def optimize_database(self):
+        """Run database optimization (VACUUM, ANALYZE)"""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                # Update statistics for query optimizer
+                await db.execute("ANALYZE")
+
+                # Rebuild database to reduce fragmentation
+                await db.execute("VACUUM")
+
+                logger.info("Database optimization completed")
+                return True
+        except Exception as e:
+            logger.error(f"Database optimization failed: {e}")
+            return False
+
+    async def get_database_stats(self) -> Dict[str, Any]:
+        """Get database statistics for monitoring"""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+
+            # Table sizes
+            async with db.execute("""
+                SELECT name, 
+                       (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=t.name) as exists_flag
+                FROM sqlite_master t
+                WHERE type='table'
+                  AND name NOT LIKE 'sqlite_%'
+            """) as cursor:
+                tables = await cursor.fetchall()
+
+            table_stats = {}
+            for table in tables:
+                table_name = table['name']
+                async with db.execute(f"SELECT COUNT(*) as count FROM {table_name}") as cursor:
+                    row = await cursor.fetchone()
+                    table_stats[table_name] = row['count'] if row else 0
+
+            # Database file size
+            import os
+            db_size = os.path.getsize(self.db_path) if os.path.exists(self.db_path) else 0
+
+            return {
+                "database_size_bytes": db_size,
+                "database_size_mb": round(db_size / (1024 * 1024), 2),
+                "table_row_counts": table_stats,
+                "total_tables": len(table_stats)
+            }
+
+    async def create_performance_indexes(self):
+        """Create additional indexes for common queries"""
+        indexes = [
+            # NPC queries
+            ("idx_npcs_location", "npcs", "location"),
+            ("idx_npcs_occupation", "npcs", "occupation"),
+
+            # Player queries
+            ("idx_players_username", "players", "username"),
+            ("idx_players_gold", "players", "gold"),
+
+            # Relationship queries
+            ("idx_relationships_player", "relationships", "player_id"),
+            ("idx_relationships_npc", "relationships", "npc_id"),
+            ("idx_relationships_friendship", "relationships", "friendship_points"),
+
+            # Quest queries
+            ("idx_quests_player_status", "quests", "player_id, status"),
+            ("idx_quests_completed", "quests", "completed_at"),
+
+            # Inventory queries
+            ("idx_inventory_player", "inventory", "player_id"),
+            ("idx_inventory_item", "inventory", "item_id"),
+
+            # World state queries
+            ("idx_world_state_date", "world_state_history", "year, season, day"),
+        ]
+
+        created = 0
+        async with aiosqlite.connect(self.db_path) as db:
+            for idx_name, table, columns in indexes:
+                try:
+                    await db.execute(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {table} ({columns})")
+                    created += 1
+                except Exception as e:
+                    logger.warning(f"Failed to create index {idx_name}: {e}")
+
+        logger.info(f"Created/verified {created} performance indexes")
+        return created
+
 
 # Global enhanced repository instance
 db_repo = DatabaseRepository()
