@@ -503,3 +503,134 @@ def _detect_emotion(text: str) -> Optional[str]:
             return emotion
 
     return "neutral"
+
+
+# ============================================================================
+# Agent Management Endpoints (Phase 1)
+# ============================================================================
+
+class StartAgentRequest(BaseModel):
+    """Request to start an autonomous agent"""
+    interval: float = Field(default=10.0, ge=1.0, le=300.0, description="Decision loop interval in seconds")
+    personality: Optional[Dict[str, Any]] = Field(default=None, description="NPC personality traits")
+
+
+@router.post("/agent/{npc_id}/start")
+async def start_agent(npc_id: str, request: StartAgentRequest):
+    """
+    Start autonomous agent for an NPC
+
+    The agent will periodically:
+    1. Perceive current context (world state, NPC info)
+    2. Retrieve relevant memories
+    3. Make decisions via LLM
+    4. Execute actions via MCP tools
+    5. Form new memories
+
+    Args:
+        npc_id: NPC identifier
+        interval: Decision loop interval (1-300 seconds)
+        personality: Optional personality traits
+    """
+    try:
+        await agent_engine.start_agent(
+            npc_id=npc_id,
+            interval=request.interval,
+            personality=request.personality
+        )
+
+        return {
+            "status": "started",
+            "npc_id": npc_id,
+            "interval": request.interval,
+            "message": f"Autonomous agent started for {npc_id}"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to start agent for {npc_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/agent/{npc_id}/stop")
+async def stop_agent(npc_id: str):
+    """
+    Stop autonomous agent for an NPC
+
+    Args:
+        npc_id: NPC identifier
+    """
+    try:
+        await agent_engine.stop_agent(npc_id)
+        return {
+            "status": "stopped",
+            "npc_id": npc_id,
+            "message": f"Agent stopped for {npc_id}"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to stop agent for {npc_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/agent/status")
+async def agent_status():
+    """Get status of all active agents"""
+    try:
+        return agent_engine.get_agent_status()
+
+    except Exception as e:
+        logger.error(f"Failed to get agent status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/agent/stop-all")
+async def stop_all_agents():
+    """Stop all active agents (admin operation)"""
+    try:
+        await agent_engine.stop_all_agents()
+        return {
+            "status": "success",
+            "message": "All agents stopped"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to stop all agents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    return "neutral"
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/memory/{npc_id}")
+async def clear_npc_memories(npc_id: str):
+    """Clear all memories for an NPC (admin operation)"""
+    try:
+        await memory_store.clear_all_memories(npc_id)
+        return {"status": "success", "message": f"Cleared memories for {npc_id}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def _detect_emotion(text: str) -> Optional[str]:
+    """
+    Simple emotion detection from text.
+    Can be replaced with more sophisticated analysis.
+    """
+    text_lower = text.lower()
+
+    emotion_keywords = {
+        "happy": ["happy", "glad", "joy", "wonderful", "great", "excellent"],
+        "sad": ["sad", "unfortunately", "sorry", "regret", "miss"],
+        "angry": ["angry", "frustrated", "annoyed", "upset"],
+        "excited": ["excited", "amazing", "fantastic", "love", "can't wait"],
+        "neutral": []
+    }
+
+    for emotion, keywords in emotion_keywords.items():
+        if any(keyword in text_lower for keyword in keywords):
+            return emotion
+
+    return "neutral"

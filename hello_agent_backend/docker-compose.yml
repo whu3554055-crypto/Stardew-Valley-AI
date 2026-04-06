@@ -1,0 +1,130 @@
+version: '3.8'
+
+# ============================================================================
+# Hello-Agent Backend - Docker Compose Configuration
+#
+# Services:
+#   - backend: FastAPI application
+#   - redis: Redis cache for performance
+#   - ollama: Local LLM server (optional)
+#
+# Usage:
+#   docker-compose up -d          # Start all services
+#   docker-compose down           # Stop all services
+#   docker-compose logs -f        # View logs
+#   docker-compose build          # Rebuild images
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # FastAPI Backend Service
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hello-agent-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Application settings
+      - HOST=0.0.0.0
+      - PORT=8080
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+
+      # Redis configuration
+      - REDIS_URL=redis://redis:6379
+
+      # Ollama configuration (if using local LLM)
+      - OLLAMA_BASE_URL=http://ollama:11434
+
+      # API Keys (set via .env file or environment)
+      - QWEN_API_KEY=${QWEN_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+
+    volumes:
+      # Persist vector database
+      - ./data/vector_store:/app/data/vector_store
+      # Persist game state database
+      - ./data/game_state.db:/app/data/game_state.db
+      # Persist logs
+      - ./data/logs:/app/data/logs
+      # Mount config directory
+      - ./config:/app/config:ro
+
+    depends_on:
+      redis:
+        condition: service_healthy
+      # ollama:
+      #   condition: service_started
+
+    networks:
+      - stardew-network
+
+    restart: unless-stopped
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # --------------------------------------------------------------------------
+  # Redis Cache Service
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: hello-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - stardew-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # --------------------------------------------------------------------------
+  # Ollama LLM Server (Optional - uncomment if using local LLM)
+  # --------------------------------------------------------------------------
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: hello-agent-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   networks:
+  #     - stardew-network
+  #   restart: unless-stopped
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0
+  #   # Pull models on startup
+  #   command: >
+  #     sh -c "ollama pull qwen3.5:9b && ollama serve"
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  redis-data:
+    driver: local
+  # ollama-data:
+  #   driver: local
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  stardew-network:
+    driver: bridge
