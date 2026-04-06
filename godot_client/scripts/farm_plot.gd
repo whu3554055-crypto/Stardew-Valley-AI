@@ -102,6 +102,11 @@ func try_water():
 	if farming_system.water_crop(tile_position):
 		show_feedback("已浇水")
 
+		# Notify quest system via parent
+		var main = get_tree().root.get_node_or_null("Main")
+		if main and main.has_node("TownSquare/QuestSystem"):
+			main.get_node("TownSquare/QuestSystem").update_quest_progress_by_type("water_crop", 1)
+
 func try_harvest():
 	"""Harvest mature crop"""
 	var result = farming_system.harvest_crop(tile_position)

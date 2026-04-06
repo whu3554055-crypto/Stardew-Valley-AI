@@ -96,6 +96,10 @@ func set_emotion(emotion: String):
 		_:
 			modulate = Color(1, 1, 1, 1)  # 正常
 
+func get_npc_id() -> String:
+	"""获取NPC ID"""
+	return npc_id
+
 func get_npc_info() -> Dictionary:
 	"""获取NPC信息"""
 	return {

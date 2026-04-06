@@ -1,0 +1,89 @@
+{
+  "project": "Cyber Town - Environment Assets",
+  "version": "2.0",
+  "generated": "2026-04-06",
+  "categories": {
+    "town": {
+      "description": "Town environment elements",
+      "path": "sprites/environment/town/",
+      "items": [
+        "cobblestone_tile.png",
+        "street_lamp.png",
+        "bench.png",
+        "trash_can.png",
+        "flower_pot.png",
+        "mailbox.png",
+        "sign_post.png",
+        "fence_wood.png",
+        "fence_stone.png",
+        "planter_box.png"
+      ]
+    },
+    "greenery": {
+      "description": "Plants and vegetation",
+      "path": "sprites/environment/greenery/",
+      "items": [
+        "bush_small.png",
+        "bush_large.png",
+        "hedge.png",
+        "tree_sapling.png",
+        "grass_clump.png",
+        "fern.png"
+      ]
+    },
+    "water": {
+      "description": "River and water features",
+      "path": "sprites/environment/water/",
+      "items": [
+        "water_tile.png",
+        "rock_small.png",
+        "rock_medium.png",
+        "rock_large.png",
+        "seaweed.png",
+        "driftwood.png",
+        "bubble.png",
+        "lilypad.png",
+        "fish_small.png",
+        "bridge_wood.png",
+        "bridge_stone.png",
+        "rapids.png",
+        "waterfall.png"
+      ]
+    },
+    "forest": {
+      "description": "Forest environment",
+      "path": "sprites/environment/forest/",
+      "items": [
+        "tree_pine.png",
+        "tree_oak.png",
+        "tree_stump.png",
+        "mushroom_red.png",
+        "mushroom_brown.png",
+        "flower_wild.png",
+        "flower_blue.png",
+        "rabbit.png",
+        "squirrel.png",
+        "bird.png",
+        "butterfly.png",
+        "log_fallen.png",
+        "berry_bush.png"
+      ]
+    },
+    "audio_ambient": {
+      "description": "Ambient environmental sounds",
+      "path": "audio/ambience_extended/",
+      "items": [
+        "river_flow.wav",
+        "stream_gentle.wav",
+        "birds_morning.wav",
+        "birds_forest.wav",
+        "rain_light.wav",
+        "rain_heavy.wav",
+        "wind_trees.wav",
+        "crickets_night.wav",
+        "frogs_pond.wav",
+        "leaves_rustle.wav"
+      ]
+    }
+  }
+}

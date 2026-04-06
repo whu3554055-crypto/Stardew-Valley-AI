@@ -240,3 +240,53 @@ func _on_dialogue_started(npc_id: String):
 func _on_dialogue_ended(npc_id: String):
 	"""Handle dialogue end"""
 	print("Dialogue ended with: ", npc_id)
+
+	# Update quest progress for talking to NPCs
+	if quest_system:
+		quest_system.update_quest_progress_by_type("talk_to_npc", 1, {"npc": npc_id})
+
+func _on_crop_planted(tile_position: Vector2i, crop_type: String):
+	"""Handle crop planting"""
+	print("Crop planted: ", crop_type, " at ", tile_position)
+
+	# Update quest progress
+	if quest_system:
+		quest_system.update_quest_progress_by_type("plant_crop", 1, {"target": crop_type})
+
+func _on_crop_grown(tile_position: Vector2i, crop_type: String):
+	"""Handle crop growth completion"""
+	print("Crop grown: ", crop_type, " at ", tile_position)
+
+func _on_crop_harvested(tile_position: Vector2i, crop_type: String, quantity: int):
+	"""Handle crop harvest"""
+	print("Crop harvested: ", crop_type, " x", quantity)
+
+	# Add to inventory
+	if inventory_system:
+		inventory_system.add_item(crop_type, quantity)
+
+	# Update quest progress
+	if quest_system:
+		quest_system.update_quest_progress_by_type("harvest_crop", quantity)
+
+func _on_quest_accepted(quest_id: String):
+	"""Handle quest acceptance"""
+	print("Quest accepted: ", quest_id)
+
+func _on_quest_completed(quest_id: String, reward_gold: int):
+	"""Handle quest completion"""
+	print("Quest completed: ", quest_id, " - Reward: ", reward_gold, "g")
+
+func _on_quest_updated(quest_id: String, progress: int, target: int):
+	"""Handle quest progress update"""
+	print("Quest updated: ", quest_id, " - Progress: ", progress, "/", target)
+		inventory_system.add_item(item_id, quantity)
+		print("Picked up: ", item_id, " x", quantity)
+
+func _on_dialogue_started(npc_id: String):
+	"""Handle dialogue start"""
+	print("Dialogue started with: ", npc_id)
+
+func _on_dialogue_ended(npc_id: String):
+	"""Handle dialogue end"""
+	print("Dialogue ended with: ", npc_id)

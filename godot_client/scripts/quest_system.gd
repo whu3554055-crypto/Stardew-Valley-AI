@@ -204,6 +204,11 @@ func update_quest_progress(quest_id: String, objective_type: String, amount: int
 	# Check if all objectives completed
 	check_quest_completion(quest_id)
 
+func update_quest_progress_by_type(objective_type: String, amount: int = 1, extra_data: Dictionary = {}):
+	"""Update progress for all active quests with matching objective type"""
+	for quest_id in active_quests.keys():
+		update_quest_progress(quest_id, objective_type, amount, extra_data)
+
 func check_quest_completion(quest_id: String):
 	"""Check if quest is fully completed"""
 	if not active_quests.has(quest_id):
