@@ -88,6 +88,7 @@ test -d "hello_agent_backend" && echo "✓ Python 后端存在"
 
 ### 🎯 快速开始（新玩家必读）
 - **[执行摘要](docs/00-执行摘要.md)** ⭐ - 项目概览、技术方案、商业计划一页纸总结
+- **[TODO 路线图](TODO.md)** 🚀 - **当前任务进度与开发计划 (推荐阅读)**
 - **[文档索引](docs/README.md)** - 完整文档体系导航
 - **[快速参考卡片](docs/CHEATSHEET.md)** - 日常开发速查表
 
@@ -285,17 +286,15 @@ See [AI_NPC_GUIDE.md](AI_NPC_GUIDE.md) for full AI setup instructions.
 
 ## Planned Features (TODO)
 
-- [ ] Fishing mini-game
-- [ ] Mining/cave system
-- [ ] Combat system
-- [ ] Crafting recipes
-- [ ] Building upgrades
-- [ ] Marriage candidates
-- [ ] Animal husbandry
-- [ ] Cooking system
-- [ ] Quest system
-- [ ] Achievement tracking
-- [ ] Multiplayer support
+详细的进度跟踪和未来计划，请参阅 [TODO.md](TODO.md)。
+
+- [ ] 钓鱼系统与小游戏 (Fishing)
+- [ ] 挖矿与战斗系统 (Mining & Combat)
+- [ ] 工艺制作与建筑升级 (Crafting & Upgrades)
+- [ ] 畜牧与烹饪系统 (Animals & Cooking)
+- [ ] 动态 AI 任务与经济系统 (AI Quests & Economy)
+- [ ] NPC 语音集成 (TTS)
+- [ ] 多人游戏支持 (Multiplayer)
 
 ## License
 
