@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import router as api_router
 from app.core.config import settings
+from app.core.cache import cache
 
 # Configure logging
 logging.basicConfig(

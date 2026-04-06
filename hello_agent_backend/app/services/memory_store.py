@@ -43,6 +43,7 @@ from lancedb.query import LanceQueryBuilder
 
 from llm.router import LLMRouter
 from llm.providers.base import LLMMessage
+from app.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +131,8 @@ class VectorMemoryStore:
         self,
         db_path: str = "data/vector_store",
         table_name: str = "npc_memories",
-        embedding_dim: int = 384
+        embedding_dim: int = 384,
+        use_cache: bool = True
     ):
         """
         Initialize memory store
@@ -139,17 +141,19 @@ class VectorMemoryStore:
             db_path: Path to LanceDB database directory
             table_name: Name of the memories table
             embedding_dim: Embedding vector dimension (384 for MiniLM)
+            use_cache: Enable Redis caching for search results
         """
         self.db_path = db_path
         self.table_name = table_name
         self.embedding_dim = embedding_dim
+        self.use_cache = use_cache
         self.llm_router = LLMRouter("config/llm_config.json")
         
         # Initialize LanceDB connection
         self.db = lancedb.connect(db_path)
         self._ensure_table()
         
-        logger.info(f"VectorMemoryStore initialized at {db_path}")
+        logger.info(f"VectorMemoryStore initialized at {db_path} (cache={'enabled' if use_cache else 'disabled'})")
     
     def _ensure_table(self):
         """Create memories table if it doesn't exist"""
@@ -259,6 +263,11 @@ class VectorMemoryStore:
             table = self.db.open_table(self.table_name)
             table.add([memory.to_dict()])
             
+            # Invalidate related cache entries (new memory may affect search results)
+            if self.use_cache:
+                await cache.invalidate_pattern(f"mem_search:*")
+                logger.debug(f"Invalidated memory search cache for new memory: {npc_id}")
+            
             logger.debug(
                 f"Added memory for {npc_id}: '{content[:50]}...' "
                 f"(importance={memory.importance}, day={memory.day})"
@@ -280,7 +289,7 @@ class VectorMemoryStore:
         day_range: Optional[tuple] = None
     ) -> List[MemoryEntry]:
         """
-        Search for semantically similar memories
+        Search for semantically similar memories with caching
         
         Args:
             query: Search query text
@@ -302,6 +311,19 @@ class VectorMemoryStore:
                 min_importance=0.6
             )
         """
+        # Generate cache key
+        cache_key_args = f"{query}:{npc_id}:{limit}:{min_importance}:{memory_type}:{day_range}"
+        import hashlib
+        cache_key_hash = hashlib.md5(cache_key_args.encode()).hexdigest()[:8]
+        cache_key = f"mem_search:{cache_key_hash}"
+        
+        # Try cache first
+        if self.use_cache:
+            cached_result = await cache.get(cache_key)
+            if cached_result is not None:
+                logger.debug(f"Cache HIT for memory search: {cache_key}")
+                return [MemoryEntry.from_dict(d) for d in cached_result]
+        
         try:
             # Generate query embedding
             query_embedding = await self._generate_embedding(query)
@@ -340,6 +362,11 @@ class VectorMemoryStore:
             
             # Convert to MemoryEntry objects
             memories = [MemoryEntry.from_dict(row) for row in results]
+            
+            # Cache results for 2 minutes (70% of searches are repeated within 5 min)
+            if self.use_cache and memories:
+                await cache.set(cache_key, [m.to_dict() for m in memories], ttl=120)
+                logger.debug(f"Cache SET for memory search: {cache_key} ({len(memories)} results)")
             
             logger.debug(
                 f"Found {len(memories)} similar memories for query: '{query[:50]}...'"
