@@ -596,8 +596,6 @@ async def stop_all_agents():
     except Exception as e:
         logger.error(f"Failed to stop all agents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    return "neutral"
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/memory/{npc_id}")
