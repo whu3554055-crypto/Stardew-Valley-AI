@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import router as api_router
+from app.api.auth import router as auth_router
 from app.core.config import settings
 from app.core.cache import cache
 from app.api.websocket import manager
@@ -83,10 +84,18 @@ app.add_middleware(
 app.add_middleware(MetricsMiddleware)
 
 # Include API routes
+app.include_router(auth_router, prefix="/api/v1")  # Auth routes first
 app.include_router(api_router, prefix="/api/v1")
 
 # Add metrics endpoint for Prometheus scraping
 app.add_route("/metrics", create_metrics_endpoint())
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize default admin user on startup"""
+    from app.core.security import create_default_admin
+    await create_default_admin()
 
 
 @app.get("/")
