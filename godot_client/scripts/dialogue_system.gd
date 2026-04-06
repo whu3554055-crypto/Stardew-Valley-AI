@@ -1,7 +1,7 @@
 extends CanvasLayer
 
 # 对话系统
-# 管理NPC对话界面和对话流程
+# 管理NPC对话界面和对话流程（集成后端API）
 
 signal dialogue_started(npc_id: String)
 signal dialogue_ended(npc_id: String)
@@ -10,14 +10,16 @@ var is_dialogue_active = false
 var current_npc = null
 var current_dialogues = []
 var current_index = 0
+var use_backend_api = true
 
 @onready var dialogue_box = $DialogueBox
 @onready var npc_name_label = $DialogueBox/NPCName
 @onready var dialogue_text = $DialogueBox/DialogueText
 @onready var continue_indicator = $DialogueBox/ContinueIndicator
 @onready var emotion_icon = $DialogueBox/EmotionIcon
+@onready var api_client = get_tree().root.get_node_or_null("Main/APIClient")
 
-# 对话配置
+# 对话配置（fallback when backend unavailable）
 var dialogue_config = {
 	"pierre": {
 		"name": "Pierre",
@@ -65,14 +67,22 @@ func _ready():
 	dialogue_box.visible = false
 	continue_indicator.visible = false
 
-func start_dialogue(npc_id: String):
-	"""开始与NPC对话"""
-	if not dialogue_config.has(npc_id):
-		print("未知NPC: ", npc_id)
-		return
-
+func start_dialogue(npc_id: String, player_message: String = ""):
+	"""开始与NPC对话（支持后端API）"""
 	is_dialogue_active = true
 	current_npc = npc_id
+
+	# Try backend API first if enabled
+	if use_backend_api and api_client:
+		await generate_backend_dialogue(npc_id, player_message)
+		return
+
+	# Fallback to local config
+	if not dialogue_config.has(npc_id):
+		print("未知NPC: ", npc_id)
+		end_dialogue()
+		return
+
 	var npc_data = dialogue_config[npc_id]
 
 	# 设置对话框
@@ -95,6 +105,66 @@ func start_dialogue(npc_id: String):
 
 	# 播放NPC情感音效
 	play_emotion_sound("neutral")
+
+func generate_backend_dialogue(npc_id: String, player_message: String):
+	"""Generate dialogue via backend API"""
+	var npc_data = dialogue_config.get(npc_id, {})
+	var npc_name = npc_data.get("name", npc_id.capitalize())
+
+	var context = {
+		"time": get_tree().root.get_node_or_null("Main").game_state.time if get_tree().root.has_node("Main") else 8.0,
+		"weather": "sunny"
+	}
+
+	var personality = {}
+	if npc_data.has("personality"):
+		personality = npc_data["personality"]
+
+	var response = await api_client.get_npc_dialogue_sync(npc_id, npc_name, player_message, context, personality)
+
+	if response.has("error"):
+		print("Backend dialogue failed, using fallback: ", response.error)
+		start_dialogue_fallback(npc_id)
+	else:
+		npc_name_label.text = npc_name
+		current_dialogues = [response.get("dialogue", "...")]
+		current_index = 0
+		show_current_dialogue()
+		dialogue_box.visible = true
+		emit_signal("dialogue_started", npc_id)
+
+		# Set emotion if available
+		var emotion = response.get("emotion", "neutral")
+		set_emotion_icon(emotion)
+
+func start_dialogue_fallback(npc_id: String):
+	"""Fallback to local dialogue when backend unavailable"""
+	if not dialogue_config.has(npc_id):
+		print("未知NPC: ", npc_id)
+		end_dialogue()
+		return
+
+	var npc_data = dialogue_config[npc_id]
+	npc_name_label.text = npc_data["name"]
+	var greetings = npc_data["greetings"]
+	current_dialogues = [greetings[randi() % greetings.size()]]
+	current_index = 0
+	show_current_dialogue()
+	dialogue_box.visible = true
+	emit_signal("dialogue_started", npc_id)
+
+func set_emotion_icon(emotion: String):
+	"""Set emotion icon based on detected emotion"""
+	if emotion_icon:
+		match emotion:
+			"happy":
+				emotion_icon.modulate = Color(1, 1, 0.5, 1)
+			"sad":
+				emotion_icon.modulate = Color(0.7, 0.7, 1, 1)
+			"angry":
+				emotion_icon.modulate = Color(1, 0.7, 0.7, 1)
+			_:
+				emotion_icon.modulate = Color(1, 1, 1, 1)
 
 func show_current_dialogue():
 	"""显示当前对话内容"""
