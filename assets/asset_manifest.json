@@ -1,0 +1,107 @@
+{
+  "project": "Cyber Town - hello-agent",
+  "version": "1.0",
+  "generated": "2026-04-06",
+  "assets": {
+    "sprites": {
+      "characters": [
+        "npc_abigail.png",
+        "npc_alex.png",
+        "npc_haley.png",
+        "npc_lewis.png",
+        "npc_maru.png",
+        "npc_penny.png",
+        "npc_pierre.png",
+        "npc_robin.png",
+        "npc_sam.png",
+        "npc_sebastian.png",
+        "player.png"
+      ],
+      "items": [
+        "bread.png",
+        "energy_drink.png",
+        "health_potion.png",
+        "salad.png",
+        "carrot.png",
+        "corn.png",
+        "parsnip.png",
+        "potato.png",
+        "pumpkin.png",
+        "tomato.png",
+        "gold_ore.png",
+        "iron_ore.png",
+        "stone.png",
+        "wood.png",
+        "axe.png",
+        "hoe.png",
+        "scythe.png",
+        "watering_can.png"
+      ],
+      "ui": [
+        "dialogue_box.png",
+        "emotion_icon_angry.png",
+        "emotion_icon_excited.png",
+        "emotion_icon_happy.png",
+        "emotion_icon_neutral.png",
+        "emotion_icon_sad.png",
+        "energy_bar.png",
+        "health_bar.png",
+        "inventory_bg.png",
+        "inventory_slot.png",
+        "name_tag.png",
+        "quest_log.png",
+        "shop_panel.png"
+      ]
+    },
+    "audio": {
+      "ambience": [
+        "fall.ogg",
+        "night.ogg",
+        "rain.ogg",
+        "spring.ogg",
+        "storm.ogg",
+        "summer.ogg",
+        "winter.ogg"
+      ],
+      "emotions": [
+        "angry.wav",
+        "excited.wav",
+        "happy.wav",
+        "neutral.wav",
+        "sad.wav",
+        "surprised.wav"
+      ],
+      "activities": [
+        "chop_wood.wav",
+        "farming_harvest.wav",
+        "farming_plant.wav",
+        "farming_till.wav",
+        "farming_water.wav",
+        "fish_cast.wav",
+        "mine_pickaxe.wav",
+        "walking_grass.wav"
+      ],
+      "locations": [
+        "beach_waves.ogg",
+        "forest_birds.ogg",
+        "shop_bell.wav",
+        "shop_enter.wav",
+        "town_crowd.ogg"
+      ],
+      "ui": [
+        "cancel.wav",
+        "click.wav",
+        "confirm.wav",
+        "error.wav",
+        "hover.wav",
+        "level_up.wav",
+        "notification.wav",
+        "quest_complete.wav"
+      ]
+    },
+    "tilemaps": {
+      "terrain": [],
+      "buildings": []
+    }
+  }
+}

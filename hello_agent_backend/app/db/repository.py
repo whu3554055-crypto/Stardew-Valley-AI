@@ -215,18 +215,12 @@ class DatabaseRepository(GameDatabase):
             },
             {
                 "version": 2,
-                "description": "Add NPC personality and schedule fields",
+                "description": "Add NPC personality and occupation fields",
                 "up_sql": [
-                    "ALTER TABLE npcs ADD COLUMN personality TEXT DEFAULT '{}'",
-                    "ALTER TABLE npcs ADD COLUMN schedule TEXT DEFAULT '{}'",
-                    "ALTER TABLE npcs ADD COLUMN occupation TEXT DEFAULT ''",
                     "CREATE INDEX IF NOT EXISTS idx_npcs_location ON npcs(location)"
                 ],
                 "down_sql": [
-                    "DROP INDEX IF EXISTS idx_npcs_location",
-                    "ALTER TABLE npcs DROP COLUMN occupation",
-                    "ALTER TABLE npcs DROP COLUMN schedule",
-                    "ALTER TABLE npcs DROP COLUMN personality"
+                    "DROP INDEX IF EXISTS idx_npcs_location"
                 ]
             },
             {
