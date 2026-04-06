@@ -20,19 +20,17 @@ from app.api.websocket import manager
 from app.db.models import game_db
 from app.middleware.metrics import MetricsMiddleware, create_metrics_endpoint
 from app.middleware.rate_limiter import RateLimitMiddleware
+from app.core.logging_config import setup_structlog, get_logger, RequestLoggingMiddleware
 from fastapi import WebSocket, WebSocketDisconnect
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(settings.LOG_FILE),
-        logging.StreamHandler()
-    ]
+# Configure structured logging
+setup_structlog(
+    log_level=settings.LOG_LEVEL,
+    log_file=settings.LOG_FILE,
+    json_logs=True
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -81,8 +79,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add request logging middleware (first in chain for full request tracking)
+app.add_middleware(RequestLoggingMiddleware)
+
 # Add Prometheus metrics middleware
 app.add_middleware(MetricsMiddleware)
+
+# Add rate limiting middleware (after metrics, before routes)
+app.add_middleware(RateLimitMiddleware)
 
 # Include API routes
 app.include_router(auth_router, prefix="/api/v1")  # Auth routes first

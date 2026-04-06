@@ -61,6 +61,12 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/backend.log"
+    LOG_FORMAT: str = "json"  # json or text
+    LOG_MAX_BYTES: int = 10485760  # 10 MB
+    LOG_BACKUP_COUNT: int = 5
+
+    # Security
+    SECRET_KEY: str = "your-secret-key-change-in-production"
 
     class Config:
         env_file = ".env"
