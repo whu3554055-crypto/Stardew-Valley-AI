@@ -312,3 +312,157 @@ func update_npc_mood(
 		"intensity": mood_change.get("intensity", 0.5),
 		"duration": mood_change.get("duration", 60.0)
 	}
+
+
+# ============================================================================
+# Phase 1 & 2 Features - Agent Control and WebSocket Integration
+# ============================================================================
+
+# Start autonomous agent for an NPC
+func start_autonomous_agent(npc_id: String, interval: float = 10.0, personality: Dictionary = {}) -> void:
+	"""Start autonomous decision-making agent for an NPC"""
+	if not _backend_available:
+		print("[AIAgentManager] Backend not available, cannot start agent")
+		agent_error.emit(npc_id, "Backend unavailable")
+		return
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/api/v1/agent/%s/start" % [api_config.backend_url, npc_id]
+	var headers = ["Content-Type: application/json"]
+	var body = JSON.stringify({
+		"interval": interval,
+		"personality": personality
+	})
+	
+	var error = http.request(url, headers, HTTPClient.METHOD_POST, body)
+	
+	if error == OK:
+		var result = await http.request_completed
+		if result[1] == 200:
+			var response = JSON.parse_string(result[3].get_string_from_utf8())
+			print("[AIAgentManager] Agent started for ", npc_id, ": ", response)
+		else:
+			print("[AIAgentManager] Failed to start agent: ", result[1])
+			agent_error.emit(npc_id, "HTTP " + str(result[1]))
+	else:
+		print("[AIAgentManager] Request failed: ", error)
+		agent_error.emit(npc_id, "Request error " + str(error))
+	
+	http.queue_free()
+
+# Stop autonomous agent for an NPC
+func stop_autonomous_agent(npc_id: String) -> void:
+	"""Stop autonomous agent for an NPC"""
+	if not _backend_available:
+		return
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/api/v1/agent/%s/stop" % [api_config.backend_url, npc_id]
+	var error = http.request(url, [], HTTPClient.METHOD_POST)
+	
+	if error == OK:
+		var result = await http.request_completed
+		if result[1] == 200:
+			print("[AIAgentManager] Agent stopped for ", npc_id)
+		else:
+			print("[AIAgentManager] Failed to stop agent: ", result[1])
+	
+	http.queue_free()
+
+# Get cache statistics
+func get_cache_stats() -> Dictionary:
+	"""Get Redis cache statistics"""
+	if not _backend_available:
+		return {}
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/api/v1/cache/stats" % api_config.backend_url
+	var error = http.request(url, [], HTTPClient.METHOD_GET)
+	
+	var stats = {}
+	
+	if error == OK:
+		var result = await http.request_completed
+		if result[1] == 200:
+			stats = JSON.parse_string(result[3].get_string_from_utf8())
+			print("[AIAgentManager] Cache stats: ", stats)
+	
+	http.queue_free()
+	return stats
+
+# Clear cache
+func clear_cache() -> void:
+	"""Clear all cached data"""
+	if not _backend_available:
+		return
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/api/v1/cache/clear" % api_config.backend_url
+	var error = http.request(url, [], HTTPClient.METHOD_POST)
+	
+	if error == OK:
+		var result = await http.request_completed
+		if result[1] == 200:
+			print("[AIAgentManager] Cache cleared")
+			response_cache.clear()
+	
+	http.queue_free()
+
+# Setup WebSocket connection for real-time events
+func setup_websocket(client_id: String = "player1") -> void:
+	"""Initialize WebSocket connection for real-time communication"""
+	if has_node("/root/WebSocketClient"):
+		print("[AIAgentManager] WebSocket already initialized")
+		return
+	
+	var ws_client = preload("res://autoload/websocket_client.gd").new()
+	ws_client.client_id = client_id
+	get_tree().root.add_child(ws_client)
+	
+	# Connect signals
+	ws_client.connection_status_changed.connect(_on_ws_connection_changed)
+	ws_client.npc_dialogue_received.connect(_on_ws_npc_dialogue)
+	ws_client.agent_action_received.connect(_on_ws_agent_action)
+	ws_client.world_event_received.connect(_on_ws_world_event)
+	
+	print("[AIAgentManager] WebSocket client initialized")
+
+# Subscribe to specific event types
+func subscribe_to_events(event_types: Array) -> void:
+	"""Subscribe to WebSocket events"""
+	if not has_node("/root/WebSocketClient"):
+		setup_websocket()
+	
+	var ws_client = get_node_or_null("/root/WebSocketClient")
+	if ws_client:
+		for event_type in event_types:
+			ws_client.subscribe_to_event(event_type)
+			print("[AIAgentManager] Subscribed to: ", event_type)
+
+# WebSocket signal handlers
+func _on_ws_connection_changed(status: bool):
+	"""Handle WebSocket connection status changes"""
+	print("[AIAgentManager] WebSocket connection: ", "connected" if status else "disconnected")
+
+func _on_ws_npc_dialogue(npc_id: String, dialogue: String, emotion: String):
+	"""Handle NPC dialogue received via WebSocket"""
+	print("[AIAgentManager] Real-time dialogue from ", npc_id, ": ", dialogue)
+	dialogue_generated.emit(npc_id, dialogue)
+
+func _on_ws_agent_action(npc_id: String, action: String, result: Dictionary):
+	"""Handle autonomous agent actions"""
+	print("[AIAgentManager] Agent action: ", npc_id, " -> ", action)
+	# Could trigger animations, sound effects, etc.
+
+func _on_ws_world_event(event_type: String, data: Dictionary):
+	"""Handle world events"""
+	print("[AIAgentManager] World event: ", event_type, " - ", data)
+	# Could update weather, time, etc.
