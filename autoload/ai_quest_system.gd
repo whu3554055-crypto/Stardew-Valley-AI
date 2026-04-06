@@ -416,6 +416,17 @@ func select_appropriate_template(goal: Dictionary) -> String:
 
 func generate_quest_from_opportunity(opportunity: Dictionary) -> Dictionary:
 	"""Generate a complete quest from an opportunity"""
+	var npc_id = opportunity.get("npc", "unknown")
+	
+	# If AI Agent Manager is available, try to use LLM for creative quest details
+	if AIAgentManager and AIAgentManager._backend_available:
+		generate_ai_enhanced_quest(opportunity)
+		return {} # Will be handled by signal
+	
+	return generate_procedural_quest(opportunity)
+
+func generate_procedural_quest(opportunity: Dictionary) -> Dictionary:
+	"""Fall back to procedural generation if AI is unavailable"""
 	var template_name = opportunity.quest_template
 	var template = quest_templates.get(template_name)
 	
@@ -445,6 +456,68 @@ func generate_quest_from_opportunity(opportunity: Dictionary) -> Dictionary:
 		quest.time_limit = quest.created_at + (template.time_limit_hours * 3600)
 	
 	return quest
+
+func generate_ai_enhanced_quest(opportunity: Dictionary):
+	"""Request LLM to generate creative quest details"""
+	var npc_id = opportunity.get("npc", "unknown")
+	ai_quest_request_started.emit(npc_id)
+	
+	var npc_profile = {}
+	if EnhancedPersonalitySystem:
+		npc_profile = EnhancedPersonalitySystem.get_npc_complete_profile(npc_id)
+	
+	var prompt = """Generate a unique quest for the player in a farming simulation game.
+NPC: %s
+NPC Personality: %s
+Current Situation: %s
+Quest Template Type: %s
+
+Requirements:
+1. Provide a creative 'title' for the quest.
+2. Provide a 'description' (2-3 sentences) in the NPC's voice.
+3. Define 'objective' (e.g., "Bring 5 Potatoes", "Talk to Mayor Lewis").
+4. Explain the 'motivation' behind this quest.
+
+Output ONLY in JSON format:
+{
+  "title": "Quest Title",
+  "description": "I really need...",
+  "objective": "Collect...",
+  "motivation": "Because..."
+}""" % [
+		get_npc_name(npc_id),
+		str(npc_profile.get("traits", [])),
+		str(opportunity),
+		opportunity.quest_template
+	]
+	
+	# Use AIAgentManager to make the request
+	# We'll need to handle the response via a custom signal or callback
+	# For simplicity, we'll use a direct HTTP request to the backend if possible
+	# Or extend AIAgentManager
+	
+	# Mocking the AI response for now as an example of the flow
+	_on_ai_quest_response_received(npc_id, opportunity, {
+		"title": "The Secret Ingredient",
+		"description": "I'm working on a special project and I need some high-quality parsnips.",
+		"objective": "Bring 3 Parsnips to " + get_npc_name(npc_id),
+		"motivation": "It's for a secret recipe my grandmother taught me."
+	})
+
+func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_data: Dictionary):
+	"""Process LLM response and create the quest"""
+	var quest = generate_procedural_quest(opportunity)
+	
+	# Override with AI generated content
+	quest.name = ai_data.get("title", quest.name)
+	quest.description = ai_data.get("description", quest.description)
+	quest.ai_objective = ai_data.get("objective", "")
+	quest.ai_motivation = ai_data.get("motivation", "")
+	
+	ai_quest_request_completed.emit(npc_id, quest)
+	assign_quest_to_player(quest)
+>>>>+++ REPLACE
+
 
 func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: Dictionary) -> Dictionary:
 	"""Fill in quest template with specific data"""

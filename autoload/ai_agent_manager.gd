@@ -313,6 +313,41 @@ func update_npc_mood(
 		"duration": mood_change.get("duration", 60.0)
 	}
 
+# Generate quest using AI agent
+func generate_quest(
+	npc_id: String,
+	prompt: String
+) -> void:
+	if not _backend_available:
+		return
+		
+	var http = HTTPRequest.new()
+	add_child(http)
+	
+	var url = "%s/api/v1/agent/%s/task" % [api_config.backend_url, npc_id]
+	var headers = ["Content-Type: application/json"]
+	var body = JSON.stringify({
+		"task_type": "quest_generation",
+		"prompt": prompt
+	})
+	
+	var error = http.request(url, headers, HTTPClient.METHOD_POST, body)
+	if error != OK:
+		agent_error.emit(npc_id, "Quest generation request failed")
+		http.queue_free()
+		return
+	
+	var result = await http.request_completed
+	if result[1] == 200:
+		var response = JSON.parse_string(result[3].get_string_from_utf8())
+		# This would ideally emit a specific signal that AIQuestSystem listens to
+		# For now we use dialogue_generated as a placeholder or could add a new signal
+		dialogue_generated.emit(npc_id, JSON.stringify(response.get("result", {})))
+	
+	http.queue_free()
+>>>>+++ REPLACE
+
+
 
 # ============================================================================
 # Phase 1 & 2 Features - Agent Control and WebSocket Integration
