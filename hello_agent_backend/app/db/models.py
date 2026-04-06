@@ -70,6 +70,8 @@ class GameDatabase:
                         mood TEXT DEFAULT 'neutral',
                         energy INTEGER DEFAULT 100,
                         schedule TEXT DEFAULT '',
+                        personality TEXT DEFAULT '{}',
+                        occupation TEXT DEFAULT '',
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
