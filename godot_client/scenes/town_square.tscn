@@ -1,0 +1,136 @@
+[gd_scene load_steps=12 format=3 uid="uid://town_square"]
+
+[ext_resource type="Script" path="res://scripts/town_square.gd" id="1_town"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/town/cobblestone_tile.png" id="2_cobble"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/town/street_lamp.png" id="3_lamp"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/town/bench.png" id="4_bench"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/town/trash_can.png" id="5_trash"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/town/flower_pot.png" id="6_flower"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/greenery/bush_small.png" id="7_bush"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/water/water_tile.png" id="8_water"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="9_player"]
+[ext_resource type="PackedScene" uid="uid://interactable" path="res://scenes/interactable_object.tscn" id="10_interact"]
+[ext_resource type="Script" path="res://scripts/player_controller.gd" id="11_player_ctrl"]
+
+[node name="TownSquare" type="Node2D"]
+script = ExtResource("1_town")
+
+# 地面层
+[node name="Ground" type="TileMapLayer" parent="."]
+
+# 装饰层
+[node name="Decorations" type="Node2D" parent="."]
+
+[node name="StreetLamp1" type="Sprite2D" parent="Decorations"]
+position = Vector2(200, 150)
+texture = ExtResource("3_lamp")
+
+[node name="StreetLamp2" type="Sprite2D" parent="Decorations"]
+position = Vector2(600, 150)
+texture = ExtResource("3_lamp")
+
+[node name="Bench1" type="Sprite2D" parent="Decorations"]
+position = Vector2(350, 300)
+texture = ExtResource("4_bench")
+
+[node name="Bench2" type="Sprite2D" parent="Decorations"]
+position = Vector2(550, 300)
+texture = ExtResource("4_bench")
+
+[node name="TrashCan" type="Sprite2D" parent="Decorations"]
+position = Vector2(450, 250)
+texture = ExtResource("5_trash")
+
+[node name="FlowerPot1" type="Sprite2D" parent="Decorations"]
+position = Vector2(300, 280)
+texture = ExtResource("6_flower")
+
+[node name="FlowerPot2" type="Sprite2D" parent="Decorations"]
+position = Vector2(500, 280)
+texture = ExtResource("6_flower")
+
+[node name="Bush1" type="Sprite2D" parent="Decorations"]
+position = Vector2(150, 350)
+texture = ExtResource("7_bush")
+
+[node name="Bush2" type="Sprite2D" parent="Decorations"]
+position = Vector2(700, 350)
+texture = ExtResource("7_bush")
+
+# 河流区域
+[node name="River" type="Node2D" parent="."]
+
+[node name="Water1" type="Sprite2D" parent="River"]
+position = Vector2(100, 450)
+texture = ExtResource("8_water")
+
+[node name="Water2" type="Sprite2D" parent="River"]
+position = Vector2(164, 450)
+texture = ExtResource("8_water")
+
+[node name="Water3" type="Sprite2D" parent="River"]
+position = Vector2(228, 450)
+texture = ExtResource("8_water")
+
+[node name="Water4" type="Sprite2D" parent="River"]
+position = Vector2(292, 450)
+texture = ExtResource("8_water")
+
+[node name="Water5" type="Sprite2D" parent="River"]
+position = Vector2(356, 450)
+texture = ExtResource("8_water")
+
+[node name="Water6" type="Sprite2D" parent="River"]
+position = Vector2(420, 450)
+texture = ExtResource("8_water")
+
+[node name="Water7" type="Sprite2D" parent="River"]
+position = Vector2(484, 450)
+texture = ExtResource("8_water")
+
+[node name="Water8" type="Sprite2D" parent="River"]
+position = Vector2(548, 450)
+texture = ExtResource("8_water")
+
+# 可互动对象
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="InteractBench1" parent="Interactables" instance=ExtResource("10_interact")]
+position = Vector2(350, 300)
+interact_type = "bench"
+interact_name = "长椅"
+interaction_text = "坐下休息"
+
+[node name="InteractTrash" parent="Interactables" instance=ExtResource("10_interact")]
+position = Vector2(450, 250)
+interact_type = "trash_can"
+interact_name = "垃圾桶"
+interaction_text = "查看"
+
+[node name="InteractFlower1" parent="Interactables" instance=ExtResource("10_interact")]
+position = Vector2(300, 280)
+interact_type = "flower"
+interact_name = "花盆"
+interaction_text = "闻花香"
+
+# 玩家
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(400, 200)
+script = ExtResource("11_player_ctrl")
+
+[node name="PlayerSprite" type="Sprite2D" parent="Player"]
+position = Vector2(0, -32)
+texture = ExtResource("9_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("RectangleShape2D_player")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(32, 32)
+
+# 环境音效
+[node name="AmbientAudio" type="AudioStreamPlayer" parent="."]
+volume_db = -18.0
+
+[node name="BirdsAudio" type="AudioStreamPlayer" parent="."]
+volume_db = -20.0
