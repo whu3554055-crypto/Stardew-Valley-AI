@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3 uid="uid://recipe_picker_ui"]
+
+[ext_resource type="Script" path="res://scripts/recipe_picker.gd" id="1_rp"]
+
+[node name="RecipePicker" type="Panel"]
+visible = false
+z_index = 100
+offset_left = 200.0
+offset_top = 80.0
+offset_right = 1080.0
+offset_bottom = 600.0
+script = ExtResource("1_rp")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "配方"
+
+[node name="ItemList" type="ItemList" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 280)
+
+[node name="Detail" type="Label" parent="Margin/VBox"]
+layout_mode = 2
+autowrap_mode = 2
+custom_minimum_size = Vector2(0, 88)
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+
+[node name="Confirm" type="Button" parent="Margin/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "制作"
+
+[node name="Close" type="Button" parent="Margin/VBox/Buttons"]
+layout_mode = 2
+text = "关闭"

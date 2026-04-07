@@ -73,6 +73,7 @@ toggle_almanac={
 GameManager="*res://autoload/game_manager.gd"
 InventoryManager="*res://autoload/inventory_manager.gd"
 ItemDatabase="*res://autoload/item_database.gd"
+RecipeCatalog="*res://autoload/recipe_catalog.gd"
 GatheringAlmanac="*res://autoload/gathering_almanac.gd"
 ShopSystem="*res://autoload/shop_system.gd"
 WeatherSystem="*res://autoload/weather_system.gd"

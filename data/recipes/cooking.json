@@ -1,0 +1,58 @@
+[
+  {
+    "id": "fish_sandwich",
+    "output_id": "fish_sandwich",
+    "output_qty": 1,
+    "inputs": { "bread": 1, "fish_sardine": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "grilled_sardine",
+    "output_id": "grilled_sardine",
+    "output_qty": 1,
+    "inputs": { "fish_sardine": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "grilled_perch",
+    "output_id": "grilled_perch",
+    "output_qty": 1,
+    "inputs": { "fish_perch": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "grilled_trout",
+    "output_id": "grilled_trout",
+    "output_qty": 1,
+    "inputs": { "fish_trout": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "grilled_carp",
+    "output_id": "grilled_carp",
+    "output_qty": 1,
+    "inputs": { "fish_carp": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "roasted_parsnip",
+    "output_id": "roasted_parsnip",
+    "output_qty": 1,
+    "inputs": { "parsnip": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "baked_potato",
+    "output_id": "baked_potato",
+    "output_qty": 1,
+    "inputs": { "potato": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "roasted_cauliflower",
+    "output_id": "roasted_cauliflower",
+    "output_qty": 1,
+    "inputs": { "cauliflower": 1 },
+    "stamina": 2
+  }
+]

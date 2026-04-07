@@ -1,54 +1,38 @@
 extends Node
 
-## Matches KitchenArea in main scene (counter south-east of farm).
-const KITCHEN_X_MIN := 600.0
-const KITCHEN_X_MAX := 820.0
-const KITCHEN_Y_MIN := 260.0
-const KITCHEN_Y_MAX := 430.0
-
 func can_cook_here(player_pos: Vector2) -> bool:
-	return player_pos.x >= KITCHEN_X_MIN and player_pos.x <= KITCHEN_X_MAX \
-		and player_pos.y >= KITCHEN_Y_MIN and player_pos.y <= KITCHEN_Y_MAX
+	return GameZones.contains_kitchen(player_pos)
 
-func try_cook_one() -> Dictionary:
-	var recipes: Array = [
-		{"in": {"bread": 1, "fish_sardine": 1}, "out": "fish_sandwich", "qty": 1},
-		{"in": {"fish_sardine": 1}, "out": "grilled_sardine", "qty": 1},
-		{"in": {"fish_perch": 1}, "out": "grilled_perch", "qty": 1},
-		{"in": {"fish_trout": 1}, "out": "grilled_trout", "qty": 1},
-		{"in": {"fish_carp": 1}, "out": "grilled_carp", "qty": 1},
-		{"in": {"parsnip": 1}, "out": "roasted_parsnip", "qty": 1},
-		{"in": {"potato": 1}, "out": "baked_potato", "qty": 1},
-		{"in": {"cauliflower": 1}, "out": "roasted_cauliflower", "qty": 1},
-	]
-	for r in recipes:
-		var cost: Dictionary = r.get("in", {})
-		if not _can_afford(cost):
-			continue
-		var out_id: String = str(r.get("out", ""))
-		var template: Dictionary = ItemDatabase.get_item(out_id)
-		if template.is_empty():
-			return {"ok": false, "message": "Recipe output missing."}
-		var qty: int = int(r.get("qty", 1))
-		if not InventoryManager.can_add_quantity(template, qty):
-			var nm: String = str(template.get("name", out_id))
-			return {"ok": false, "message": "Inventory full — need room for %s ×%d." % [nm, qty]}
-		if GameManager and not GameManager.try_consume_stamina(2.0):
-			return {"ok": false, "message": "Too tired to cook."}
-		for i in range(qty):
-			if not InventoryManager.add_item(template.duplicate(true)):
-				return {"ok": false, "message": "Inventory full."}
-		_consume(cost)
-		if QuestSystem:
-			QuestSystem.track_event("cook_meal", {"dish_id": out_id, "count": 1})
-		if GatheringSfx:
-			GatheringSfx.play_cook()
-		var nm2: String = str(template.get("name", out_id))
-		return {"ok": true, "message": "Cooked: %s" % nm2}
-	var hint: String = RecipeHelpers.hint_first_unaffordable(recipes)
-	if hint.is_empty():
-		return {"ok": false, "message": "Nothing to cook."}
-	return {"ok": false, "message": "Can't cook yet. %s" % hint}
+func get_recipe_list() -> Array:
+	if RecipeCatalog:
+		return RecipeCatalog.cooking_recipes
+	return []
+
+func try_recipe(recipe: Dictionary) -> Dictionary:
+	var cost: Dictionary = RecipeHelpers.recipe_cost(recipe)
+	if not _can_afford(cost):
+		return {"ok": false, "message": "Not enough ingredients."}
+	var out_id: String = RecipeHelpers.recipe_output_id(recipe)
+	var template: Dictionary = ItemDatabase.get_item(out_id)
+	if template.is_empty():
+		return {"ok": false, "message": "Recipe output missing."}
+	var qty: int = int(recipe.get("output_qty", recipe.get("qty", 1)))
+	var stamina_cost: float = float(recipe.get("stamina", 2.0))
+	if not InventoryManager.can_add_quantity(template, qty):
+		var nm: String = str(template.get("name", out_id))
+		return {"ok": false, "message": "Inventory full — need room for %s ×%d." % [nm, qty]}
+	if GameManager and not GameManager.try_consume_stamina(stamina_cost):
+		return {"ok": false, "message": "Too tired to cook."}
+	for i in range(qty):
+		if not InventoryManager.add_item(template.duplicate(true)):
+			return {"ok": false, "message": "Inventory full."}
+	_consume(cost)
+	if QuestSystem:
+		QuestSystem.track_event("cook_meal", {"dish_id": out_id, "count": 1})
+	if GatheringSfx:
+		GatheringSfx.play_cook()
+	var nm2: String = str(template.get("name", out_id))
+	return {"ok": true, "message": "Cooked: %s" % nm2}
 
 func _can_afford(costs: Dictionary) -> bool:
 	for k in costs.keys():

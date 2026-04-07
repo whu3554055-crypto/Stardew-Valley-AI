@@ -1,51 +1,40 @@
 extends Node
 
-## Matches SmelterArea in main scene (rough forge slab near farm).
-const SMELTER_X_MIN := 380.0
-const SMELTER_X_MAX := 580.0
-const SMELTER_Y_MIN := 70.0
-const SMELTER_Y_MAX := 260.0
-
 func can_smelt_here(player_pos: Vector2) -> bool:
-	return player_pos.x >= SMELTER_X_MIN and player_pos.x <= SMELTER_X_MAX \
-		and player_pos.y >= SMELTER_Y_MIN and player_pos.y <= SMELTER_Y_MAX
+	return GameZones.contains_smelter(player_pos)
 
-func try_smelt_one() -> Dictionary:
-	var recipes: Array = [
-		{"in": {"copper_ore": 5, "coal": 1}, "out": "copper_bar", "qty": 1},
-		{"in": {"iron_ore": 5, "coal": 1}, "out": "iron_bar", "qty": 1},
-		{"in": {"gold_ore": 5, "coal": 2}, "out": "gold_bar", "qty": 1},
-	]
-	for r in recipes:
-		var cost: Dictionary = r.get("in", {})
-		if not _can_afford(cost):
-			continue
-		var out_id: String = str(r.get("out", ""))
-		var template: Dictionary = ItemDatabase.get_item(out_id)
-		if template.is_empty():
-			return {"ok": false, "message": "Recipe output missing."}
-		var qty: int = int(r.get("qty", 1))
-		if not InventoryManager.can_add_quantity(template, qty):
-			var nm: String = str(template.get("name", out_id))
-			return {"ok": false, "message": "Inventory full — need room for %s ×%d." % [nm, qty]}
-		if GameManager and not GameManager.try_consume_stamina(3.0):
-			return {"ok": false, "message": "Too tired to work the furnace."}
-		for i in range(qty):
-			if not InventoryManager.add_item(template.duplicate(true)):
-				return {"ok": false, "message": "Inventory full."}
-		_consume(cost)
-		if GatheringAlmanac:
-			GatheringAlmanac.record_smelt(out_id)
-		if QuestSystem:
-			QuestSystem.track_event("smelt_bar", {"bar_id": out_id, "count": 1})
-		if GatheringSfx:
-			GatheringSfx.play_smelt()
-		var nm2: String = str(template.get("name", out_id))
-		return {"ok": true, "message": "Smelted: %s" % nm2}
-	var hint: String = RecipeHelpers.hint_first_unaffordable(recipes)
-	if hint.is_empty():
-		return {"ok": false, "message": "Nothing to smelt."}
-	return {"ok": false, "message": "Can't smelt yet. %s" % hint}
+func get_recipe_list() -> Array:
+	if RecipeCatalog:
+		return RecipeCatalog.smelting_recipes
+	return []
+
+func try_recipe(recipe: Dictionary) -> Dictionary:
+	var cost: Dictionary = RecipeHelpers.recipe_cost(recipe)
+	if not _can_afford(cost):
+		return {"ok": false, "message": "Not enough ore or coal."}
+	var out_id: String = RecipeHelpers.recipe_output_id(recipe)
+	var template: Dictionary = ItemDatabase.get_item(out_id)
+	if template.is_empty():
+		return {"ok": false, "message": "Recipe output missing."}
+	var qty: int = int(recipe.get("output_qty", recipe.get("qty", 1)))
+	var stamina_cost: float = float(recipe.get("stamina", 3.0))
+	if not InventoryManager.can_add_quantity(template, qty):
+		var nm: String = str(template.get("name", out_id))
+		return {"ok": false, "message": "Inventory full — need room for %s ×%d." % [nm, qty]}
+	if GameManager and not GameManager.try_consume_stamina(stamina_cost):
+		return {"ok": false, "message": "Too tired to work the furnace."}
+	for i in range(qty):
+		if not InventoryManager.add_item(template.duplicate(true)):
+			return {"ok": false, "message": "Inventory full."}
+	_consume(cost)
+	if GatheringAlmanac:
+		GatheringAlmanac.record_smelt(out_id)
+	if QuestSystem:
+		QuestSystem.track_event("smelt_bar", {"bar_id": out_id, "count": 1})
+	if GatheringSfx:
+		GatheringSfx.play_smelt()
+	var nm2: String = str(template.get("name", out_id))
+	return {"ok": true, "message": "Smelted: %s" % nm2}
 
 func _can_afford(costs: Dictionary) -> bool:
 	for k in costs.keys():

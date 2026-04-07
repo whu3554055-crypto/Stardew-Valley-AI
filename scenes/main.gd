@@ -18,6 +18,7 @@ extends Node2D
 @onready var fx_fish = $FXLayer/FishSplash
 @onready var fx_mine = $FXLayer/MineSpark
 @onready var almanac_panel = $UILayer/AlmanacPanel
+@onready var recipe_picker = $UILayer/RecipePicker
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -59,7 +60,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen | smelter | workbench craft | fish | mine | chop (axe, west) | eat | J = collection")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | J = collection")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -158,6 +159,24 @@ func _try_harvest_facing_tile(tile_coords: Vector2i) -> bool:
 	update_ui()
 	return true
 
+func _on_recipe_chosen(recipe: Dictionary, mode: String) -> void:
+	var result: Dictionary = {}
+	match mode:
+		"cooking":
+			result = CookingSystem.try_recipe(recipe)
+		"smelting":
+			result = SmeltingSystem.try_recipe(recipe)
+		"crafting":
+			result = CraftingSystem.try_recipe(recipe)
+	var msg: String = str(result.get("message", ""))
+	if result.get("ok", false):
+		show_dialogue(msg)
+		record_world_event(msg)
+	else:
+		if not msg.is_empty():
+			show_dialogue(msg)
+	update_ui()
+
 func _on_player_interact(tile_position: Vector2):
 	var tile_coords = tilemap.local_to_map(tile_position)
 
@@ -169,50 +188,30 @@ func _on_player_interact(tile_position: Vector2):
 			QuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
 		return
 
+	if recipe_picker and recipe_picker.visible:
+		recipe_picker.close_picker()
+		return
+
 	var selected_item = InventoryManager.get_selected_item()
 
 	# Harvest ripe crop (empty hands only — avoids conflict with eating while holding food)
 	if selected_item == null and _try_harvest_facing_tile(tile_coords):
 		return
 
-	# Kitchen / cooking (empty hands, counter south-east)
-	if selected_item == null and CookingSystem:
-		if CookingSystem.can_cook_here(player.global_position):
-			var cook_result: Dictionary = CookingSystem.try_cook_one()
-			var ck_msg: String = str(cook_result.get("message", ""))
-			if cook_result.get("ok", false):
-				show_dialogue(ck_msg)
-				record_world_event(ck_msg)
-				return
-			if not ck_msg.is_empty():
-				show_dialogue(ck_msg)
-				return
+	# Kitchen / cooking — recipe picker (empty hands)
+	if selected_item == null and CookingSystem and recipe_picker and CookingSystem.can_cook_here(player.global_position):
+		recipe_picker.open_picker("cooking", CookingSystem.get_recipe_list())
+		return
 
-	# Furnace / smelting (empty hands, brown slab north of farm)
-	if selected_item == null and SmeltingSystem:
-		if SmeltingSystem.can_smelt_here(player.global_position):
-			var smelt_result: Dictionary = SmeltingSystem.try_smelt_one()
-			var sm_msg: String = str(smelt_result.get("message", ""))
-			if smelt_result.get("ok", false):
-				show_dialogue(sm_msg)
-				record_world_event(sm_msg)
-				return
-			if not sm_msg.is_empty():
-				show_dialogue(sm_msg)
-				return
+	# Furnace / smelting — recipe picker
+	if selected_item == null and SmeltingSystem and recipe_picker and SmeltingSystem.can_smelt_here(player.global_position):
+		recipe_picker.open_picker("smelting", SmeltingSystem.get_recipe_list())
+		return
 
-	# Workbench / crafting (empty hands, east of kitchen)
-	if selected_item == null and CraftingSystem:
-		if CraftingSystem.can_craft_here(player.global_position):
-			var craft_result: Dictionary = CraftingSystem.try_craft_one()
-			var cr_msg: String = str(craft_result.get("message", ""))
-			if craft_result.get("ok", false):
-				show_dialogue(cr_msg)
-				record_world_event(cr_msg)
-				return
-			if not cr_msg.is_empty():
-				show_dialogue(cr_msg)
-				return
+	# Workbench / crafting — recipe picker
+	if selected_item == null and CraftingSystem and recipe_picker and CraftingSystem.can_craft_here(player.global_position):
+		recipe_picker.open_picker("crafting", CraftingSystem.get_recipe_list())
+		return
 
 	# Fishing: equip rod; ocean (south) or river (right); bite QTE — second E in time window
 	if selected_item and str(selected_item.get("id", "")) == "fishing_rod" and FishingSystem:

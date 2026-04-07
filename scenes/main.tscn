@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=13 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/npc_abigail.tscn" id="7_abigail"]
 [ext_resource type="PackedScene" path="res://scenes/npc_lewis.tscn" id="8_lewis"]
 [ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="10_inv"]
+[ext_resource type="PackedScene" path="res://scenes/recipe_picker.tscn" id="11_rp"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -88,16 +89,16 @@ horizontal_alignment = 1
 
 [node name="ForestArea" type="Node2D" parent="."]
 z_index = -2
-position = Vector2(40, 90)
+position = Vector2(40, 95)
 
 [node name="ForestFloor" type="Polygon2D" parent="ForestArea"]
 color = Color(0.22, 0.42, 0.24, 0.55)
-polygon = PackedVector2Array(0, 0, 300, 0, 300, 195, 0, 195)
+polygon = PackedVector2Array(0, 0, 280, 0, 280, 180, 0, 180)
 
 [node name="ForestHint" type="Label" parent="ForestArea"]
 offset_left = 0.0
 offset_top = -24.0
-offset_right = 300.0
+offset_right = 280.0
 offset_bottom = 0.0
 theme_override_font_sizes/font_size = 12
 text = "Forest — axe (E) to chop wood"
@@ -323,6 +324,8 @@ text = ""
 
 [node name="QuickTipTimer" type="Timer" parent="UILayer"]
 one_shot = true
+
+[node name="RecipePicker" parent="UILayer" instance=ExtResource("11_rp")]
 
 [node name="WorldEventFeed" type="Panel" parent="UILayer"]
 offset_left = 930.0

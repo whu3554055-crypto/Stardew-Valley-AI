@@ -1,0 +1,23 @@
+[
+  {
+    "id": "copper_bar",
+    "output_id": "copper_bar",
+    "output_qty": 1,
+    "inputs": { "copper_ore": 5, "coal": 1 },
+    "stamina": 3
+  },
+  {
+    "id": "iron_bar",
+    "output_id": "iron_bar",
+    "output_qty": 1,
+    "inputs": { "iron_ore": 5, "coal": 1 },
+    "stamina": 3
+  },
+  {
+    "id": "gold_bar",
+    "output_id": "gold_bar",
+    "output_qty": 1,
+    "inputs": { "gold_ore": 5, "coal": 2 },
+    "stamina": 3
+  }
+]

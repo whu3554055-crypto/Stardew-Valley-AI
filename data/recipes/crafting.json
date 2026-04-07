@@ -1,0 +1,16 @@
+[
+  {
+    "id": "worm_bait_bundle",
+    "output_id": "worm_bait",
+    "output_qty": 5,
+    "inputs": { "wood_log": 2, "coal": 1 },
+    "stamina": 3
+  },
+  {
+    "id": "sprinkler_frame",
+    "output_id": "sprinkler_basic",
+    "output_qty": 1,
+    "inputs": { "wood_log": 3, "copper_bar": 1 },
+    "stamina": 3
+  }
+]

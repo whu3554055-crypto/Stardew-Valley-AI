@@ -1,14 +1,7 @@
 extends Node
 
-## Forest patch west of farm (no overlap with MineArea y>=300).
-const FOREST_X_MIN := 40.0
-const FOREST_X_MAX := 340.0
-const FOREST_Y_MIN := 90.0
-const FOREST_Y_MAX := 285.0
-
 func can_chop_here(player_pos: Vector2) -> bool:
-	return player_pos.x >= FOREST_X_MIN and player_pos.x <= FOREST_X_MAX \
-		and player_pos.y >= FOREST_Y_MIN and player_pos.y <= FOREST_Y_MAX
+	return GameZones.contains_forest(player_pos)
 
 func try_chop_one() -> Dictionary:
 	var template: Dictionary = ItemDatabase.get_item("wood_log")

@@ -1,6 +1,14 @@
 class_name RecipeHelpers
 extends RefCounted
 
+static func recipe_cost(recipe: Dictionary) -> Dictionary:
+	if recipe.has("inputs"):
+		return recipe["inputs"]
+	return recipe.get("in", {})
+
+static func recipe_output_id(recipe: Dictionary) -> String:
+	return str(recipe.get("output_id", recipe.get("out", "")))
+
 ## Lists only materials where have < need: "Coal 0/1, Wood 1/2"
 static func format_material_gap(costs: Dictionary) -> String:
 	var parts: PackedStringArray = PackedStringArray()
@@ -20,7 +28,7 @@ static func format_material_gap(costs: Dictionary) -> String:
 ## First recipe in list the player cannot afford — for failure hints.
 static func hint_first_unaffordable(recipes: Array) -> String:
 	for r in recipes:
-		var cost: Dictionary = r.get("in", {})
+		var cost: Dictionary = recipe_cost(r)
 		var affordable := true
 		for k in cost.keys():
 			if InventoryManager.count_item(str(k)) < int(cost[k]):
@@ -28,7 +36,7 @@ static func hint_first_unaffordable(recipes: Array) -> String:
 				break
 		if affordable:
 			continue
-		var out_id: String = str(r.get("out", ""))
+		var out_id: String = recipe_output_id(r)
 		var label: String = str(ItemDatabase.get_item(out_id).get("name", out_id))
 		var gap: String = format_material_gap(cost)
 		if gap.is_empty():
