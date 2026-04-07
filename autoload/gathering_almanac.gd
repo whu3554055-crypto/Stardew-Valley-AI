@@ -44,7 +44,12 @@ func save_data() -> void:
 	var f = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if not f:
 		return
-	f.store_var({"fish": fish_caught, "minerals": minerals_mined, "smelted": smelted_bars})
+	f.store_var({
+		"fish": fish_caught,
+		"minerals": minerals_mined,
+		"smelted": smelted_bars,
+		"meals": meals_cooked
+	})
 	f.close()
 
 func load_data() -> void:

@@ -289,3 +289,43 @@ func add_story_daily_quest(event_data: Dictionary):
 	}
 	start_quest(quest_id)
 	last_story_quest_day_key = day_key
+
+
+func save_snapshot() -> Dictionary:
+	var qd: Dictionary = {}
+	for qid in quests.keys():
+		qd[qid] = _serialize_quest_entry(quests[qid])
+	return {
+		"quests": qd,
+		"active_quests": active_quests.duplicate(),
+		"completed_quests": completed_quests.duplicate(),
+		"last_story_quest_day_key": last_story_quest_day_key
+	}
+
+
+func _serialize_quest_entry(q: Dictionary) -> Dictionary:
+	var out: Dictionary = q.duplicate(true)
+	out["status"] = int(q.get("status", QuestStatus.NOT_STARTED))
+	return out
+
+
+func load_snapshot(data: Variant) -> void:
+	if not data is Dictionary:
+		return
+	var d: Dictionary = data
+	if d.has("last_story_quest_day_key"):
+		last_story_quest_day_key = str(d["last_story_quest_day_key"])
+	if d.get("active_quests") is Array:
+		active_quests = d["active_quests"].duplicate()
+	if d.get("completed_quests") is Array:
+		completed_quests = d["completed_quests"].duplicate()
+	if d.get("quests") is Dictionary:
+		var qsave: Dictionary = d["quests"]
+		for qid in qsave.keys():
+			var saved: Dictionary = qsave[qid].duplicate(true)
+			if saved.has("status"):
+				saved["status"] = int(saved["status"])
+			quests[qid] = saved
+	for qid in completed_quests:
+		if active_quests.has(qid):
+			active_quests.erase(qid)
