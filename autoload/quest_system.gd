@@ -145,8 +145,16 @@ func track_event(event_type: String, data: Dictionary):
 		for i in range(quest.objectives.size()):
 			var objective = quest.objectives[i]
 			if objective.type == event_type:
-				if data.get("crop_id") == objective.get("crop_id") or objective.get("crop_id") == null:
+				if _objective_matches_event(objective, data):
 					update_quest_progress(quest_id, i, data.get("count", 1))
+
+func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
+	"""Generic matcher for objective/event payload compatibility."""
+	if objective.has("crop_id"):
+		return data.get("crop_id") == objective.get("crop_id")
+	if objective.has("npc_id"):
+		return data.get("npc_id") == objective.get("npc_id")
+	return true
 
 func add_story_daily_quest(event_data: Dictionary):
 	"""

@@ -84,6 +84,8 @@ func _on_player_interact(tile_position: Vector2):
 	if current_npc:
 		var dialogue = current_npc.interact()
 		show_dialogue(dialogue)
+		if QuestSystem:
+			QuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
 		return
 
 	# Farming interactions
