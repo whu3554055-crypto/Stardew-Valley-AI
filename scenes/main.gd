@@ -49,7 +49,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E to interact with NPCs; walk to the bottom (y>480) with empty hands to fish")
+	print("Press E: NPCs | fish (bottom, empty hands) | mine (left gray cave, pickaxe selected)")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -83,6 +83,9 @@ func give_starter_items():
 	if not parsnip_seeds.is_empty():
 		for i in range(5):
 			InventoryManager.add_item(parsnip_seeds.duplicate(true))
+	var pickaxe_item = ItemDatabase.get_item("pickaxe")
+	if not pickaxe_item.is_empty():
+		InventoryManager.add_item(pickaxe_item.duplicate(true))
 
 func _on_player_interact(tile_position: Vector2):
 	var tile_coords = tilemap.local_to_map(tile_position)
@@ -107,6 +110,19 @@ func _on_player_interact(tile_position: Vector2):
 				return
 			if not fish_msg.is_empty():
 				show_dialogue(fish_msg)
+				return
+
+	# Mining MVP: pickaxe equipped, standing in mine region (see MiningSystem bounds / MineArea node)
+	if selected_item and str(selected_item.get("id", "")) == "pickaxe" and MiningSystem:
+		if MiningSystem.can_mine_here(player.global_position):
+			var mine_result: Dictionary = MiningSystem.try_swing(player.global_position)
+			var mine_msg: String = str(mine_result.get("message", ""))
+			if mine_result.get("ok", false):
+				show_dialogue(mine_msg)
+				record_world_event(mine_msg)
+				return
+			if not mine_msg.is_empty():
+				show_dialogue(mine_msg)
 				return
 
 	# Farming interactions

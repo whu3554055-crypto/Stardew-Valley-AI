@@ -87,6 +87,7 @@ AIEventSystem="*res://autoload/ai_event_system.gd"
 AIQuestSystem="*res://autoload/ai_quest_system.gd"
 DailyNarrativeSystem="*res://autoload/daily_narrative_system.gd"
 FishingSystem="*res://autoload/fishing_system.gd"
+MiningSystem="*res://autoload/mining_system.gd"
 
 [rendering]
 

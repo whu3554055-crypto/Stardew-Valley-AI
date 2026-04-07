@@ -149,6 +149,37 @@ func initialize_items():
 		"sell_price": 2
 	}
 
+	# Mining (MVP)
+	items["stone_chunk"] = {
+		"id": "stone_chunk",
+		"name": "Stone",
+		"description": "Rough stone from the cave wall.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 5
+	}
+
+	items["copper_ore"] = {
+		"id": "copper_ore",
+		"name": "Copper Ore",
+		"description": "Can be smelted later.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 25
+	}
+
+	items["coal"] = {
+		"id": "coal",
+		"name": "Coal",
+		"description": "Fuel and smelting material.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 18
+	}
+
 func get_item(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 

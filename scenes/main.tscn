@@ -33,6 +33,23 @@ shape = SubResource("RectangleShape2D_player")
 [node name="FarmManager" type="Node2D" parent="."]
 script = ExtResource("5_farm")
 
+[node name="MineArea" type="Node2D" parent="."]
+z_index = -2
+position = Vector2(70, 300)
+
+[node name="CaveFloor" type="Polygon2D" parent="MineArea"]
+color = Color(0.38, 0.35, 0.4, 0.72)
+polygon = PackedVector2Array(0, 0, 240, 0, 240, 220, 0, 220)
+
+[node name="MineHint" type="Label" parent="MineArea"]
+offset_left = 0.0
+offset_top = -26.0
+offset_right = 240.0
+offset_bottom = -2.0
+theme_override_font_sizes/font_size = 12
+text = "Mine — Pickaxe (E)"
+horizontal_alignment = 1
+
 [node name="UILayer" type="CanvasLayer" parent="."]
 
 [node name="TimeLabel" type="Label" parent="UILayer"]
