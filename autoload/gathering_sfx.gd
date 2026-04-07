@@ -23,6 +23,9 @@ func play_mine_swing() -> void:
 func play_smelt() -> void:
 	_play_path(PATH_SMELT)
 
+func play_cook() -> void:
+	_play_path(PATH_SMELT)
+
 func _play_path(path: String) -> void:
 	var st: Resource = load(path)
 	if st is AudioStream and _player:

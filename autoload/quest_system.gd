@@ -100,6 +100,17 @@ func initialize_quests():
 		"reward": {"gold": 25, "items": ["bread:2"]}
 	}
 
+	quests["intro_cook"] = {
+		"id": "intro_cook",
+		"title": "Home Cooking",
+		"description": "Cook a meal at the kitchen counter (empty hands, E).",
+		"objectives": [
+			{"type": "cook_meal", "count": 1, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 35, "items": ["bread:1"]}
+	}
+
 func start_quest(quest_id: String):
 	if not quests.has(quest_id):
 		return
@@ -212,6 +223,10 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "consume_food":
 		if objective.has("item_id"):
 			return str(data.get("item_id", "")) == str(objective.get("item_id", ""))
+		return true
+	if ot == "cook_meal":
+		if objective.has("dish_id"):
+			return str(data.get("dish_id", "")) == str(objective.get("dish_id", ""))
 		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")

@@ -59,7 +59,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | smelter (north slab, empty hands) | fish | mine | J = collection")
+	print("Press E: NPCs | harvest (empty hands) | kitchen cook | smelter | fish | mine | eat (select food) | J = collection")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -74,6 +74,7 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("intro_mine")
 		QuestSystem.start_quest("intro_smelt")
 		QuestSystem.start_quest("intro_eat")
+		QuestSystem.start_quest("intro_cook")
 	
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
@@ -128,6 +129,30 @@ func _try_eat_selected_food() -> bool:
 		QuestSystem.track_event("consume_food", {"item_id": item_id, "count": 1})
 	return true
 
+func _try_harvest_facing_tile(tile_coords: Vector2i) -> bool:
+	if not farm_manager:
+		return false
+	var h: Dictionary = farm_manager.harvest_crop(tile_coords)
+	if h.is_empty() or not h.has("product"):
+		return false
+	var product_id: String = str(h.get("product", ""))
+	if product_id.is_empty():
+		return false
+	var count: int = int(h.get("count", 1))
+	var template: Dictionary = ItemDatabase.get_item(product_id)
+	if template.is_empty():
+		show_dialogue("Harvest failed (unknown crop).")
+		return true
+	for i in range(count):
+		if not InventoryManager.add_item(template.duplicate(true)):
+			show_dialogue("Inventory full.")
+			return true
+	var pnm: String = str(template.get("name", product_id))
+	show_dialogue("Harvested: %s ×%d" % [pnm, count])
+	record_world_event("Harvested %s ×%d" % [product_id, count])
+	update_ui()
+	return true
+
 func _on_player_interact(tile_position: Vector2):
 	var tile_coords = tilemap.local_to_map(tile_position)
 
@@ -140,6 +165,24 @@ func _on_player_interact(tile_position: Vector2):
 		return
 
 	var selected_item = InventoryManager.get_selected_item()
+
+	# Harvest ripe crop (empty hands only — avoids conflict with eating while holding food)
+	if selected_item == null and _try_harvest_facing_tile(tile_coords):
+		return
+
+	# Kitchen / cooking (empty hands, counter south-east)
+	if selected_item == null and CookingSystem:
+		if CookingSystem.can_cook_here(player.global_position):
+			var cook_result: Dictionary = CookingSystem.try_cook_one()
+			var ck_msg: String = str(cook_result.get("message", ""))
+			if cook_result.get("ok", false):
+				show_dialogue(ck_msg)
+				record_world_event(ck_msg)
+				return
+			if not ck_msg.is_empty():
+				show_dialogue(ck_msg)
+				return
+
 	# Furnace / smelting (empty hands, brown slab north of farm)
 	if selected_item == null and SmeltingSystem:
 		if SmeltingSystem.can_smelt_here(player.global_position):

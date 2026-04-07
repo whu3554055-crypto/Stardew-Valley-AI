@@ -92,6 +92,94 @@ func initialize_items():
 		"stamina_restore": 45.0
 	}
 
+	items["fish_sandwich"] = {
+		"id": "fish_sandwich",
+		"name": "Fish Sandwich",
+		"description": "Bread and grilled fish. Cook at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 95,
+		"stamina_restore": 62.0
+	}
+
+	items["grilled_sardine"] = {
+		"id": "grilled_sardine",
+		"name": "Grilled Sardine",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 55,
+		"stamina_restore": 28.0
+	}
+
+	items["grilled_perch"] = {
+		"id": "grilled_perch",
+		"name": "Grilled Perch",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 72,
+		"stamina_restore": 34.0
+	}
+
+	items["grilled_trout"] = {
+		"id": "grilled_trout",
+		"name": "Grilled Trout",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 85,
+		"stamina_restore": 32.0
+	}
+
+	items["grilled_carp"] = {
+		"id": "grilled_carp",
+		"name": "Grilled Carp",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 62,
+		"stamina_restore": 30.0
+	}
+
+	items["roasted_parsnip"] = {
+		"id": "roasted_parsnip",
+		"name": "Roasted Parsnip",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 48,
+		"stamina_restore": 32.0
+	}
+
+	items["baked_potato"] = {
+		"id": "baked_potato",
+		"name": "Baked Potato",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 98,
+		"stamina_restore": 38.0
+	}
+
+	items["roasted_cauliflower"] = {
+		"id": "roasted_cauliflower",
+		"name": "Roasted Cauliflower",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 220,
+		"stamina_restore": 42.0
+	}
+
 	# Tools
 	items["hoe"] = {
 		"id": "hoe",
