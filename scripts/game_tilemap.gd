@@ -98,8 +98,28 @@ var zone_paths = [
 ]
 
 func _ready():
+	if tile_set == null:
+		tile_set = _create_main_tileset()
 	generate_enhanced_map()
 	initialize_zone_data()
+
+
+func _create_main_tileset() -> TileSet:
+	## 11 tiles in one row (see TileType) — built from `assets/tiles/terrain_atlas_32.png`.
+	var ts := TileSet.new()
+	ts.tile_size = Vector2i(32, 32)
+	var tex: Texture2D = load("res://assets/tiles/terrain_atlas_32.png") as Texture2D
+	if tex == null:
+		push_error("GameTileMap: missing res://assets/tiles/terrain_atlas_32.png")
+		return ts
+	var src := TileSetAtlasSource.new()
+	src.texture = tex
+	src.texture_region_size = Vector2i(32, 32)
+	for i in range(11):
+		var at := Vector2i(i, 0)
+		src.create_tile(at)
+	ts.add_source(src, 0)
+	return ts
 
 func generate_enhanced_map():
 	"""Generate comprehensive town map with all zones"""

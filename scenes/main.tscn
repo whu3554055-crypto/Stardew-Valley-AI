@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=15 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" path="res://scenes/npc_lewis.tscn" id="8_lewis"]
 [ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="10_inv"]
 [ext_resource type="PackedScene" path="res://scenes/recipe_picker.tscn" id="11_rp"]
+[ext_resource type="Script" path="res://scripts/game_tilemap.gd" id="12_gtmap"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="13_playertex"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -19,14 +21,16 @@ size = Vector2(32, 32)
 script = ExtResource("1_main")
 
 [node name="TileMap" type="TileMap" parent="."]
-tile_set = null
+z_index = -3
+script = ExtResource("12_gtmap")
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(640, 360)
 script = ExtResource("2_player")
 
 [node name="Sprite2D" type="Sprite2D" parent="Player"]
-texture = null
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("13_playertex")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
 shape = SubResource("RectangleShape2D_player")

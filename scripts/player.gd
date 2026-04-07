@@ -3,8 +3,8 @@ extends CharacterBody2D
 const SPEED = 100.0
 
 @onready var sprite = $Sprite2D
-@onready var animation_player = $AnimationPlayer
 @onready var interaction_area = $InteractionArea
+var _animation_player: AnimationPlayer
 
 var facing_direction = Vector2.DOWN
 var is_moving = false
@@ -12,7 +12,7 @@ var is_moving = false
 signal interacted(tile_position)
 
 func _ready():
-	pass
+	_animation_player = get_node_or_null("AnimationPlayer") as AnimationPlayer
 
 func _physics_process(delta):
 	var velocity_input = Vector2.ZERO
@@ -33,16 +33,17 @@ func _physics_process(delta):
 	velocity = velocity_input.normalized() * SPEED
 	is_moving = velocity_input.length() > 0
 
-	# Update animation
+	# Flip sprite; optional AnimationPlayer if present in scene
 	if is_moving:
-		animation_player.play("walk")
-		# Flip sprite based on direction
+		if _animation_player and _animation_player.has_animation("walk"):
+			_animation_player.play("walk")
 		if facing_direction == Vector2.LEFT:
 			sprite.flip_h = true
 		elif facing_direction == Vector2.RIGHT:
 			sprite.flip_h = false
 	else:
-		animation_player.play("idle")
+		if _animation_player and _animation_player.has_animation("idle"):
+			_animation_player.play("idle")
 
 	move_and_slide()
 
