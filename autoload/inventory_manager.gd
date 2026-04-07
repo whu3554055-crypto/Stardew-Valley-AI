@@ -121,3 +121,38 @@ func clear_inventory():
 	for i in range(INVENTORY_SIZE):
 		inventory[i] = null
 	inventory_updated.emit()
+
+
+func save_snapshot() -> Dictionary:
+	var slots: Array = []
+	for i in range(INVENTORY_SIZE):
+		if inventory[i] == null:
+			slots.append(null)
+		else:
+			slots.append(inventory[i].duplicate(true))
+	return {
+		"slots": slots,
+		"selected_slot": selected_slot
+	}
+
+
+func load_snapshot(data: Variant) -> void:
+	if data is Dictionary:
+		var d: Dictionary = data
+		if d.get("slots") is Array:
+			var slots: Array = d["slots"]
+			var n: int = mini(slots.size(), INVENTORY_SIZE)
+			for i in range(n):
+				var entry: Variant = slots[i]
+				if entry == null:
+					inventory[i] = null
+				elif entry is Dictionary:
+					inventory[i] = entry.duplicate(true)
+				else:
+					inventory[i] = null
+			for i in range(n, INVENTORY_SIZE):
+				inventory[i] = null
+		if d.has("selected_slot"):
+			selected_slot = clampi(int(d["selected_slot"]), 0, INVENTORY_SIZE - 1)
+	inventory_updated.emit()
+	selected_slot_changed.emit(selected_slot)

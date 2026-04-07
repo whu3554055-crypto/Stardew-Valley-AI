@@ -27,6 +27,7 @@ var world_event_feed: Array[String] = []
 const WORLD_EVENT_FEED_MAX := 6
 const WORLD_EVENT_FEED_SAVE_PATH := "user://world_event_feed.save"
 const FARM_SAVE_PATH := "user://farm.save"
+const INVENTORY_SAVE_PATH := "user://inventory.save"
 
 func _ready():
 	# Connect signals
@@ -65,7 +66,7 @@ func _ready():
 	print("======================================")
 
 func _load_persistent_game_state() -> bool:
-	## Loads `GameManager` player blob + farm (`farm_manager.load_farm_data`). Returns true if `user://savegame.save` existed.
+	## Loads `GameManager` player blob, farm, inventory. Returns true if `user://savegame.save` existed.
 	var had_player_save: bool = false
 	if FileAccess.file_exists("user://savegame.save"):
 		had_player_save = GameManager.load_game()
@@ -76,6 +77,16 @@ func _load_persistent_game_state() -> bool:
 			ff.close()
 			if farm_data is Dictionary and farm_manager:
 				farm_manager.load_farm_data(farm_data)
+	if FileAccess.file_exists(INVENTORY_SAVE_PATH):
+		var invf: FileAccess = FileAccess.open(INVENTORY_SAVE_PATH, FileAccess.READ)
+		if invf:
+			var inv_data: Variant = invf.get_var()
+			invf.close()
+			if InventoryManager:
+				InventoryManager.load_snapshot(inv_data)
+	elif had_player_save:
+		# Save from before inventory persistence — grant starter kit once.
+		give_starter_items()
 	return had_player_save
 
 func initialize_playable_first_loop():
@@ -546,6 +557,12 @@ func save_game():
 	if farm_file:
 		farm_file.store_var(farm_data)
 		farm_file.close()
+	if InventoryManager:
+		var inv_data: Dictionary = InventoryManager.save_snapshot()
+		var inv_file: FileAccess = FileAccess.open(INVENTORY_SAVE_PATH, FileAccess.WRITE)
+		if inv_file:
+			inv_file.store_var(inv_data)
+			inv_file.close()
 	# Save NPC memories and emotions
 	if NPCMemorySystem:
 		NPCMemorySystem.save_memories()

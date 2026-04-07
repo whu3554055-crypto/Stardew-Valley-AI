@@ -34,7 +34,7 @@
 
 - [ ] **A3 — 呈现与资源**  
   补齐或替换占位：**TileMap tileset、玩家/作物/工具相关美术**，让玩法反馈「看得见」（可与 A1/A2 并行，由人力安排）。  
-  *进度：`TileMap` 已挂 `GameTileMap` + 运行时/资源图集 `assets/tiles/terrain_atlas_32.png`；玩家已用 `player.png`（缩放至约 32px）。田间作物按阶段 `Sprite2D`；背包格对有图标的物品显示缩略图 + `ItemDatabase.resolve_icon_path`。犁地会同步底层瓦片为犁土贴图；种子/部分工具用别名或占位图。存档：`user://farm.save` 与 `GameManager` 同步读档，`load_farm_data` 含犁地/作物格子键反序列化。*
+  *进度：`TileMap` 已挂 `GameTileMap` + 运行时/资源图集 `assets/tiles/terrain_atlas_32.png`；玩家已用 `player.png`（缩放至约 32px）。田间作物按阶段 `Sprite2D`；背包格对有图标的物品显示缩略图 + `ItemDatabase.resolve_icon_path`。犁地会同步底层瓦片为犁土贴图；种子/部分工具用别名或占位图。存档：`user://farm.save`、`user://inventory.save` 与 `GameManager` 同步读档；旧档无 inventory 时补发一次新手包。*
 
 - [ ] **A4 — 长线玩法 MVP（按需排期）**  
   从下列中选做最小可用版本（不必一次全做）：**建筑升级** / **畜牧** / **洞穴与战斗**（若目标超出当前「矿区条带式」挖矿）。
