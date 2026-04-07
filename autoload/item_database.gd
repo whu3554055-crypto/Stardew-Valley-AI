@@ -118,6 +118,37 @@ func initialize_items():
 		"sell_price": 0
 	}
 
+	items["pickaxe_iron"] = {
+		"id": "pickaxe_iron",
+		"name": "Iron Pickaxe",
+		"description": "Stronger pick; can reach deep gold veins.",
+		"type": "tool",
+		"stack": 1,
+		"max_stack": 1,
+		"sell_price": 0
+	}
+
+	items["fishing_rod"] = {
+		"id": "fishing_rod",
+		"name": "Fishing Rod",
+		"description": "Equip and press E at water to fish.",
+		"type": "tool",
+		"stack": 1,
+		"max_stack": 1,
+		"sell_price": 0
+	}
+
+	items["worm_bait"] = {
+		"id": "worm_bait",
+		"name": "Worm Bait",
+		"description": "Consumes on a successful catch to improve odds.",
+		"type": "bait",
+		"stack": 1,
+		"max_stack": 99,
+		"buy_price": 8,
+		"sell_price": 2
+	}
+
 	# Fishing (MVP)
 	items["fish_sardine"] = {
 		"id": "fish_sardine",
@@ -137,6 +168,26 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 55
+	}
+
+	items["fish_trout"] = {
+		"id": "fish_trout",
+		"name": "Trout",
+		"description": "Quick and prized in rivers.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 65
+	}
+
+	items["fish_carp"] = {
+		"id": "fish_carp",
+		"name": "Carp",
+		"description": "Common but filling.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 45
 	}
 
 	items["junk_boot"] = {
@@ -178,6 +229,26 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 18
+	}
+
+	items["iron_ore"] = {
+		"id": "iron_ore",
+		"name": "Iron Ore",
+		"description": "Smelt into bars.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 35
+	}
+
+	items["gold_ore"] = {
+		"id": "gold_ore",
+		"name": "Gold Ore",
+		"description": "Rare; needs a strong pick at depth.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 120
 	}
 
 func get_item(item_id: String) -> Dictionary:

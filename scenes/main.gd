@@ -12,6 +12,10 @@ extends Node2D
 @onready var day_label = $UILayer/DayLabel
 @onready var ai_config_button = $UILayer/AIConfigButton
 @onready var world_event_feed_label = $UILayer/WorldEventFeed/Content
+@onready var quick_tip_label = $UILayer/QuickTipLabel
+@onready var quick_tip_timer = $UILayer/QuickTipTimer
+@onready var fx_fish = $FXLayer/FishSplash
+@onready var fx_mine = $FXLayer/MineSpark
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -33,6 +37,8 @@ func _ready():
 	
 	# Initialize systems
 	update_ui()
+	if GatheringAlmanac:
+		GatheringAlmanac.load_data()
 	_load_world_event_feed()
 	_refresh_world_event_feed_ui()
 	initialize_playable_first_loop()
@@ -43,13 +49,15 @@ func _ready():
 	# Setup AI config button
 	if ai_config_button:
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
+	if quick_tip_timer:
+		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
 	
 	print("======================================")
 	print("  Stardew Valley Clone - AI Edition")
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | fish (bottom, empty hands) | mine (left gray cave, pickaxe selected)")
+	print("Press E: NPCs | fish (rod + river/right or ocean/south) | mine (pickaxe, left cave; lower Y = deeper)")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -86,6 +94,13 @@ func give_starter_items():
 	var pickaxe_item = ItemDatabase.get_item("pickaxe")
 	if not pickaxe_item.is_empty():
 		InventoryManager.add_item(pickaxe_item.duplicate(true))
+	var rod = ItemDatabase.get_item("fishing_rod")
+	if not rod.is_empty():
+		InventoryManager.add_item(rod.duplicate(true))
+	var bait = ItemDatabase.get_item("worm_bait")
+	if not bait.is_empty():
+		for i in range(5):
+			InventoryManager.add_item(bait.duplicate(true))
 
 func _on_player_interact(tile_position: Vector2):
 	var tile_coords = tilemap.local_to_map(tile_position)
@@ -98,28 +113,36 @@ func _on_player_interact(tile_position: Vector2):
 			QuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
 		return
 
-	# Fishing MVP: empty hands, southern water band (walk toward bottom of screen)
 	var selected_item = InventoryManager.get_selected_item()
-	if selected_item == null and FishingSystem:
+	# Fishing: equip rod; ocean (south) or river (right); bite QTE — second E in time window
+	if selected_item and str(selected_item.get("id", "")) == "fishing_rod" and FishingSystem:
 		if FishingSystem.can_fish_here(player.global_position):
-			var catch_result: Dictionary = FishingSystem.try_cast(player.global_position)
+			var catch_result: Dictionary = FishingSystem.handle_fish_input(player.global_position)
+			if str(catch_result.get("phase", "")) == "hook_prompt":
+				show_quick_tip(str(catch_result.get("message", "Press E!")))
+				return
 			var fish_msg: String = str(catch_result.get("message", ""))
 			if catch_result.get("ok", false):
 				show_dialogue(fish_msg)
 				record_world_event(fish_msg)
+				_play_fx_fish()
 				return
 			if not fish_msg.is_empty():
 				show_dialogue(fish_msg)
 				return
 
-	# Mining MVP: pickaxe equipped, standing in mine region (see MiningSystem bounds / MineArea node)
-	if selected_item and str(selected_item.get("id", "")) == "pickaxe" and MiningSystem:
+	# Mining: pickaxe (basic or iron), Y band = depth; iron pick for deep gold
+	if selected_item and str(selected_item.get("id", "")) in ["pickaxe", "pickaxe_iron"] and MiningSystem:
 		if MiningSystem.can_mine_here(player.global_position):
-			var mine_result: Dictionary = MiningSystem.try_swing(player.global_position)
+			var mine_result: Dictionary = MiningSystem.try_swing(
+				player.global_position,
+				str(selected_item.get("id", ""))
+			)
 			var mine_msg: String = str(mine_result.get("message", ""))
 			if mine_result.get("ok", false):
 				show_dialogue(mine_msg)
 				record_world_event(mine_msg)
+				_play_fx_mine()
 				return
 			if not mine_msg.is_empty():
 				show_dialogue(mine_msg)
@@ -290,6 +313,31 @@ func show_dialogue(text: String):
 	await get_tree().create_timer(3.0).timeout
 	dialogue_box.visible = false
 
+func show_quick_tip(text: String, duration: float = 1.35) -> void:
+	if not quick_tip_label or not quick_tip_timer:
+		return
+	quick_tip_label.text = text
+	quick_tip_label.visible = true
+	quick_tip_timer.stop()
+	quick_tip_timer.wait_time = duration
+	quick_tip_timer.start()
+
+func _on_quick_tip_timeout() -> void:
+	if quick_tip_label:
+		quick_tip_label.visible = false
+
+func _play_fx_fish() -> void:
+	if fx_fish:
+		fx_fish.global_position = player.global_position
+		fx_fish.restart()
+		fx_fish.emitting = true
+
+func _play_fx_mine() -> void:
+	if fx_mine:
+		fx_mine.global_position = player.global_position
+		fx_mine.restart()
+		fx_mine.emitting = true
+
 func _unhandled_input(event):
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()
@@ -309,6 +357,8 @@ func save_game():
 		NPCMemorySystem.save_memories()
 	if NPCEmotionSystem:
 		NPCEmotionSystem.save_emotion_state()
+	if GatheringAlmanac:
+		GatheringAlmanac.save_data()
 	print("Game saved!")
 
 func _on_ai_config_pressed():

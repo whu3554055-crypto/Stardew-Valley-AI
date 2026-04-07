@@ -17,7 +17,10 @@ func initialize_shop():
 	shop_stock = {
 		"parsnip_seeds": {"price": 20, "stock": 99},
 		"cauliflower_seeds": {"price": 80, "stock": 99},
-		"potato_seeds": {"price": 50, "stock": 99}
+		"potato_seeds": {"price": 50, "stock": 99},
+		"fishing_rod": {"price": 120, "stock": 10},
+		"worm_bait": {"price": 8, "stock": 99},
+		"pickaxe_iron": {"price": 800, "stock": 3}
 	}
 
 func open_shop():

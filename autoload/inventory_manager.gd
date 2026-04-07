@@ -55,6 +55,30 @@ func set_selected_slot(slot: int):
 func get_selected_item() -> Dictionary:
 	return get_item(selected_slot)
 
+func count_item(item_id: String) -> int:
+	var n := 0
+	for i in range(INVENTORY_SIZE):
+		if inventory[i] != null and inventory[i].id == item_id:
+			n += inventory[i].stack
+	return n
+
+func consume_item_by_id(item_id: String, amount: int = 1) -> bool:
+	if count_item(item_id) < amount:
+		return false
+	var remaining: int = amount
+	for i in range(INVENTORY_SIZE):
+		if remaining <= 0:
+			break
+		if inventory[i] == null or inventory[i].id != item_id:
+			continue
+		var take: int = mini(remaining, inventory[i].stack)
+		inventory[i].stack -= take
+		remaining -= take
+		if inventory[i].stack <= 0:
+			inventory[i] = null
+	inventory_updated.emit()
+	return true
+
 func clear_inventory():
 	for i in range(INVENTORY_SIZE):
 		inventory[i] = null
