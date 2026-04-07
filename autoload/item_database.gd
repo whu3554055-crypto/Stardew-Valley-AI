@@ -404,7 +404,7 @@ func initialize_items():
 	items["sprinkler_basic"] = {
 		"id": "sprinkler_basic",
 		"name": "Basic Sprinkler",
-		"description": "Face an empty tilled tile and press E to place. Each morning it waters the four crops north/south/east/west of it (consumes the item when placed).",
+		"description": "Place on empty tilled soil (E). Waters four ortho neighbors daily. Use pickaxe on the tile to pick it back up.",
 		"type": "tool",
 		"stack": 1,
 		"max_stack": 99,

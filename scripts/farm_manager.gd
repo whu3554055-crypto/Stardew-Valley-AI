@@ -18,12 +18,24 @@ signal crop_planted(position, crop_id)
 signal crop_harvested(position, crop_id, quantity)
 signal soil_tilled(position)
 
+var _sprinkler_layer: Node2D
+
 func _ready():
+	_sprinkler_layer = Node2D.new()
+	_sprinkler_layer.name = "SprinklerVisuals"
+	_sprinkler_layer.z_index = 2
+	add_child(_sprinkler_layer)
 	load_crop_database()
 
 	# Connect to game manager day change signal
 	if GameManager:
 		GameManager.day_changed.connect(_on_day_changed)
+
+func _tilemap() -> TileMap:
+	var p: Node = get_parent()
+	if p:
+		return p.get_node_or_null("TileMap") as TileMap
+	return null
 
 func load_crop_database():
 	# Example crop definitions
@@ -147,7 +159,41 @@ func try_place_sprinkler(position: Vector2i) -> Dictionary:
 		return {"ok": false, "reason": "has_sprinkler"}
 	sprinkler_tiles[position] = true
 	_water_ortho_neighbors(position)
+	_refresh_sprinkler_visuals()
 	return {"ok": true}
+
+func has_sprinkler_at(position: Vector2i) -> bool:
+	return sprinkler_tiles.has(position)
+
+func remove_sprinkler(position: Vector2i) -> bool:
+	if not sprinkler_tiles.has(position):
+		return false
+	sprinkler_tiles.erase(position)
+	_refresh_sprinkler_visuals()
+	return true
+
+func _refresh_sprinkler_visuals() -> void:
+	if _sprinkler_layer == null:
+		return
+	for c in _sprinkler_layer.get_children():
+		c.queue_free()
+	var tm: TileMap = _tilemap()
+	if tm == null:
+		return
+	var cell: Vector2 = Vector2(32, 32)
+	if tm.tile_set:
+		cell = Vector2(tm.tile_set.tile_size)
+	var half: float = minf(cell.x, cell.y) * 0.35
+	for pos in sprinkler_tiles.keys():
+		var poly := Polygon2D.new()
+		poly.color = Color(0.35, 0.65, 0.95, 0.62)
+		var center: Vector2 = tm.map_to_local(pos)
+		poly.position = center - Vector2(half, half)
+		var s: float = half * 2.0
+		poly.polygon = PackedVector2Array([
+			Vector2(0, 0), Vector2(s, 0), Vector2(s, s), Vector2(0, s)
+		])
+		_sprinkler_layer.add_child(poly)
 
 func _water_ortho_neighbors(origin: Vector2i) -> void:
 	var dirs: Array = [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
@@ -170,6 +216,7 @@ func load_farm_data(data: Dictionary):
 	tilled_soil = data.get("tilled_soil", {})
 	planted_crops = data.get("planted_crops", {})
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
+	call_deferred("_refresh_sprinkler_visuals")
 
 func _deserialize_sprinklers(raw) -> Dictionary:
 	var out: Dictionary = {}

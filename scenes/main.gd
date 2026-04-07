@@ -230,6 +230,21 @@ func _on_player_interact(tile_position: Vector2):
 				show_dialogue(fish_msg)
 				return
 
+	# Pickaxe on farm: pick up basic sprinkler from facing tile (before mining)
+	if selected_item and str(selected_item.get("id", "")) in ["pickaxe", "pickaxe_iron"] and farm_manager:
+		if farm_manager.has_sprinkler_at(tile_coords):
+			var tpl_pick: Dictionary = ItemDatabase.get_item("sprinkler_basic")
+			if not tpl_pick.is_empty() and InventoryManager.can_add_quantity(tpl_pick, 1):
+				if farm_manager.remove_sprinkler(tile_coords):
+					InventoryManager.add_item(tpl_pick.duplicate(true))
+					if GatheringSfx:
+						GatheringSfx.play_craft()
+					show_quick_tip("已收回洒水器。")
+					update_ui()
+					return
+			show_quick_tip("背包已满，无法收回洒水器。")
+			return
+
 	# Mining: pickaxe (basic or iron), Y band = depth; iron pick for deep gold
 	if selected_item and str(selected_item.get("id", "")) in ["pickaxe", "pickaxe_iron"] and MiningSystem:
 		if MiningSystem.can_mine_here(player.global_position):
