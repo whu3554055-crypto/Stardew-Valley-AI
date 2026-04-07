@@ -56,12 +56,13 @@ var tts_metrics_total: Dictionary = {
 var tts_metrics_by_npc: Dictionary = {}
 const TTS_MIN_INTERVAL_SECONDS = 0.35
 const TTS_INTERRUPT_PRIORITY = 8
-const TTS_MAX_PARALLEL_NPC = 3
+var tts_max_parallel_npc: int = 3
 const TTS_LANE_IDLE_TIMEOUT_SECONDS = 45.0
 const TTS_REQUEST_STALL_SECONDS = 12.0
 var tts_cleanup_timer: Timer = null
 var tts_metrics_flush_timer: Timer = null
 const TTS_METRICS_SAVE_PATH = "user://tts_metrics_snapshot.json"
+var tts_adaptive_timer: Timer = null
 
 func _ready():
 	initialize_audio_pool()
@@ -70,6 +71,7 @@ func _ready():
 	_initialize_tts_cleanup_timer()
 	_initialize_tts_metrics_flush_timer()
 	_load_tts_metrics_snapshot()
+	_initialize_tts_adaptive_timer()
 
 func initialize_audio_pool():
 	"""Create pool of reusable audio players"""
@@ -135,6 +137,25 @@ func _initialize_tts_metrics_flush_timer():
 	tts_metrics_flush_timer.timeout.connect(_save_tts_metrics_snapshot)
 	add_child(tts_metrics_flush_timer)
 	tts_metrics_flush_timer.start()
+
+func _initialize_tts_adaptive_timer():
+	"""Adapt TTS lane concurrency based on runtime FPS."""
+	tts_adaptive_timer = Timer.new()
+	tts_adaptive_timer.wait_time = 5.0
+	tts_adaptive_timer.one_shot = false
+	tts_adaptive_timer.timeout.connect(_update_tts_parallel_limit)
+	add_child(tts_adaptive_timer)
+	tts_adaptive_timer.start()
+
+func _update_tts_parallel_limit():
+	# Lightweight rule-of-thumb tuning. Keeps gameplay responsive first.
+	var fps = Engine.get_frames_per_second()
+	if fps <= 35.0:
+		tts_max_parallel_npc = 1
+	elif fps <= 50.0:
+		tts_max_parallel_npc = 2
+	else:
+		tts_max_parallel_npc = 3
 
 func _save_tts_metrics_snapshot():
 	"""Save aggregated/per-NPC TTS metrics to disk."""
@@ -209,7 +230,7 @@ func _prune_lower_priority_for_npc(npc_id: String, min_priority: int):
 func _get_or_create_npc_tts_request(npc_id: String) -> HTTPRequest:
 	if tts_request_by_npc.has(npc_id):
 		return tts_request_by_npc[npc_id]
-	if tts_request_by_npc.size() >= TTS_MAX_PARALLEL_NPC:
+	if tts_request_by_npc.size() >= tts_max_parallel_npc:
 		return null
 	var req = HTTPRequest.new()
 	add_child(req)
@@ -710,7 +731,8 @@ func get_audio_status() -> Dictionary:
 		"tts_in_flight_total": _get_in_flight_lane_count(),
 		"tts_lane_count": tts_request_by_npc.size(),
 		"tts_stall_threshold_seconds": TTS_REQUEST_STALL_SECONDS,
-		"tts_metrics_total": tts_metrics_total.duplicate(true)
+		"tts_metrics_total": tts_metrics_total.duplicate(true),
+		"tts_max_parallel_npc": tts_max_parallel_npc
 	}
 
 func get_tts_metrics_for_npc(npc_id: String) -> Dictionary:
