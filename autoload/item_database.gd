@@ -573,6 +573,25 @@ func initialize_items():
 		"sell_price": 420
 	}
 
+func resolve_icon_path(item_id: String) -> String:
+	var id: String = item_id.strip_edges()
+	if id.is_empty():
+		return ""
+	var candidates: PackedStringArray = PackedStringArray([
+		"res://assets/sprites/items/crops/%s.png" % id,
+		"res://assets/sprites/items/tools/%s.png" % id,
+		"res://assets/sprites/items/resources/%s.png" % id,
+		"res://assets/sprites/items/consumables/%s.png" % id,
+	])
+	for p in candidates:
+		if ResourceLoader.exists(p):
+			return p
+	var it: Dictionary = get_item(id)
+	if not it.is_empty() and str(it.get("type", "")) == "fish":
+		if ResourceLoader.exists("res://assets/sprites/environment/water/fish_small.png"):
+			return "res://assets/sprites/environment/water/fish_small.png"
+	return ""
+
 func get_item(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 

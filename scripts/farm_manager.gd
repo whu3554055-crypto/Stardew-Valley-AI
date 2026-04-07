@@ -19,12 +19,17 @@ signal crop_harvested(position, crop_id, quantity)
 signal soil_tilled(position)
 
 var _sprinkler_layer: Node2D
+var _crop_layer: Node2D
 
 func _ready():
 	_sprinkler_layer = Node2D.new()
 	_sprinkler_layer.name = "SprinklerVisuals"
 	_sprinkler_layer.z_index = 2
 	add_child(_sprinkler_layer)
+	_crop_layer = Node2D.new()
+	_crop_layer.name = "CropVisuals"
+	_crop_layer.z_index = 3
+	add_child(_crop_layer)
 	load_crop_database()
 
 	# Connect to game manager day change signal
@@ -97,6 +102,7 @@ func plant_seed(position: Vector2i, crop_id: String) -> bool:
 
 	planted_crops[position] = crop_data
 	crop_planted.emit(position, crop_id)
+	_refresh_crop_visuals()
 
 	return true
 
@@ -124,6 +130,7 @@ func harvest_crop(position: Vector2i) -> Dictionary:
 	else:
 		planted_crops.erase(position)
 
+	_refresh_crop_visuals()
 	return harvest_data
 
 func water_plant(position: Vector2i):
@@ -138,6 +145,7 @@ func _on_day_changed(new_day):
 		if crop.watered:
 			crop.days_grown += 1
 			crop.watered = false  # Reset water status
+	_refresh_crop_visuals()
 
 func get_growth_stage(crop: Dictionary) -> int:
 	var progress = float(crop.days_grown) / crop.growth_days
@@ -197,6 +205,48 @@ func _refresh_sprinkler_visuals() -> void:
 		])
 		_sprinkler_layer.add_child(poly)
 
+func _crop_stage_texture_path(crop_id: String, growth_stage: int) -> String:
+	var g: int = clampi(growth_stage, 0, 4)
+	match crop_id:
+		"parsnip":
+			return "res://assets/sprites/crops/parsnip_stage_%d.png" % mini(g, 3)
+		"potato":
+			return "res://assets/sprites/crops/potato_stage_%d.png" % mini(g, 4)
+		"cauliflower":
+			var idx: int = clampi(int(round(float(g) * 5.0 / 4.0)), 0, 5)
+			return "res://assets/sprites/crops/cauliflower_stage_%d.png" % idx
+		_:
+			return ""
+
+func _refresh_crop_visuals() -> void:
+	if _crop_layer == null:
+		return
+	for c in _crop_layer.get_children():
+		c.queue_free()
+	var tm: TileMap = _tilemap()
+	if tm == null:
+		return
+	var cell: Vector2 = Vector2(32, 32)
+	if tm.tile_set:
+		cell = Vector2(tm.tile_set.tile_size)
+	for pos in planted_crops.keys():
+		var crop: Dictionary = planted_crops[pos]
+		var st: int = get_growth_stage(crop)
+		var path: String = _crop_stage_texture_path(str(crop.get("id", "")), st)
+		if path.is_empty():
+			continue
+		var tex: Texture2D = load(path) as Texture2D
+		if tex == null:
+			continue
+		var spr := Sprite2D.new()
+		spr.texture = tex
+		spr.centered = true
+		var center_world: Vector2 = tm.to_global(tm.map_to_local(pos))
+		spr.position = _crop_layer.to_local(center_world)
+		var sc: float = minf(cell.x / float(tex.get_width()), cell.y / float(tex.get_height())) * 0.88
+		spr.scale = Vector2(sc, sc)
+		_crop_layer.add_child(spr)
+
 func _water_ortho_neighbors(origin: Vector2i) -> void:
 	var dirs: Array = [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
 	for d in dirs:
@@ -219,6 +269,7 @@ func load_farm_data(data: Dictionary):
 	planted_crops = data.get("planted_crops", {})
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
 	call_deferred("_refresh_sprinkler_visuals")
+	call_deferred("_refresh_crop_visuals")
 
 func _deserialize_sprinklers(raw) -> Dictionary:
 	var out: Dictionary = {}
