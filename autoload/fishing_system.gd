@@ -98,6 +98,8 @@ func _grant_catch(item_id: String, junk_message: String) -> Dictionary:
 		InventoryManager.consume_item_by_id("worm_bait", 1)
 	if GatheringAlmanac:
 		GatheringAlmanac.record_fish(item_id)
+	if QuestSystem:
+		QuestSystem.track_event("fish_caught", {"fish_id": item_id, "count": 1})
 	var msg: String = junk_message
 	if msg.is_empty():
 		msg = "You caught a %s!" % str(template.get("name", item_id))

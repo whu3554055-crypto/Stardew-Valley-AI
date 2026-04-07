@@ -56,6 +56,28 @@ func initialize_quests():
 		"reward": {"gold": 200, "items": []}
 	}
 
+	quests["intro_fish"] = {
+		"id": "intro_fish",
+		"title": "First Catch",
+		"description": "Catch any fish 3 times.",
+		"objectives": [
+			{"type": "fish_caught", "count": 3, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 40, "items": ["worm_bait:5"]}
+	}
+
+	quests["intro_mine"] = {
+		"id": "intro_mine",
+		"title": "Into the Stone",
+		"description": "Mine ore 5 times.",
+		"objectives": [
+			{"type": "mine_ore", "count": 5, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 60, "items": ["coal:3"]}
+	}
+
 func start_quest(quest_id: String):
 	if not quests.has(quest_id):
 		return
@@ -152,6 +174,15 @@ func track_event(event_type: String, data: Dictionary):
 
 func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	"""Generic matcher for objective/event payload compatibility."""
+	var ot: String = str(objective.get("type", ""))
+	if ot == "fish_caught":
+		if objective.has("fish_id"):
+			return str(data.get("fish_id", "")) == str(objective.get("fish_id", ""))
+		return true
+	if ot == "mine_ore":
+		if objective.has("ore_id"):
+			return str(data.get("ore_id", "")) == str(objective.get("ore_id", ""))
+		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")
 	if objective.has("npc_id"):

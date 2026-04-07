@@ -73,6 +73,8 @@ func _grant_ore(item_id: String, empty_msg: String) -> Dictionary:
 		return {"ok": false, "message": "Inventory full."}
 	if GatheringAlmanac:
 		GatheringAlmanac.record_mineral(item_id)
+	if QuestSystem:
+		QuestSystem.track_event("mine_ore", {"ore_id": item_id, "count": 1})
 	var msg: String = empty_msg
 	if msg.is_empty():
 		msg = "Mined: %s" % str(template.get("name", item_id))
