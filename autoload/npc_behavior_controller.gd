@@ -28,12 +28,14 @@ var behavior_config = {
 var npc_states = {}
 var active_behaviors = {}
 var behavior_timers = {}
+var npc_relationship_stage = {}
 
 # 信号
 signal npc_started_action(npc_id, action)
 signal npc_completed_action(npc_id, action)
 signal npc_moved_to(npc_id, position)
 signal spontaneous_interaction(npc1_id, npc2_id, type)
+signal relationship_feedback(npc_id, stage, delta)
 
 func _ready():
 	initialize_npc_states()
@@ -363,6 +365,8 @@ func register_npc(npc_id: String, initial_state: Dictionary = {}):
 	}
 	
 	npc_states[npc_id].merge(initial_state)
+	if not npc_relationship_stage.has(npc_id):
+		npc_relationship_stage[npc_id] = "neutral"
 
 func unregister_npc(npc_id: String):
 	"""注销 NPC"""
@@ -385,3 +389,19 @@ func get_npc_state(npc_id: String) -> Dictionary:
 func get_all_npc_states() -> Dictionary:
 	"""获取所有 NPC 状态"""
 	return npc_states.duplicate(true)
+
+func get_all_npc_ids() -> Array:
+	"""Provide NPC id list for cross-system integrations."""
+	return npc_states.keys()
+
+func apply_relationship_update(npc_id: String, stage: String, delta: int = 0):
+	"""Apply relationship stage from backend and trigger local feedback."""
+	npc_relationship_stage[npc_id] = stage
+	relationship_feedback.emit(npc_id, stage, delta)
+	
+	if NPCEmotionSystem:
+		match stage:
+			"close", "warming":
+				NPCEmotionSystem.trigger_emotion(npc_id, "gift_received", {"relationship": 0.8})
+			"tense", "conflict":
+				NPCEmotionSystem.trigger_emotion(npc_id, "rude_behavior", {"relationship": -0.5})

@@ -263,6 +263,26 @@ func get_dialogue_modifier(npc_id: String) -> Dictionary:
 	
 	return modifier
 
+func get_emotion_ui_style(npc_id: String) -> Dictionary:
+	"""Provide lightweight UI style hints based on current emotion."""
+	if not npc_emotions.has(npc_id):
+		return {
+			"badge": "neutral",
+			"name_tint": Color(1, 1, 1, 1),
+			"sfx": "notification"
+		}
+	
+	var state = npc_emotions[npc_id]
+	match state.current_emotion:
+		BasicEmotion.HAPPY, BasicEmotion.EXCITED, BasicEmotion.GRATEFUL:
+			return {"badge": "positive", "name_tint": Color(0.8, 1.0, 0.8, 1), "sfx": "level_up"}
+		BasicEmotion.SAD, BasicEmotion.LONELY:
+			return {"badge": "sad", "name_tint": Color(0.8, 0.85, 1.0, 1), "sfx": "notification"}
+		BasicEmotion.ANGRY:
+			return {"badge": "angry", "name_tint": Color(1.0, 0.75, 0.75, 1), "sfx": "error"}
+		_:
+			return {"badge": "neutral", "name_tint": Color(1, 1, 1, 1), "sfx": "notification"}
+
 # Record emotion change
 func record_emotion_change(npc_id: String, emotion: BasicEmotion, cause: String):
 	if not emotion_history.has(npc_id):

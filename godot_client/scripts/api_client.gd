@@ -137,6 +137,30 @@ func health_check() -> Dictionary:
 	else:
 		return {"status": "error", "code": response_code}
 
+func generate_tts(npc_id: String, text: String, emotion: String = "neutral") -> Dictionary:
+	"""Request backend TTS (with backend-controlled fallback mode)."""
+	var url = base_url + "/tts/generate"
+	var body = {
+		"npc_id": npc_id,
+		"text": text,
+		"emotion": emotion
+	}
+	var error = http_client.request(url, ["Content-Type: application/json"], HTTPClient.METHOD_POST, JSON.stringify(body))
+	if error != OK:
+		return {"success": false, "error": "HTTP request failed", "code": error}
+	
+	var result = await http_client.request_completed
+	var response_code = result[1]
+	var response_body = result[3]
+	if response_code != 200:
+		return {"success": false, "error": "HTTP error", "code": response_code}
+	
+	var json = JSON.new()
+	var parse_error = json.parse(response_body.get_string_from_utf8())
+	if parse_error != OK:
+		return {"success": false, "error": "JSON parse failed", "code": parse_error}
+	return json.data
+
 func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
 	"""Handle async request completion"""
 	if response_code == 200:

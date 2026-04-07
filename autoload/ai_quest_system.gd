@@ -31,6 +31,7 @@ var generation_state = {
 
 # Narrative threads
 var narrative_threads = []
+var daily_narrative_cache = {}
 
 func _ready():
 	initialize_quest_system()
@@ -245,6 +246,7 @@ func attempt_generate_quests():
 		return
 	
 	# Analyze situation for quest opportunities
+	apply_daily_narrative_context()
 	var opportunities = analyze_quest_opportunities()
 	
 	if opportunities.is_empty():
@@ -260,6 +262,31 @@ func attempt_generate_quests():
 			assign_quest_to_player(quest)
 	
 	generation_state.last_generation = current_time
+
+func apply_daily_narrative_context():
+	"""Inject lightweight daily narrative context into local thread cache."""
+	var day_key = "day_" + str(GameManager.player_data.day if GameManager and GameManager.player_data else 1)
+	if daily_narrative_cache.has(day_key):
+		return
+	
+	var seed_threads = [
+		{
+			"id": "daily_social_" + day_key,
+			"title": "今日村庄动向",
+			"description": "村民间出现了新的互动机会。",
+			"status": "active",
+			"progress": 0,
+			"total_steps": 2,
+			"active_quests": [],
+			"completed_quests": [],
+			"importance": 0.6,
+			"next_quest_type": "relationship_build"
+		}
+	]
+	
+	for thread in seed_threads:
+		narrative_threads.append(thread)
+	daily_narrative_cache[day_key] = true
 
 func analyze_quest_opportunities() -> Array:
 	"""Analyze game state for quest opportunities"""

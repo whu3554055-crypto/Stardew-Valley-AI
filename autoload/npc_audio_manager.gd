@@ -19,7 +19,10 @@ var audio_config = {
 	"voice_volume": 0.9,
 	"enable_emotion_sounds": true,
 	"enable_activity_sounds": true,
-	"enable_ambient_sounds": true
+	"enable_ambient_sounds": true,
+	"backend_tts_enabled": true,
+	"backend_base_url": "http://localhost:8080/api/v1",
+	"tts_timeout_seconds": 4.0
 }
 
 # Currently playing sounds tracking
@@ -31,9 +34,16 @@ const DEFAULT_COOLDOWN = 2.0
 
 signal sound_played(npc_id, sound_type, sound_path)
 signal sound_finished(npc_id, sound_type)
+signal tts_requested(npc_id, text, emotion)
+signal tts_fallback_used(npc_id, text)
+signal tts_result_received(npc_id, mode, payload)
+
+var tts_http_request: HTTPRequest = null
+var pending_tts_context: Dictionary = {}
 
 func _ready():
 	initialize_audio_pool()
+	initialize_tts_client()
 	load_audio_config()
 
 func initialize_audio_pool():
@@ -53,6 +63,13 @@ func load_audio_config():
 		if data:
 			audio_config.merge(data)
 		file.close()
+
+func initialize_tts_client():
+	"""Initialize a dedicated HTTP client for TTS calls."""
+	tts_http_request = HTTPRequest.new()
+	add_child(tts_http_request)
+	tts_http_request.timeout = audio_config.get("tts_timeout_seconds", 4.0)
+	tts_http_request.request_completed.connect(_on_tts_request_completed)
 
 func save_audio_config():
 	"""Save audio preferences"""
@@ -403,3 +420,81 @@ func get_audio_status() -> Dictionary:
 		"config": audio_config.duplicate(),
 		"cooldowns": sound_cooldowns.size()
 	}
+
+func speak_npc_line(npc_id: String, text: String, emotion: String = "neutral") -> Dictionary:
+	"""
+	Lightweight TTS entrypoint for MVP.
+	Current behavior: emit request + fallback to local greeting SFX.
+	"""
+	tts_requested.emit(npc_id, text, emotion)
+	
+	var backend_tts_enabled = audio_config.get("backend_tts_enabled", true)
+	if backend_tts_enabled and tts_http_request and tts_http_request.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+		var request_body = {
+			"npc_id": npc_id,
+			"text": text,
+			"emotion": emotion
+		}
+		pending_tts_context = {
+			"npc_id": npc_id,
+			"text": text,
+			"emotion": emotion
+		}
+		var err = tts_http_request.request(
+			audio_config.get("backend_base_url", "http://localhost:8080/api/v1") + "/tts/generate",
+			["Content-Type: application/json"],
+			HTTPClient.METHOD_POST,
+			JSON.stringify(request_body)
+		)
+		if err == OK:
+			return {
+				"success": true,
+				"npc_id": npc_id,
+				"emotion": emotion,
+				"audio_mode": "backend_tts_pending"
+			}
+	
+	var greeting_ok = play_greeting_sound(npc_id, emotion if emotion in ["happy", "neutral", "sad"] else "neutral")
+	if not greeting_ok:
+		tts_fallback_used.emit(npc_id, text)
+	
+	return {
+		"success": true,
+		"npc_id": npc_id,
+		"emotion": emotion,
+		"audio_mode": "sfx_fallback"
+	}
+
+func _on_tts_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray):
+	"""Handle backend TTS response and fallback gracefully."""
+	var npc_id = pending_tts_context.get("npc_id", "unknown")
+	var text = pending_tts_context.get("text", "")
+	var emotion = pending_tts_context.get("emotion", "neutral")
+	
+	if result != OK or response_code != 200:
+		var fallback_ok = play_greeting_sound(npc_id, emotion if emotion in ["happy", "neutral", "sad"] else "neutral")
+		if not fallback_ok:
+			tts_fallback_used.emit(npc_id, text)
+		tts_result_received.emit(npc_id, "fallback_http_error", {"code": response_code})
+		return
+	
+	var json = JSON.new()
+	var parse_err = json.parse(body.get_string_from_utf8())
+	if parse_err != OK:
+		var fallback_ok2 = play_greeting_sound(npc_id, emotion if emotion in ["happy", "neutral", "sad"] else "neutral")
+		if not fallback_ok2:
+			tts_fallback_used.emit(npc_id, text)
+		tts_result_received.emit(npc_id, "fallback_invalid_json", {})
+		return
+	
+	var payload = json.data
+	var mode = payload.get("fallback_mode", "text_only")
+	if mode == "text_only":
+		var fallback_ok3 = play_greeting_sound(npc_id, emotion if emotion in ["happy", "neutral", "sad"] else "neutral")
+		if not fallback_ok3:
+			tts_fallback_used.emit(npc_id, text)
+		tts_result_received.emit(npc_id, "fallback_text_only", payload)
+		return
+	
+	# Future-ready: if backend returns playable URL, this branch can stream/queue playback.
+	tts_result_received.emit(npc_id, "backend_audio_ready", payload)
