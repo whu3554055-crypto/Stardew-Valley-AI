@@ -89,6 +89,17 @@ func initialize_quests():
 		"reward": {"gold": 40, "items": ["coal:2"]}
 	}
 
+	quests["intro_eat"] = {
+		"id": "intro_eat",
+		"title": "A Bite to Eat",
+		"description": "Eat something to recover energy (select food, press E).",
+		"objectives": [
+			{"type": "consume_food", "count": 1, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 25, "items": ["bread:2"]}
+	}
+
 func start_quest(quest_id: String):
 	if not quests.has(quest_id):
 		return
@@ -197,6 +208,10 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "smelt_bar":
 		if objective.has("bar_id"):
 			return str(data.get("bar_id", "")) == str(objective.get("bar_id", ""))
+		return true
+	if ot == "consume_food":
+		if objective.has("item_id"):
+			return str(data.get("item_id", "")) == str(objective.get("item_id", ""))
 		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")

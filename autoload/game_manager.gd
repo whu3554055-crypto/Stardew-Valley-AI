@@ -64,6 +64,13 @@ func try_consume_stamina(amount: float) -> bool:
 	player_data.stamina = s - amount
 	return true
 
+func restore_stamina(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var smax: float = float(player_data.get("stamina_max", 100.0))
+	var scur: float = float(player_data.get("stamina", 0.0))
+	player_data.stamina = minf(smax, scur + amount)
+
 func get_stamina_ratio() -> float:
 	var smax: float = float(player_data.get("stamina_max", 100.0))
 	return float(player_data.get("stamina", 0.0)) / maxf(1.0, smax)

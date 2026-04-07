@@ -73,6 +73,7 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("intro_fish")
 		QuestSystem.start_quest("intro_mine")
 		QuestSystem.start_quest("intro_smelt")
+		QuestSystem.start_quest("intro_eat")
 	
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
@@ -106,6 +107,26 @@ func give_starter_items():
 	if not bait.is_empty():
 		for i in range(5):
 			InventoryManager.add_item(bait.duplicate(true))
+	var bread = ItemDatabase.get_item("bread")
+	if not bread.is_empty():
+		InventoryManager.add_item(bread.duplicate(true))
+
+func _try_eat_selected_food() -> bool:
+	var slot: int = InventoryManager.selected_slot
+	var item = InventoryManager.get_item(slot)
+	if item == null or float(item.get("stamina_restore", 0.0)) <= 0.0:
+		return false
+	var amt: float = float(item.get("stamina_restore", 0.0))
+	var item_id: String = str(item.get("id", ""))
+	var nm: String = str(item.get("name", "Food"))
+	if GameManager:
+		GameManager.restore_stamina(amt)
+	InventoryManager.remove_item(slot, 1)
+	show_quick_tip("Ate %s (+%d energy)" % [nm, int(ceil(amt))])
+	update_ui()
+	if QuestSystem:
+		QuestSystem.track_event("consume_food", {"item_id": item_id, "count": 1})
+	return true
 
 func _on_player_interact(tile_position: Vector2):
 	var tile_coords = tilemap.local_to_map(tile_position)
@@ -166,6 +187,10 @@ func _on_player_interact(tile_position: Vector2):
 			if not mine_msg.is_empty():
 				show_dialogue(mine_msg)
 				return
+
+	# Eat food / crops / fish with stamina_restore (select item, press E)
+	if selected_item and _try_eat_selected_food():
+		return
 
 	# Farming interactions
 	if selected_item:

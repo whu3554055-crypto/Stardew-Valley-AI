@@ -54,7 +54,8 @@ func initialize_items():
 		"type": "crop",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 35
+		"sell_price": 35,
+		"stamina_restore": 18.0
 	}
 
 	items["cauliflower"] = {
@@ -64,7 +65,8 @@ func initialize_items():
 		"type": "crop",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 175
+		"sell_price": 175,
+		"stamina_restore": 28.0
 	}
 
 	items["potato"] = {
@@ -74,7 +76,20 @@ func initialize_items():
 		"type": "crop",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 80
+		"sell_price": 80,
+		"stamina_restore": 22.0
+	}
+
+	items["bread"] = {
+		"id": "bread",
+		"name": "Bread",
+		"description": "Simple bread. Eat to restore energy.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"buy_price": 50,
+		"sell_price": 20,
+		"stamina_restore": 45.0
 	}
 
 	# Tools
@@ -159,7 +174,8 @@ func initialize_items():
 		"type": "fish",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 40
+		"sell_price": 40,
+		"stamina_restore": 16.0
 	}
 
 	items["fish_perch"] = {
@@ -169,7 +185,8 @@ func initialize_items():
 		"type": "fish",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 55
+		"sell_price": 55,
+		"stamina_restore": 20.0
 	}
 
 	items["fish_trout"] = {
@@ -179,7 +196,8 @@ func initialize_items():
 		"type": "fish",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 65
+		"sell_price": 65,
+		"stamina_restore": 18.0
 	}
 
 	items["fish_carp"] = {
@@ -189,7 +207,8 @@ func initialize_items():
 		"type": "fish",
 		"stack": 1,
 		"max_stack": 99,
-		"sell_price": 45
+		"sell_price": 45,
+		"stamina_restore": 18.0
 	}
 
 	items["junk_boot"] = {
