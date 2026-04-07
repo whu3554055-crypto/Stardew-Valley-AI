@@ -21,6 +21,9 @@ signal soil_tilled(position)
 var _sprinkler_layer: Node2D
 var _crop_layer: Node2D
 
+## Matches `TileType.TILLED_SOIL` atlas column in `terrain_atlas_32.png` / GameTileMap.
+const _TILLED_ATLAS := Vector2i(2, 0)
+
 func _ready():
 	_sprinkler_layer = Node2D.new()
 	_sprinkler_layer.name = "SprinklerVisuals"
@@ -80,6 +83,7 @@ func till_soil(position: Vector2i):
 	if not tilled_soil.has(position):
 		tilled_soil[position] = true
 		soil_tilled.emit(position)
+		_paint_tilled_cell(position)
 		return true
 	return false
 
@@ -265,21 +269,43 @@ func save_farm_data():
 	return save_data
 
 func load_farm_data(data: Dictionary):
-	tilled_soil = data.get("tilled_soil", {})
+	tilled_soil = _deserialize_tile_dict(data.get("tilled_soil", {}))
 	planted_crops = data.get("planted_crops", {})
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
 	call_deferred("_refresh_sprinkler_visuals")
 	call_deferred("_refresh_crop_visuals")
+	call_deferred("_refresh_tilled_tilemap")
 
-func _deserialize_sprinklers(raw) -> Dictionary:
+func _deserialize_tile_dict(raw) -> Dictionary:
 	var out: Dictionary = {}
 	if raw is Dictionary:
 		for k in raw.keys():
 			if k is Vector2i:
-				out[k] = true
+				out[k] = raw[k]
 			elif k is String:
 				var s: String = str(k).strip_edges().replace("(", "").replace(")", "")
 				var parts: PackedStringArray = s.split(",")
 				if parts.size() >= 2:
-					out[Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))] = true
+					out[Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))] = raw[k]
+	return out
+
+func _paint_tilled_cell(pos: Vector2i) -> void:
+	var tm: TileMap = _tilemap()
+	if tm == null:
+		return
+	tm.set_cell(0, pos, 0, _TILLED_ATLAS)
+
+func _refresh_tilled_tilemap() -> void:
+	var tm: TileMap = _tilemap()
+	if tm == null:
+		return
+	for k in tilled_soil.keys():
+		if k is Vector2i:
+			tm.set_cell(0, k, 0, _TILLED_ATLAS)
+
+func _deserialize_sprinklers(raw) -> Dictionary:
+	var base: Dictionary = _deserialize_tile_dict(raw)
+	var out: Dictionary = {}
+	for k in base.keys():
+		out[k] = true
 	return out

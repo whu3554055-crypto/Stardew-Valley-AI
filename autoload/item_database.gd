@@ -577,6 +577,12 @@ func resolve_icon_path(item_id: String) -> String:
 	var id: String = item_id.strip_edges()
 	if id.is_empty():
 		return ""
+	# Seed bags: reuse harvested crop icon when available (e.g. parsnip_seeds → parsnip.png).
+	if id.ends_with("_seeds"):
+		var crop_id: String = id.trim_suffix("_seeds")
+		var seed_crop: String = "res://assets/sprites/items/crops/%s.png" % crop_id
+		if ResourceLoader.exists(seed_crop):
+			return seed_crop
 	var candidates: PackedStringArray = PackedStringArray([
 		"res://assets/sprites/items/crops/%s.png" % id,
 		"res://assets/sprites/items/tools/%s.png" % id,
@@ -590,6 +596,20 @@ func resolve_icon_path(item_id: String) -> String:
 	if not it.is_empty() and str(it.get("type", "")) == "fish":
 		if ResourceLoader.exists("res://assets/sprites/environment/water/fish_small.png"):
 			return "res://assets/sprites/environment/water/fish_small.png"
+	# Tools / misc without dedicated inventory art yet
+	match id:
+		"fishing_rod":
+			if ResourceLoader.exists("res://assets/sprites/environment/water/fish_small.png"):
+				return "res://assets/sprites/environment/water/fish_small.png"
+		"pickaxe", "pickaxe_iron":
+			if ResourceLoader.exists("res://assets/sprites/items/resources/stone.png"):
+				return "res://assets/sprites/items/resources/stone.png"
+		"worm_bait":
+			if ResourceLoader.exists("res://assets/sprites/environment/greenery/grass_clump.png"):
+				return "res://assets/sprites/environment/greenery/grass_clump.png"
+		"sprinkler_basic":
+			if ResourceLoader.exists("res://assets/sprites/items/tools/watering_can.png"):
+				return "res://assets/sprites/items/tools/watering_can.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:
