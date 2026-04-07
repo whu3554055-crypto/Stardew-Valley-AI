@@ -119,10 +119,13 @@ static func mining_ore_weights(depth: int, pickaxe_tier: int) -> Dictionary:
 		w["iron_ore"] = float(w.get("iron_ore", 0.0)) + 0.35
 		# Small chance for a shiny drop (sell or display)
 		w["quartz"] = 0.14
+		# Rare violet crystal — only in the lowest band
+		w["amethyst_shard"] = 0.075
 		if pickaxe_tier >= 2:
 			w["gold_ore"] = 0.45
 			# Deep vein + iron pick — softer precious vein than gold
 			w["silver_ore"] = 0.28
+			w["amethyst_shard"] = float(w.get("amethyst_shard", 0.0)) * 1.12
 		else:
 			w["stone_chunk"] *= 1.15
 
@@ -146,4 +149,6 @@ static func mining_ore_weights(depth: int, pickaxe_tier: int) -> Dictionary:
 				w["quartz"] = float(w["quartz"]) * 1.15
 			if "silver_ore" in w:
 				w["silver_ore"] = float(w["silver_ore"]) * 1.1
+			if "amethyst_shard" in w:
+				w["amethyst_shard"] = float(w["amethyst_shard"]) * 1.08
 	return w

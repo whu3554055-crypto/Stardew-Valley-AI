@@ -633,6 +633,16 @@ func initialize_items():
 		"sell_price": 95
 	}
 
+	items["amethyst_shard"] = {
+		"id": "amethyst_shard",
+		"name": "Amethyst Shard",
+		"description": "A rare violet crystal from the deepest band — collectors pay well.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 155
+	}
+
 	items["copper_bar"] = {
 		"id": "copper_bar",
 		"name": "Copper Bar",
@@ -752,6 +762,9 @@ func resolve_icon_path(item_id: String) -> String:
 		"sap_glazed_catfish":
 			if ResourceLoader.exists("res://assets/sprites/environment/water/fish_small.png"):
 				return "res://assets/sprites/environment/water/fish_small.png"
+		"amethyst_shard":
+			if ResourceLoader.exists("res://assets/sprites/items/resources/silver_ore.png"):
+				return "res://assets/sprites/items/resources/silver_ore.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:

@@ -103,6 +103,16 @@ func _grant_ore(item_id: String, empty_msg: String, _depth: int = 0, _tier: int 
 			msg = "Rich vein! Mined: %s" % nm
 		elif item_id == "silver_ore":
 			msg = "Pale glint in the rock — %s." % nm
+		elif item_id == "amethyst_shard":
+			msg = "A violet flash — %s, rare in the deep band." % nm
+		elif item_id == "coal":
+			msg = "Black seams — %s for the furnace." % nm
+		elif item_id == "copper_ore":
+			msg = "Greenish flecks — %s." % nm
+		elif item_id == "iron_ore":
+			msg = "Heavy grey — %s." % nm
+		elif item_id == "stone_chunk":
+			msg = "The wall crumbles — %s." % nm
 		else:
 			msg = "Mined: %s" % nm
 	var prefix: String = GT.mining_layer_prefix(_depth)
