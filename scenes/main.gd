@@ -29,6 +29,7 @@ func _ready():
 	
 	# Initialize systems
 	update_ui()
+	initialize_playable_first_loop()
 	
 	# Give starter items
 	give_starter_items()
@@ -44,6 +45,23 @@ func _ready():
 	print("NPCs with AI: Pierre, Abigail, Lewis")
 	print("Press E to interact with NPCs")
 	print("======================================")
+
+func initialize_playable_first_loop():
+	"""
+	Playable-first bootstrap:
+	- Start one beginner quest immediately
+	- Generate one daily narrative seed
+	"""
+	if QuestSystem:
+		QuestSystem.start_quest("tutorial_plant")
+	
+	if DailyNarrativeSystem:
+		var narrative = DailyNarrativeSystem.generate_daily_narrative()
+		if not narrative.is_empty():
+			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
+
+	if QuestSystem:
+		QuestSystem.quest_completed.connect(_on_quest_completed)
 
 func give_starter_items():
 	var hoe_item = ItemDatabase.get_item("hoe")
@@ -89,6 +107,15 @@ func _on_day_changed(new_day):
 	# Auto-water crops if raining
 	if WeatherSystem.is_raining():
 		auto_water_crops()
+	
+	# Lightweight daily refresh keeps the game feeling alive.
+	if DailyNarrativeSystem:
+		DailyNarrativeSystem.generate_daily_narrative()
+
+func _on_quest_completed(quest_id: String):
+	if QuestSystem and QuestSystem.quests.has(quest_id):
+		var title = QuestSystem.quests[quest_id].get("title", quest_id)
+		show_dialogue("Quest completed: " + str(title))
 
 func _on_season_changed(new_season):
 	update_ui()

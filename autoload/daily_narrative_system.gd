@@ -327,7 +327,7 @@ func schedule_daily_generation():
 	if GameManager:
 		GameManager.connect("day_changed", Callable(self, "_on_new_day"))
 
-func _on_new_day(day_data: Dictionary):
+func _on_new_day(_new_day: int):
 	"""Handle new day - generate narrative if enabled"""
 	if not config.enabled:
 		return
@@ -1141,10 +1141,9 @@ func apply_visual_filter(filter_type: String, theme: String):
 func play_theme_audio(audio_theme: String, theme: String):
 	"""Play thematic audio for narrative"""
 	if NPCAudioManager:
-		# Play ambient theme music
-		NPCAudioManager.play_ambient_sound("narrative", 
-			"res://assets/audio/music/{theme}_theme.ogg".format({"theme": theme}), 
-			0.6)
+		# Keep API compatible with current audio manager MVP.
+		# Theme-specific track routing can be added later.
+		NPCAudioManager.play_ambient_sound("town")
 	
 	print("[DailyNarrativeSystem] Audio theme playing: ", audio_theme)
 
