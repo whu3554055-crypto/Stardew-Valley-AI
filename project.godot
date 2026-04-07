@@ -95,6 +95,7 @@ DailyNarrativeSystem="*res://autoload/daily_narrative_system.gd"
 GatheringSfx="*res://autoload/gathering_sfx.gd"
 FishingSystem="*res://autoload/fishing_system.gd"
 MiningSystem="*res://autoload/mining_system.gd"
+SmeltingSystem="*res://autoload/smelting_system.gd"
 
 [rendering]
 

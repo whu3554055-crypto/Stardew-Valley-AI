@@ -59,7 +59,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | fish (rod + river/right or ocean/south) | mine (pickaxe, left cave; lower Y = deeper)")
+	print("Press E: NPCs | smelter (north slab, empty hands) | fish | mine | J = collection")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -118,6 +118,19 @@ func _on_player_interact(tile_position: Vector2):
 		return
 
 	var selected_item = InventoryManager.get_selected_item()
+	# Furnace / smelting (empty hands, brown slab north of farm)
+	if selected_item == null and SmeltingSystem:
+		if SmeltingSystem.can_smelt_here(player.global_position):
+			var smelt_result: Dictionary = SmeltingSystem.try_smelt_one()
+			var sm_msg: String = str(smelt_result.get("message", ""))
+			if smelt_result.get("ok", false):
+				show_dialogue(sm_msg)
+				record_world_event(sm_msg)
+				return
+			if not sm_msg.is_empty():
+				show_dialogue(sm_msg)
+				return
+
 	# Fishing: equip rod; ocean (south) or river (right); bite QTE — second E in time window
 	if selected_item and str(selected_item.get("id", "")) == "fishing_rod" and FishingSystem:
 		if FishingSystem.can_fish_here(player.global_position):

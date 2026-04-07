@@ -253,6 +253,36 @@ func initialize_items():
 		"sell_price": 120
 	}
 
+	items["copper_bar"] = {
+		"id": "copper_bar",
+		"name": "Copper Bar",
+		"description": "Smelted metal for crafting.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 180
+	}
+
+	items["iron_bar"] = {
+		"id": "iron_bar",
+		"name": "Iron Bar",
+		"description": "Refined iron.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 250
+	}
+
+	items["gold_bar"] = {
+		"id": "gold_bar",
+		"name": "Gold Bar",
+		"description": "Valuable refined gold.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 650
+	}
+
 func get_item(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 
