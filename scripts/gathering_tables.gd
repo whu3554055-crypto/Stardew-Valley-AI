@@ -68,6 +68,7 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 
 
 ## Short label for mining UI / messages (Y-band depth in MineArea).
+## Depth tiers use global Y vs `MiningSystem.MINE_GLOBAL_DEPTH_BREAK_*` (same as `main.tscn` MineLayer* bands).
 static func mining_layer_prefix(depth: int) -> String:
 	match depth:
 		0:

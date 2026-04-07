@@ -108,18 +108,67 @@ horizontal_alignment = 1
 z_index = -2
 position = Vector2(70, 300)
 
-[node name="CaveFloor" type="Polygon2D" parent="MineArea"]
-color = Color(0.38, 0.35, 0.4, 0.72)
-polygon = PackedVector2Array(0, 0, 240, 0, 240, 220, 0, 220)
+[node name="MineLayerSurface" type="Polygon2D" parent="MineArea"]
+color = Color(0.44, 0.4, 0.36, 0.88)
+polygon = PackedVector2Array(0, 0, 240, 0, 240, 80, 0, 80)
+
+[node name="MineLayerIron" type="Polygon2D" parent="MineArea"]
+color = Color(0.38, 0.33, 0.4, 0.9)
+polygon = PackedVector2Array(0, 80, 240, 80, 240, 160, 0, 160)
+
+[node name="MineLayerDeep" type="Polygon2D" parent="MineArea"]
+color = Color(0.26, 0.24, 0.32, 0.92)
+polygon = PackedVector2Array(0, 160, 240, 160, 240, 220, 0, 220)
+
+[node name="MineDivider1" type="Polygon2D" parent="MineArea"]
+z_index = 1
+color = Color(0.1, 0.08, 0.1, 0.45)
+polygon = PackedVector2Array(0, 79, 240, 79, 240, 82, 0, 82)
+
+[node name="MineDivider2" type="Polygon2D" parent="MineArea"]
+z_index = 1
+color = Color(0.1, 0.08, 0.1, 0.45)
+polygon = PackedVector2Array(0, 159, 240, 159, 240, 162, 0, 162)
+
+[node name="MineLabelSurface" type="Label" parent="MineArea"]
+z_index = 2
+offset_left = 6.0
+offset_top = 4.0
+offset_right = 234.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 10
+text = "Surface drift — Cu / coal / geode"
+vertical_alignment = 1
+
+[node name="MineLabelIron" type="Label" parent="MineArea"]
+z_index = 2
+offset_left = 6.0
+offset_top = 84.0
+offset_right = 234.0
+offset_bottom = 156.0
+theme_override_font_sizes/font_size = 10
+text = "Iron seam — iron ore"
+vertical_alignment = 1
+
+[node name="MineLabelDeep" type="Label" parent="MineArea"]
+z_index = 2
+offset_left = 6.0
+offset_top = 164.0
+offset_right = 234.0
+offset_bottom = 216.0
+theme_override_font_sizes/font_size = 10
+text = "Deep vein — gold, quartz (iron pick)"
+vertical_alignment = 1
 
 [node name="MineHint" type="Label" parent="MineArea"]
 offset_left = 0.0
-offset_top = -26.0
+offset_top = -40.0
 offset_right = 240.0
 offset_bottom = -2.0
 theme_override_font_sizes/font_size = 12
-text = "Mine — pickaxe (E), lower = deeper"
+text = "Mine — pickaxe (E) · 3 bands, walk down for depth"
 horizontal_alignment = 1
+autowrap_mode = 2
 
 [node name="RiverZone" type="Node2D" parent="."]
 z_index = -2

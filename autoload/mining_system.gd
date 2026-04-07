@@ -7,6 +7,9 @@ const MINE_GLOBAL_X_MIN := 70.0
 const MINE_GLOBAL_X_MAX := 310.0
 const MINE_GLOBAL_Y_MIN := 300.0
 const MINE_GLOBAL_Y_MAX := 520.0
+## Global Y boundaries between depth tiers — must match `MineArea` layer polygons in `main.tscn`.
+const MINE_GLOBAL_DEPTH_BREAK_1 := 380.0
+const MINE_GLOBAL_DEPTH_BREAK_2 := 460.0
 
 var _last_swing_time: float = -100.0
 const SWING_COOLDOWN_SEC := 1.2
@@ -15,10 +18,13 @@ func can_mine_here(player_pos: Vector2) -> bool:
 	return player_pos.x >= MINE_GLOBAL_X_MIN and player_pos.x <= MINE_GLOBAL_X_MAX \
 		and player_pos.y >= MINE_GLOBAL_Y_MIN and player_pos.y <= MINE_GLOBAL_Y_MAX
 
+func depth_from_global_y(global_y: float) -> int:
+	return _depth_from_y(global_y)
+
 func _depth_from_y(player_y: float) -> int:
-	if player_y < 380.0:
+	if player_y < MINE_GLOBAL_DEPTH_BREAK_1:
 		return 0
-	if player_y < 460.0:
+	if player_y < MINE_GLOBAL_DEPTH_BREAK_2:
 		return 1
 	return 2
 
