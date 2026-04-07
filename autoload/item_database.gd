@@ -118,6 +118,37 @@ func initialize_items():
 		"sell_price": 0
 	}
 
+	# Fishing (MVP)
+	items["fish_sardine"] = {
+		"id": "fish_sardine",
+		"name": "Sardine",
+		"description": "A small silvery fish.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 40
+	}
+
+	items["fish_perch"] = {
+		"id": "fish_perch",
+		"name": "Perch",
+		"description": "A freshwater favorite.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 55
+	}
+
+	items["junk_boot"] = {
+		"id": "junk_boot",
+		"name": "Old Boot",
+		"description": "Not edible. Maybe recyclable?",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 2
+	}
+
 func get_item(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 

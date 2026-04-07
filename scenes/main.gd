@@ -49,7 +49,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E to interact with NPCs")
+	print("Press E to interact with NPCs; walk to the bottom (y>480) with empty hands to fish")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -95,9 +95,21 @@ func _on_player_interact(tile_position: Vector2):
 			QuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
 		return
 
-	# Farming interactions
+	# Fishing MVP: empty hands, southern water band (walk toward bottom of screen)
 	var selected_item = InventoryManager.get_selected_item()
+	if selected_item == null and FishingSystem:
+		if FishingSystem.can_fish_here(player.global_position):
+			var catch_result: Dictionary = FishingSystem.try_cast(player.global_position)
+			var fish_msg: String = str(catch_result.get("message", ""))
+			if catch_result.get("ok", false):
+				show_dialogue(fish_msg)
+				record_world_event(fish_msg)
+				return
+			if not fish_msg.is_empty():
+				show_dialogue(fish_msg)
+				return
 
+	# Farming interactions
 	if selected_item:
 		if selected_item.type == "seed":
 			if farm_manager.can_plant_here(tile_coords):
