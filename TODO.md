@@ -49,8 +49,13 @@
 
 ### AI 系统深度增强 (Advanced AI Enhancements)
 - [ ] **AI 经济系统 (AI Economy)**: 根据 AI 预测动态调整物价。
-- [ ] **AI 任务系统 (AI Quest System)**: 基于 NPC 当前需求动态生成任务。
+- [x] **AI 任务系统 (AI Quest System)**: 基于 NPC 当前需求动态生成任务。
+  - [x] 基础异步任务生成框架
+  - [x] LLM 创意增强接口 (LLM-enhanced quest details)
+  - [ ] 任务目标自动验证逻辑 (Objective verification)
 - [ ] **社交动力学插件 (Social Dynamics)**: NPC 之间的复杂互动（争吵、合作、流言）。
+>>>>+++ REPLACE
+
 - [ ] **语音集成 (NPC Audio/TTS)**: 为 NPC 对话集成文本转语音。
 
 ### 性能与架构 (Optimization Phase 2 & 3)
@@ -72,6 +77,49 @@
 ### 长期目标
 - [ ] **多玩家支持 (Multiplayer)**: 合作经营农场。
 - [ ] **创意工坊 (Mod Support)**: 允许用户添加自定义 NPC 插件。
+
+---
+
+## 📝 实施中发现（防遗漏）
+
+> 规则：开发过程中发现“本轮不做，但必须记住”的点，统一追加到这里（不要只留在聊天记录里）。
+
+### 记录模板
+- [ ] **功能点名称**  
+  - 来源：在哪个任务/文件发现  
+  - 原因：为什么本轮未做  
+  - 建议：下次实现的最小切入点  
+
+### 当前已记录
+- [ ] **真实 TTS Provider 接入（替换 text-only / sfx 回退）**  
+  - 来源：`autoload/npc_audio_manager.gd` 与 `hello_agent_backend/app/api/routes.py`  
+  - 原因：本轮先做 MVP 回退策略，保证稳定不阻塞  
+  - 建议：先接 1 个 Provider（Edge/ElevenLabs 等），保留失败回退
+
+- [ ] **关系事件驱动的双向 NPC 社交传播（NPC↔NPC）**  
+  - 来源：`hello_agent_backend/app/services/social_manager.py`  
+  - 原因：本轮聚焦玩家↔NPC 主链路  
+  - 建议：新增 NPC-NPC 关系图谱与事件广播，驱动群体流言/合作
+
+- [ ] **每日叙事事件对前端可视化触发器（地图热点/弹窗）**  
+  - 来源：`hello_agent_backend/app/services/daily_narrative_manager.py`  
+  - 原因：本轮已完成生成与缓存，前端演出未全量接入  
+  - 建议：在 Godot 增加事件消费器，按地点触发
+
+- [ ] **链式任务奖励与经济系统联动（价格波动）**  
+  - 来源：`hello_agent_backend/app/services/quest_manager.py`  
+  - 原因：本轮仅完成任务链与奖励倍率，未接 AI 经济闭环  
+  - 建议：将任务完成结果写入 AI 经济输入，按日刷新物价
+
+- [ ] **后端 TTS 音频流真实播放（非 mock/text-only）**  
+  - 来源：`autoload/npc_audio_manager.gd`、`hello_agent_backend/app/api/routes.py`  
+  - 原因：当前已接“异步请求 + 回退”，但真实音频文件/流未接入  
+  - 建议：实现 provider 产出音频文件 URL，并在 Godot 侧拉流播放
+
+- [ ] **TTS 并发队列与打断策略（避免语音重叠）**  
+  - 来源：`autoload/npc_audio_manager.gd`  
+  - 原因：当前为单请求上下文，连续多句会竞争同一请求状态  
+  - 建议：为每个 NPC 增加 speak queue 与优先级中断规则
 
 ---
 
