@@ -42,6 +42,8 @@ func try_swing(player_pos: Vector2, pickaxe_id: String) -> Dictionary:
 	if now - _last_swing_time < SWING_COOLDOWN_SEC:
 		return {"ok": false, "message": "You catch your breath..."}
 	_last_swing_time = now
+	if GatheringSfx:
+		GatheringSfx.play_mine_swing()
 
 	var depth := _depth_from_y(player_pos.y)
 	var weights: Dictionary = GT.mining_ore_weights(depth, tier)

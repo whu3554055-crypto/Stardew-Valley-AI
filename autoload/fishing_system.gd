@@ -45,6 +45,8 @@ func handle_fish_input(player_pos: Vector2) -> Dictionary:
 	_bait_flag = InventoryManager.count_item("worm_bait") > 0
 	_fish_phase = "hook"
 	_hook_deadline = now + HOOK_WINDOW_SEC
+	if GatheringSfx:
+		GatheringSfx.play_fish_cast()
 	return {
 		"ok": true,
 		"phase": "hook_prompt",
@@ -94,6 +96,8 @@ func _grant_catch(item_id: String, junk_message: String) -> Dictionary:
 		return {"ok": false, "message": "Catch failed (missing item data)."}
 	if not InventoryManager.add_item(template.duplicate(true)):
 		return {"ok": false, "message": "Inventory full."}
+	if GatheringSfx:
+		GatheringSfx.play_fish_catch()
 	if _bait_flag:
 		InventoryManager.consume_item_by_id("worm_bait", 1)
 	if GatheringAlmanac:
