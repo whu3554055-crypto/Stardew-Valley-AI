@@ -213,6 +213,50 @@ func initialize_items():
 		"stamina_restore": 44.0
 	}
 
+	items["hearty_braise"] = {
+		"id": "hearty_braise",
+		"name": "Hearty River Braise",
+		"description": "Carp, perch, and potato — three ingredients, one filling meal.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 240,
+		"stamina_restore": 72.0
+	}
+
+	items["garden_pot_pie"] = {
+		"id": "garden_pot_pie",
+		"name": "Garden Pot Pie",
+		"description": "Parsnip, potato, and cauliflower under a crust of hope.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 380,
+		"stamina_restore": 68.0
+	}
+
+	items["ocean_skillet"] = {
+		"id": "ocean_skillet",
+		"name": "Ocean Skillet",
+		"description": "Sardine and mackerel on bread — salty harbor lunch.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 210,
+		"stamina_restore": 58.0
+	}
+
+	items["tuna_bowl"] = {
+		"id": "tuna_bowl",
+		"name": "Tuna Harvest Bowl",
+		"description": "Tuna with cauliflower and potato — a full plate from sea and soil.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 420,
+		"stamina_restore": 78.0
+	}
+
 	# Tools
 	items["hoe"] = {
 		"id": "hoe",
@@ -344,6 +388,28 @@ func initialize_items():
 		"stamina_restore": 28.0
 	}
 
+	items["fish_catfish"] = {
+		"id": "fish_catfish",
+		"name": "Catfish",
+		"description": "Whiskered river dweller — more active after dark.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 62,
+		"stamina_restore": 22.0
+	}
+
+	items["fish_mackerel"] = {
+		"id": "fish_mackerel",
+		"name": "Mackerel",
+		"description": "Striped and oily — common in open water by day.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 58,
+		"stamina_restore": 20.0
+	}
+
 	items["junk_boot"] = {
 		"id": "junk_boot",
 		"name": "Old Boot",
@@ -423,6 +489,16 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 85
+	}
+
+	items["geode"] = {
+		"id": "geode",
+		"name": "Geode",
+		"description": "A lumpy stone from the upper mine — crack it open… or sell it.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 95
 	}
 
 	items["copper_bar"] = {

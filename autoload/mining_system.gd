@@ -88,8 +88,13 @@ func _grant_ore(item_id: String, empty_msg: String, _depth: int = 0, _tier: int 
 		var nm: String = str(template.get("name", item_id))
 		if item_id == "quartz":
 			msg = "A chip of %s catches the light." % nm
+		elif item_id == "geode":
+			msg = "A rattling %s — the surface layer hides curios." % nm
 		elif item_id == "gold_ore":
 			msg = "Rich vein! Mined: %s" % nm
 		else:
 			msg = "Mined: %s" % nm
+	var prefix: String = GT.mining_layer_prefix(_depth)
+	if not prefix.is_empty():
+		msg = "%s %s" % [prefix, msg]
 	return {"ok": true, "message": msg, "item_id": item_id}

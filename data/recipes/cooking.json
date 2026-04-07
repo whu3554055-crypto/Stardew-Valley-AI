@@ -75,5 +75,33 @@
     "output_qty": 1,
     "inputs": { "parsnip": 1, "potato": 1 },
     "stamina": 2
+  },
+  {
+    "id": "hearty_braise",
+    "output_id": "hearty_braise",
+    "output_qty": 1,
+    "inputs": { "fish_carp": 1, "fish_perch": 1, "potato": 1 },
+    "stamina": 4
+  },
+  {
+    "id": "garden_pot_pie",
+    "output_id": "garden_pot_pie",
+    "output_qty": 1,
+    "inputs": { "parsnip": 1, "potato": 1, "cauliflower": 1 },
+    "stamina": 4
+  },
+  {
+    "id": "ocean_skillet",
+    "output_id": "ocean_skillet",
+    "output_qty": 1,
+    "inputs": { "fish_sardine": 1, "fish_mackerel": 1, "bread": 1 },
+    "stamina": 3
+  },
+  {
+    "id": "tuna_bowl",
+    "output_id": "tuna_bowl",
+    "output_qty": 1,
+    "inputs": { "fish_tuna": 1, "cauliflower": 1, "potato": 1 },
+    "stamina": 5
   }
 ]
