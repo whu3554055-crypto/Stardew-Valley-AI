@@ -115,7 +115,8 @@ func initialize_items():
 		"type": "tool",
 		"stack": 1,
 		"max_stack": 1,
-		"sell_price": 0
+		"sell_price": 0,
+		"max_durability": 100
 	}
 
 	items["pickaxe_iron"] = {
@@ -125,7 +126,8 @@ func initialize_items():
 		"type": "tool",
 		"stack": 1,
 		"max_stack": 1,
-		"sell_price": 0
+		"sell_price": 0,
+		"max_durability": 140
 	}
 
 	items["fishing_rod"] = {

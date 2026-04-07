@@ -28,6 +28,8 @@ func add_item(item_data: Dictionary) -> bool:
 		if inventory[i] == null:
 			inventory[i] = item_data.duplicate()
 			inventory[i].stack = 1
+			if inventory[i].has("max_durability") and not inventory[i].has("durability"):
+				inventory[i].durability = int(inventory[i].max_durability)
 			inventory_updated.emit()
 			return true
 
@@ -61,6 +63,20 @@ func count_item(item_id: String) -> int:
 		if inventory[i] != null and inventory[i].id == item_id:
 			n += inventory[i].stack
 	return n
+
+func damage_tool_slot(slot: int, amount: int = 1) -> bool:
+	if slot < 0 or slot >= INVENTORY_SIZE:
+		return false
+	var item = inventory[slot]
+	if item == null or not item.has("max_durability"):
+		return true
+	if not item.has("durability"):
+		item.durability = int(item.max_durability)
+	item.durability = int(item.durability) - amount
+	if item.durability <= 0:
+		inventory[slot] = null
+	inventory_updated.emit()
+	return true
 
 func consume_item_by_id(item_id: String, amount: int = 1) -> bool:
 	if count_item(item_id) < amount:
