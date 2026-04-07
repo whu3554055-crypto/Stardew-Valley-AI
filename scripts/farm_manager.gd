@@ -11,6 +11,9 @@ var planted_crops = {}
 # Tilled soil positions
 var tilled_soil = {}
 
+## Placed basic sprinklers: tile under the sprinkler (must be tilled, no crop). Waters 4 ortho neighbors each morning.
+var sprinkler_tiles: Dictionary = {}
+
 signal crop_planted(position, crop_id)
 signal crop_harvested(position, crop_id, quantity)
 signal soil_tilled(position)
@@ -55,6 +58,8 @@ func load_crop_database():
 	}
 
 func till_soil(position: Vector2i):
+	if sprinkler_tiles.has(position):
+		return false
 	if not tilled_soil.has(position):
 		tilled_soil[position] = true
 		soil_tilled.emit(position)
@@ -63,6 +68,9 @@ func till_soil(position: Vector2i):
 
 func plant_seed(position: Vector2i, crop_id: String) -> bool:
 	if not tilled_soil.has(position):
+		return false
+
+	if sprinkler_tiles.has(position):
 		return false
 
 	if not crops_db.has(crop_id):
@@ -111,6 +119,7 @@ func water_plant(position: Vector2i):
 		planted_crops[position]["watered"] = true
 
 func _on_day_changed(new_day):
+	_sprinkler_water_neighbor_tiles()
 	# Grow all crops
 	for position in planted_crops:
 		var crop = planted_crops[position]
@@ -127,15 +136,50 @@ func is_tile_tilled(position: Vector2i) -> bool:
 	return tilled_soil.has(position)
 
 func can_plant_here(position: Vector2i) -> bool:
-	return tilled_soil.has(position) and not planted_crops.has(position)
+	return tilled_soil.has(position) and not planted_crops.has(position) and not sprinkler_tiles.has(position)
+
+func try_place_sprinkler(position: Vector2i) -> Dictionary:
+	if not tilled_soil.has(position):
+		return {"ok": false, "reason": "not_tilled"}
+	if planted_crops.has(position):
+		return {"ok": false, "reason": "has_crop"}
+	if sprinkler_tiles.has(position):
+		return {"ok": false, "reason": "has_sprinkler"}
+	sprinkler_tiles[position] = true
+	_water_ortho_neighbors(position)
+	return {"ok": true}
+
+func _water_ortho_neighbors(origin: Vector2i) -> void:
+	var dirs: Array = [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
+	for d in dirs:
+		water_plant(origin + d)
+
+func _sprinkler_water_neighbor_tiles() -> void:
+	for sp in sprinkler_tiles.keys():
+		_water_ortho_neighbors(sp)
 
 func save_farm_data():
 	var save_data = {
 		"tilled_soil": tilled_soil,
-		"planted_crops": planted_crops
+		"planted_crops": planted_crops,
+		"sprinkler_tiles": sprinkler_tiles
 	}
 	return save_data
 
 func load_farm_data(data: Dictionary):
 	tilled_soil = data.get("tilled_soil", {})
 	planted_crops = data.get("planted_crops", {})
+	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
+
+func _deserialize_sprinklers(raw) -> Dictionary:
+	var out: Dictionary = {}
+	if raw is Dictionary:
+		for k in raw.keys():
+			if k is Vector2i:
+				out[k] = true
+			elif k is String:
+				var s: String = str(k).strip_edges().replace("(", "").replace(")", "")
+				var parts: PackedStringArray = s.split(",")
+				if parts.size() >= 2:
+					out[Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))] = true
+	return out

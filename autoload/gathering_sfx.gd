@@ -3,7 +3,11 @@ extends Node
 const PATH_FISH_CAST := "res://assets/audio/activities/fish_cast.wav"
 const PATH_FISH_CATCH := "res://assets/audio/activities/farming_harvest.wav"
 const PATH_MINE := "res://assets/audio/activities/mine_pickaxe.wav"
+const PATH_CHOP := "res://assets/audio/activities/chop_wood.wav"
 const PATH_SMELT := "res://assets/audio/ui/confirm.wav"
+const PATH_COOK := "res://assets/audio/activities/farming_plant.wav"
+const PATH_CRAFT := "res://assets/audio/ui/notification.wav"
+const PATH_WATER := "res://assets/audio/activities/farming_water.wav"
 
 var _player: AudioStreamPlayer
 
@@ -24,13 +28,16 @@ func play_smelt() -> void:
 	_play_path(PATH_SMELT)
 
 func play_cook() -> void:
-	_play_path(PATH_SMELT)
+	_play_path(PATH_COOK)
 
 func play_chop() -> void:
-	_play_path(PATH_MINE)
+	_play_path(PATH_CHOP)
 
 func play_craft() -> void:
-	_play_path(PATH_SMELT)
+	_play_path(PATH_CRAFT)
+
+func play_water() -> void:
+	_play_path(PATH_WATER)
 
 func _play_path(path: String) -> void:
 	var st: Resource = load(path)

@@ -60,7 +60,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | J = collection")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -257,27 +257,39 @@ func _on_player_interact(tile_position: Vector2):
 				InventoryManager.damage_tool_slot(InventoryManager.selected_slot, 1)
 				show_dialogue(ch_msg)
 				record_world_event(ch_msg)
-				_play_fx_mine()
 				return
 			if not ch_msg.is_empty():
 				show_dialogue(ch_msg)
 				return
 
-	# Basic sprinkler — water every planted crop once (consumes item)
+	# Basic sprinkler — place on empty tilled tile; waters 4 ortho neighbors each morning (+ once on place)
 	if selected_item and str(selected_item.get("id", "")) == "sprinkler_basic":
 		if not farm_manager:
 			return
-		if farm_manager.planted_crops.is_empty():
-			show_quick_tip("No crops to water.")
-			return
-		if GameManager and GameManager.try_consume_stamina(5.0):
-			for pos in farm_manager.planted_crops.keys():
-				farm_manager.water_plant(pos)
+		if GameManager:
+			var sc: float = float(GameManager.player_data.get("stamina", 0.0))
+			if sc < 5.0:
+				show_quick_tip("体力不足，无法放置洒水器。")
+				return
+		var sp_res: Dictionary = farm_manager.try_place_sprinkler(tile_coords)
+		if sp_res.get("ok", false):
+			if GameManager:
+				GameManager.try_consume_stamina(5.0)
 			InventoryManager.remove_item(InventoryManager.selected_slot, 1)
-			show_quick_tip("Sprinkler used — all crops watered.")
+			if GatheringSfx:
+				GatheringSfx.play_water()
+			show_quick_tip("洒水器已放置：已浇灌邻格；之后每天清晨再浇一次。")
 			update_ui()
 			return
-		show_quick_tip("Too tired to use the sprinkler.")
+		match str(sp_res.get("reason", "")):
+			"not_tilled":
+				show_quick_tip("需要先犁地，且该地块不能种作物。")
+			"has_crop":
+				show_quick_tip("该地块已有作物，请换一块空地。")
+			"has_sprinkler":
+				show_quick_tip("这里已有洒水器。")
+			_:
+				show_quick_tip("无法在此放置洒水器。")
 		return
 
 	# Eat food / crops / fish with stamina_restore (select item, press E)
@@ -295,6 +307,8 @@ func _on_player_interact(tile_position: Vector2):
 			farm_manager.till_soil(tile_coords)
 		elif selected_item.id == "watering_can":
 			farm_manager.water_plant(tile_coords)
+			if GatheringSfx:
+				GatheringSfx.play_water()
 
 func _on_time_changed(new_time):
 	update_ui()
