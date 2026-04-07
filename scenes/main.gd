@@ -138,6 +138,7 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	var story_npc_id: String = str(quest_data.get("story_npc_id", ""))
 	if story_npc_id.is_empty():
 		return
+	var quest_id: String = str(quest_data.get("id", ""))
 
 	# Immediate "world reacts to player action" feedback.
 	if NPCEmotionSystem:
@@ -163,14 +164,16 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 						neighbor_id,
 						"I heard the player helped %s with today's story. People are talking about it." % story_npc_id.capitalize(),
 						0.78,
-						"happy"
+						"happy",
+						["player", story_npc_id, neighbor_id, "daily_narrative", quest_id]
 					)
 		if NPCMemorySystem:
 			NPCMemorySystem.record_event(
 				story_npc_id,
 				"The player helped me with today's story quest. I'm grateful.",
 				0.82,
-				"happy"
+				"happy",
+				["player", story_npc_id, "daily_narrative", quest_id]
 			)
 
 	if NPCAudioManager:

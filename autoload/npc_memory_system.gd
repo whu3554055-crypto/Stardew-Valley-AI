@@ -95,14 +95,16 @@ func record_event(
 	npc_id: String,
 	event_description: String,
 	importance: float = 0.5,
-	emotion: String = "neutral"
+	emotion: String = "neutral",
+	related_entities: Array = []
 ):
 	add_memory(
 		npc_id,
 		MemoryType.EVENT,
 		event_description,
 		importance,
-		emotion
+		emotion,
+		related_entities
 	)
 
 # Learn player preference
@@ -174,8 +176,12 @@ func get_relevant_memories(
 		
 		# Boost matching keywords
 		for keyword in context_keywords:
-			if keyword.to_lower() in memory.content.to_lower():
+			var kw = str(keyword).to_lower()
+			if kw in memory.content.to_lower():
 				score *= 1.5
+			for entity in memory.related_entities:
+				if kw in str(entity).to_lower():
+					score *= 1.35
 		
 		scored_memories.append({"memory": memory, "score": score})
 	
