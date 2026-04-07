@@ -67,12 +67,14 @@ class EmotionalState:
 var npc_emotions = {}
 var npc_personalities = {}
 var emotion_history = {}
+var npc_social_graph = {}
 
 signal emotion_changed(npc_id, new_emotion, intensity)
 signal mood_updated(npc_id, mood_description)
 
 func _ready():
 	initialize_personalities()
+	initialize_social_graph()
 	load_emotion_state()
 
 func _process(delta):
@@ -133,6 +135,14 @@ func initialize_personalities():
 		}
 	}
 
+func initialize_social_graph():
+	# Lightweight social graph for first playable propagation loop.
+	npc_social_graph = {
+		"pierre": {"abigail": 0.9, "lewis": 0.5},
+		"abigail": {"pierre": 0.9, "lewis": 0.4},
+		"lewis": {"pierre": 0.5, "abigail": 0.4}
+	}
+
 # Set initial emotion for NPC
 func set_emotion(
 	npc_id: String,
@@ -150,6 +160,33 @@ func set_emotion(
 	npc_emotions[npc_id].cause = cause
 	
 	emotion_changed.emit(npc_id, emotion, intensity)
+
+func propagate_emotion_to_social_circle(
+	source_npc_id: String,
+	emotion: BasicEmotion,
+	source_intensity: float = 0.7,
+	cause: String = "social_propagation"
+) -> Array:
+	var changed_npcs: Array = []
+	if not npc_social_graph.has(source_npc_id):
+		return changed_npcs
+	
+	var neighbors: Dictionary = npc_social_graph.get(source_npc_id, {})
+	for neighbor_id in neighbors.keys():
+		var bond_strength = float(neighbors[neighbor_id])
+		var personality = get_personality(neighbor_id)
+		var friendliness = float(personality.get("traits", {}).get("friendliness", 0.5))
+		var sensitivity = float(personality.get("traits", {}).get("sensitivity", 0.5))
+		var propagated_intensity = source_intensity * bond_strength * (0.6 + friendliness * 0.2 + sensitivity * 0.2)
+		propagated_intensity = clamp(propagated_intensity, 0.15, 0.75)
+		
+		set_emotion(neighbor_id, emotion, propagated_intensity, 90.0, cause)
+		changed_npcs.append({
+			"npc_id": neighbor_id,
+			"intensity": propagated_intensity
+		})
+	
+	return changed_npcs
 
 # Trigger emotion based on event
 func trigger_emotion(npc_id: String, event_type: String, context: Dictionary = {}):

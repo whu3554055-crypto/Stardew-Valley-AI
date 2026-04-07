@@ -141,7 +141,23 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 
 	# Immediate "world reacts to player action" feedback.
 	if NPCEmotionSystem:
-		NPCEmotionSystem.set_emotion(story_npc_id, "happy")
+		NPCEmotionSystem.set_emotion(
+			story_npc_id,
+			NPCEmotionSystem.BasicEmotion.HAPPY,
+			0.8,
+			120.0,
+			"player_story_help"
+		)
+		var spread_results: Array = NPCEmotionSystem.propagate_emotion_to_social_circle(
+			story_npc_id,
+			NPCEmotionSystem.BasicEmotion.HAPPY,
+			0.6,
+			"story_emotion_spread"
+		)
+		for result in spread_results:
+			var neighbor_id: String = str(result.get("npc_id", ""))
+			if not neighbor_id.is_empty():
+				record_world_event("%s was uplifted after hearing about your help to %s." % [neighbor_id.capitalize(), story_npc_id.capitalize()])
 
 	if NPCAudioManager:
 		NPCAudioManager.speak(story_npc_id, "Thanks! Today's story moved forward because of you.", "happy")
