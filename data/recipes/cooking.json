@@ -63,6 +63,20 @@
     "stamina": 2
   },
   {
+    "id": "grilled_catfish",
+    "output_id": "grilled_catfish",
+    "output_qty": 1,
+    "inputs": { "fish_catfish": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "grilled_mackerel",
+    "output_id": "grilled_mackerel",
+    "output_qty": 1,
+    "inputs": { "fish_mackerel": 1 },
+    "stamina": 2
+  },
+  {
     "id": "fish_stew",
     "output_id": "fish_stew",
     "output_qty": 1,

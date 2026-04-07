@@ -191,6 +191,28 @@ func initialize_items():
 		"stamina_restore": 48.0
 	}
 
+	items["grilled_catfish"] = {
+		"id": "grilled_catfish",
+		"name": "Grilled Catfish",
+		"description": "River catch, simple grill.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 98,
+		"stamina_restore": 36.0
+	}
+
+	items["grilled_mackerel"] = {
+		"id": "grilled_mackerel",
+		"name": "Grilled Mackerel",
+		"description": "Oily and satisfying.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 92,
+		"stamina_restore": 34.0
+	}
+
 	items["fish_stew"] = {
 		"id": "fish_stew",
 		"name": "Fish Stew",
