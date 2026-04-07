@@ -183,12 +183,14 @@ func _refresh_sprinkler_visuals() -> void:
 	var cell: Vector2 = Vector2(32, 32)
 	if tm.tile_set:
 		cell = Vector2(tm.tile_set.tile_size)
-	var half: float = minf(cell.x, cell.y) * 0.35
+	# Full tile, centered on the cell; TileMap → world → SprinklerVisuals local (siblings can differ in transform).
+	var half: float = minf(cell.x, cell.y) * 0.5
 	for pos in sprinkler_tiles.keys():
 		var poly := Polygon2D.new()
-		poly.color = Color(0.35, 0.65, 0.95, 0.62)
-		var center: Vector2 = tm.map_to_local(pos)
-		poly.position = center - Vector2(half, half)
+		poly.color = Color(0.35, 0.65, 0.95, 0.4)
+		var center_world: Vector2 = tm.to_global(tm.map_to_local(pos))
+		var top_left: Vector2 = _sprinkler_layer.to_local(center_world) - Vector2(half, half)
+		poly.position = top_left
 		var s: float = half * 2.0
 		poly.polygon = PackedVector2Array([
 			Vector2(0, 0), Vector2(s, 0), Vector2(s, s), Vector2(0, s)

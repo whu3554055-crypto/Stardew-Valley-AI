@@ -238,7 +238,7 @@ func _on_player_interact(tile_position: Vector2):
 				if farm_manager.remove_sprinkler(tile_coords):
 					InventoryManager.add_item(tpl_pick.duplicate(true))
 					if GatheringSfx:
-						GatheringSfx.play_craft()
+						GatheringSfx.play_mine_swing()
 					show_quick_tip("已收回洒水器。")
 					update_ui()
 					return
