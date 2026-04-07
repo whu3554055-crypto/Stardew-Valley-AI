@@ -72,6 +72,7 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("tutorial_plant")
 		QuestSystem.start_quest("intro_fish")
 		QuestSystem.start_quest("intro_mine")
+		QuestSystem.start_quest("intro_smelt")
 	
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()

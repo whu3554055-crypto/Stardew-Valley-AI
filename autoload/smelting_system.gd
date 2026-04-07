@@ -32,6 +32,10 @@ func try_smelt_one() -> Dictionary:
 			if not InventoryManager.add_item(template.duplicate(true)):
 				return {"ok": false, "message": "Inventory full."}
 		_consume(cost)
+		if GatheringAlmanac:
+			GatheringAlmanac.record_smelt(out_id)
+		if QuestSystem:
+			QuestSystem.track_event("smelt_bar", {"bar_id": out_id, "count": 1})
 		if GatheringSfx:
 			GatheringSfx.play_smelt()
 		var nm: String = str(template.get("name", out_id))

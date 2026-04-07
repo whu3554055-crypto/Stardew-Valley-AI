@@ -78,6 +78,17 @@ func initialize_quests():
 		"reward": {"gold": 60, "items": ["coal:3"]}
 	}
 
+	quests["intro_smelt"] = {
+		"id": "intro_smelt",
+		"title": "Hot Metal",
+		"description": "Smelt any bar at the furnace once.",
+		"objectives": [
+			{"type": "smelt_bar", "count": 1, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 40, "items": ["coal:2"]}
+	}
+
 func start_quest(quest_id: String):
 	if not quests.has(quest_id):
 		return
@@ -182,6 +193,10 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "mine_ore":
 		if objective.has("ore_id"):
 			return str(data.get("ore_id", "")) == str(objective.get("ore_id", ""))
+		return true
+	if ot == "smelt_bar":
+		if objective.has("bar_id"):
+			return str(data.get("bar_id", "")) == str(objective.get("bar_id", ""))
 		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=12 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/npc_pierre.tscn" id="6_pierre"]
 [ext_resource type="PackedScene" path="res://scenes/npc_abigail.tscn" id="7_abigail"]
 [ext_resource type="PackedScene" path="res://scenes/npc_lewis.tscn" id="8_lewis"]
+[ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="10_inv"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -172,6 +173,30 @@ offset_left = 400.0
 offset_top = 200.0
 offset_right = 880.0
 offset_bottom = 520.0
+script = ExtResource("10_inv")
+
+[node name="MarginContainer" type="MarginContainer" parent="UILayer/InventoryUI"]
+layout_mode = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 480.0
+offset_bottom = 320.0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="UILayer/InventoryUI/MarginContainer"]
+layout_mode = 2
+
+[node name="StaminaLabel" type="Label" parent="UILayer/InventoryUI/MarginContainer/VBox"]
+layout_mode = 2
+text = "Stamina: 100 / 100"
+
+[node name="GridContainer" type="GridContainer" parent="UILayer/InventoryUI/MarginContainer/VBox"]
+layout_mode = 2
+columns = 9
 
 [node name="AlmanacPanel" type="Panel" parent="UILayer"]
 visible = false
@@ -196,7 +221,7 @@ layout_mode = 2
 [node name="Title" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Fish & Minerals — Collection (J)"
+text = "Fish / Minerals / Smelted — Collection (J)"
 
 [node name="FishLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
@@ -205,7 +230,7 @@ text = "Fish"
 [node name="FishItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 120)
 
 [node name="MineralLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
@@ -214,7 +239,16 @@ text = "Minerals"
 [node name="MineralItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 120)
+
+[node name="SmeltLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+text = "Smelted bars"
+
+[node name="SmeltItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 100)
 
 [node name="AIConfigButton" type="Button" parent="UILayer"]
 offset_left = 1100.0

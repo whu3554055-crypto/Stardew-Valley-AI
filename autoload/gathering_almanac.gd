@@ -5,6 +5,7 @@ signal collection_updated
 ## Fish / mineral discovery counts for collection UI and saves.
 var fish_caught: Dictionary = {}
 var minerals_mined: Dictionary = {}
+var smelted_bars: Dictionary = {}
 
 const SAVE_PATH := "user://gathering_almanac.save"
 
@@ -20,6 +21,12 @@ func record_mineral(ore_id: String) -> void:
 	minerals_mined[ore_id] = int(minerals_mined.get(ore_id, 0)) + 1
 	collection_updated.emit()
 
+func record_smelt(bar_id: String) -> void:
+	if bar_id.is_empty():
+		return
+	smelted_bars[bar_id] = int(smelted_bars.get(bar_id, 0)) + 1
+	collection_updated.emit()
+
 func get_fish_discovered_count() -> int:
 	return fish_caught.size()
 
@@ -30,7 +37,7 @@ func save_data() -> void:
 	var f = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if not f:
 		return
-	f.store_var({"fish": fish_caught, "minerals": minerals_mined})
+	f.store_var({"fish": fish_caught, "minerals": minerals_mined, "smelted": smelted_bars})
 	f.close()
 
 func load_data() -> void:
@@ -46,3 +53,5 @@ func load_data() -> void:
 			fish_caught = data.fish
 		if data.get("minerals") is Dictionary:
 			minerals_mined = data.minerals
+		if data.get("smelted") is Dictionary:
+			smelted_bars = data.smelted
