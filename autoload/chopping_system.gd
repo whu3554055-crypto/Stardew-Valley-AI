@@ -16,8 +16,13 @@ func try_chop_one() -> Dictionary:
 	for i in range(n):
 		if not InventoryManager.add_item(template.duplicate(true)):
 			return {"ok": false, "message": "Inventory full."}
+	var msg: String = "Chopped %d wood." % n
+	var sap_tpl: Dictionary = ItemDatabase.get_item("tree_sap")
+	if not sap_tpl.is_empty() and randf() < 0.12:
+		if InventoryManager.can_add_quantity(sap_tpl, 1) and InventoryManager.add_item(sap_tpl.duplicate(true)):
+			msg += " Also found tree sap!"
 	if QuestSystem:
 		QuestSystem.track_event("chop_wood", {"count": 1})
 	if GatheringSfx:
 		GatheringSfx.play_chop()
-	return {"ok": true, "message": "Chopped %d wood." % n}
+	return {"ok": true, "message": msg}

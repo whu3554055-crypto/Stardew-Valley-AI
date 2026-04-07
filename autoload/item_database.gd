@@ -661,6 +661,16 @@ func initialize_items():
 		"sell_price": 5
 	}
 
+	items["tree_sap"] = {
+		"id": "tree_sap",
+		"name": "Tree Sap",
+		"description": "Sticky sap from forest trees; sometimes drops when chopping.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 15
+	}
+
 	items["sprinkler_basic"] = {
 		"id": "sprinkler_basic",
 		"name": "Basic Sprinkler",
@@ -711,6 +721,9 @@ func resolve_icon_path(item_id: String) -> String:
 		"basic_fertilizer":
 			if ResourceLoader.exists("res://assets/sprites/environment/greenery/grass_clump.png"):
 				return "res://assets/sprites/environment/greenery/grass_clump.png"
+		"tree_sap":
+			if ResourceLoader.exists("res://assets/sprites/items/resources/wood.png"):
+				return "res://assets/sprites/items/resources/wood.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:

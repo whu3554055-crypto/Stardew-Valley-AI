@@ -186,6 +186,9 @@ func _update_activity_zone_label() -> void:
 		else:
 			activity_zone_label.text = ""
 		return
+	if sid == "axe" and ChoppingSystem and ChoppingSystem.can_chop_here(player.global_position):
+		activity_zone_label.text = "伐木 · 森林"
+		return
 	activity_zone_label.text = ""
 
 func _try_load_save_bundle() -> bool:
