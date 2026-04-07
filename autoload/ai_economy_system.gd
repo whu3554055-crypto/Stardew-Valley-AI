@@ -637,3 +637,64 @@ func record_ai_decision(decision_type: String, data: Dictionary):
 func get_ai_decision_history(count: int = 10) -> Array:
 	"""Get recent AI decisions"""
 	return ai_decisions.slice(-count)
+
+# ============================================
+# QUEST ↔ ECONOMY (playable-first feedback loop)
+# ============================================
+
+func on_quest_completed(quest_data: Dictionary) -> void:
+	"""Nudge supply/demand when the player completes a quest so the market reacts."""
+	if quest_data.is_empty():
+		return
+	var quest_id: String = str(quest_data.get("id", ""))
+	var reward: Dictionary = quest_data.get("reward", {})
+	var gold: int = int(reward.get("gold", 0))
+	var source: String = str(quest_data.get("source", ""))
+
+	for objective in quest_data.get("objectives", []):
+		if typeof(objective) != TYPE_DICTIONARY:
+			continue
+		var obj: Dictionary = objective
+		if obj.get("type") in ["plant", "harvest"] and obj.has("crop_id"):
+			var crop_id: String = str(obj.get("crop_id"))
+			_bump_item_demand(crop_id, 1.06)
+			if not crop_id.ends_with("_seeds"):
+				_bump_item_demand("%s_seeds" % crop_id, 1.04)
+
+	for item_str in reward.get("items", []):
+		var parts: PackedStringArray = str(item_str).split(":")
+		if parts.size() > 0:
+			_bump_item_demand(str(parts[0]), 1.05)
+
+	if gold > 0:
+		_boost_town_commerce_from_quest_reward(gold)
+
+	if source == "daily_narrative":
+		_pulse_village_interest_in_farming()
+
+	record_ai_decision("quest_completed_pulse", {
+		"quest_id": quest_id,
+		"gold": gold,
+		"source": source
+	})
+
+func _bump_item_demand(item_id: String, factor: float) -> void:
+	if not market_state.items.has(item_id):
+		return
+	var item: Dictionary = market_state.items[item_id]
+	item.demand = clamp(item.demand * factor, 10.0, 220.0)
+	item.last_updated = Time.get_unix_time_from_system()
+
+func _boost_town_commerce_from_quest_reward(gold: int) -> void:
+	var nudge: float = 1.0 + clamp(float(gold) / 5000.0, 0.01, 0.06)
+	var candidates: Array = get_top_demanded_items(8)
+	var boosted := 0
+	for item_id in candidates:
+		_bump_item_demand(str(item_id), nudge)
+		boosted += 1
+		if boosted >= 3:
+			break
+
+func _pulse_village_interest_in_farming() -> void:
+	for item_id in ["parsnip_seeds", "parsnip", "hoe", "watering_can"]:
+		_bump_item_demand(item_id, 1.03)

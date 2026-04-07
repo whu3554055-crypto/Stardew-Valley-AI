@@ -114,6 +114,8 @@ func complete_quest(quest_id: String):
 	# Move from active to completed
 	active_quests.erase(quest_id)
 	completed_quests.append(quest_id)
+	if AIEconomySystem:
+		AIEconomySystem.on_quest_completed(quest)
 	quest_completed.emit(quest_id)
 
 func turn_in_quest(quest_id: String):
