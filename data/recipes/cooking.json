@@ -131,5 +131,19 @@
     "output_qty": 1,
     "inputs": { "fish_tuna": 1, "cauliflower": 1, "potato": 1 },
     "stamina": 5
+  },
+  {
+    "id": "sap_glazed_toast",
+    "output_id": "sap_glazed_toast",
+    "output_qty": 1,
+    "inputs": { "bread": 1, "tree_sap": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "sap_glazed_catfish",
+    "output_id": "sap_glazed_catfish",
+    "output_qty": 1,
+    "inputs": { "fish_catfish": 1, "tree_sap": 1 },
+    "stamina": 2
   }
 ]

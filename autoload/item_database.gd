@@ -335,6 +335,28 @@ func initialize_items():
 		"stamina_restore": 78.0
 	}
 
+	items["sap_glazed_toast"] = {
+		"id": "sap_glazed_toast",
+		"name": "Sap-Glazed Toast",
+		"description": "Shop bread brushed with tree sap from the forest — sweet and filling.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 95,
+		"stamina_restore": 52.0
+	}
+
+	items["sap_glazed_catfish"] = {
+		"id": "sap_glazed_catfish",
+		"name": "Sap-Glazed Catfish",
+		"description": "River catfish with a sticky sap glaze — forest meets the river.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 128,
+		"stamina_restore": 48.0
+	}
+
 	# Tools
 	items["hoe"] = {
 		"id": "hoe",
@@ -724,6 +746,12 @@ func resolve_icon_path(item_id: String) -> String:
 		"tree_sap":
 			if ResourceLoader.exists("res://assets/sprites/items/resources/wood.png"):
 				return "res://assets/sprites/items/resources/wood.png"
+		"sap_glazed_toast":
+			if ResourceLoader.exists("res://assets/sprites/items/consumables/bread.png"):
+				return "res://assets/sprites/items/consumables/bread.png"
+		"sap_glazed_catfish":
+			if ResourceLoader.exists("res://assets/sprites/environment/water/fish_small.png"):
+				return "res://assets/sprites/environment/water/fish_small.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:
