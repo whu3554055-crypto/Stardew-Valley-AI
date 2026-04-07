@@ -11,10 +11,13 @@ extends Node2D
 @onready var season_label = $UILayer/SeasonLabel
 @onready var day_label = $UILayer/DayLabel
 @onready var ai_config_button = $UILayer/AIConfigButton
+@onready var world_event_feed_label = $UILayer/WorldEventFeed/Content
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
 var ai_config_instance = null
+var world_event_feed: Array[String] = []
+const WORLD_EVENT_FEED_MAX := 6
 
 func _ready():
 	# Connect signals
@@ -59,6 +62,7 @@ func initialize_playable_first_loop():
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
 		if not narrative.is_empty():
 			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
+			record_world_event("Daily story generated: %s" % str(narrative.get("title", "A new day begins")))
 			_apply_narrative_daily_quest(narrative)
 
 	if QuestSystem:
@@ -114,6 +118,7 @@ func _on_day_changed(new_day):
 	# Lightweight daily refresh keeps the game feeling alive.
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
+		record_world_event("New day, new story seed is ready.")
 		_apply_narrative_daily_quest(narrative)
 
 func _on_quest_completed(quest_id: String):
@@ -138,7 +143,27 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if NPCAudioManager:
 		NPCAudioManager.speak(story_npc_id, "Thanks! Today's story moved forward because of you.", "happy")
 
-	show_dialogue("%s now feels encouraged by your help." % story_npc_id.capitalize())
+	var feedback_line := "%s now feels encouraged by your help." % story_npc_id.capitalize()
+	record_world_event(feedback_line)
+	show_dialogue(feedback_line)
+
+func record_world_event(event_text: String) -> void:
+	var timestamp := ""
+	if GameManager:
+		timestamp = str(GameManager.get_time_string())
+	var line := "[%s] %s" % [timestamp if not timestamp.is_empty() else "--:--", event_text]
+	world_event_feed.push_front(line)
+	if world_event_feed.size() > WORLD_EVENT_FEED_MAX:
+		world_event_feed.resize(WORLD_EVENT_FEED_MAX)
+	_refresh_world_event_feed_ui()
+
+func _refresh_world_event_feed_ui() -> void:
+	if not world_event_feed_label:
+		return
+	if world_event_feed.is_empty():
+		world_event_feed_label.text = "No events yet."
+		return
+	world_event_feed_label.text = "\n".join(world_event_feed)
 
 func _apply_narrative_daily_quest(narrative: Dictionary):
 	if narrative.is_empty():

@@ -98,6 +98,29 @@ offset_right = 1270.0
 offset_bottom = 40.0
 text = "AI Config"
 
+[node name="WorldEventFeed" type="Panel" parent="UILayer"]
+offset_left = 930.0
+offset_top = 50.0
+offset_right = 1270.0
+offset_bottom = 260.0
+
+[node name="Title" type="Label" parent="UILayer/WorldEventFeed"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 330.0
+offset_bottom = 28.0
+text = "World Event Feed"
+
+[node name="Content" type="Label" parent="UILayer/WorldEventFeed"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 30.0
+offset_right = 330.0
+offset_bottom = 204.0
+text = "No events yet."
+autowrap_mode = 2
+
 [node name="Pierre" parent="." instance=ExtResource("6_pierre")]
 
 [node name="Abigail" parent="." instance=ExtResource("7_abigail")]
