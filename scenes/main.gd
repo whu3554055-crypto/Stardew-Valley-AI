@@ -18,6 +18,7 @@ var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
 var ai_config_instance = null
 var world_event_feed: Array[String] = []
 const WORLD_EVENT_FEED_MAX := 6
+const WORLD_EVENT_FEED_SAVE_PATH := "user://world_event_feed.save"
 
 func _ready():
 	# Connect signals
@@ -32,6 +33,8 @@ func _ready():
 	
 	# Initialize systems
 	update_ui()
+	_load_world_event_feed()
+	_refresh_world_event_feed_ui()
 	initialize_playable_first_loop()
 	
 	# Give starter items
@@ -156,6 +159,7 @@ func record_world_event(event_text: String) -> void:
 	if world_event_feed.size() > WORLD_EVENT_FEED_MAX:
 		world_event_feed.resize(WORLD_EVENT_FEED_MAX)
 	_refresh_world_event_feed_ui()
+	_save_world_event_feed()
 
 func _refresh_world_event_feed_ui() -> void:
 	if not world_event_feed_label:
@@ -164,6 +168,28 @@ func _refresh_world_event_feed_ui() -> void:
 		world_event_feed_label.text = "No events yet."
 		return
 	world_event_feed_label.text = "\n".join(world_event_feed)
+
+func _save_world_event_feed() -> void:
+	var save_file = FileAccess.open(WORLD_EVENT_FEED_SAVE_PATH, FileAccess.WRITE)
+	if not save_file:
+		return
+	save_file.store_var(world_event_feed)
+	save_file.close()
+
+func _load_world_event_feed() -> void:
+	if not FileAccess.file_exists(WORLD_EVENT_FEED_SAVE_PATH):
+		return
+	var save_file = FileAccess.open(WORLD_EVENT_FEED_SAVE_PATH, FileAccess.READ)
+	if not save_file:
+		return
+	var loaded = save_file.get_var()
+	save_file.close()
+	if loaded is Array:
+		world_event_feed.clear()
+		for item in loaded:
+			world_event_feed.append(str(item))
+		if world_event_feed.size() > WORLD_EVENT_FEED_MAX:
+			world_event_feed.resize(WORLD_EVENT_FEED_MAX)
 
 func _apply_narrative_daily_quest(narrative: Dictionary):
 	if narrative.is_empty():
@@ -215,6 +241,7 @@ func toggle_inventory():
 
 func save_game():
 	GameManager.save_game()
+	_save_world_event_feed()
 	var farm_data = farm_manager.save_farm_data()
 	# Save NPC memories and emotions
 	if NPCMemorySystem:
