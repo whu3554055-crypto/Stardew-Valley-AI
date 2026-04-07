@@ -16,6 +16,7 @@ extends Node2D
 @onready var quick_tip_timer = $UILayer/QuickTipTimer
 @onready var fx_fish = $FXLayer/FishSplash
 @onready var fx_mine = $FXLayer/MineSpark
+@onready var almanac_panel = $UILayer/AlmanacPanel
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -339,6 +340,9 @@ func _play_fx_mine() -> void:
 		fx_mine.emitting = true
 
 func _unhandled_input(event):
+	if event.is_action_pressed("toggle_almanac") and almanac_panel:
+		almanac_panel.visible = not almanac_panel.visible
+		return
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()
 	if event.is_action_pressed("ui_cancel"):

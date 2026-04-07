@@ -1,5 +1,7 @@
 extends Node
 
+signal collection_updated
+
 ## Fish / mineral discovery counts for collection UI and saves.
 var fish_caught: Dictionary = {}
 var minerals_mined: Dictionary = {}
@@ -10,11 +12,13 @@ func record_fish(fish_id: String) -> void:
 	if fish_id.is_empty():
 		return
 	fish_caught[fish_id] = int(fish_caught.get(fish_id, 0)) + 1
+	collection_updated.emit()
 
 func record_mineral(ore_id: String) -> void:
 	if ore_id.is_empty():
 		return
 	minerals_mined[ore_id] = int(minerals_mined.get(ore_id, 0)) + 1
+	collection_updated.emit()
 
 func get_fish_discovered_count() -> int:
 	return fish_caught.size()

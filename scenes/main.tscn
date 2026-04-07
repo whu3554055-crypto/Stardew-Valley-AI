@@ -1,6 +1,7 @@
-[gd_scene load_steps=10 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=11 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
 [ext_resource type="Script" path="res://autoload/game_manager.gd" id="3_gamemanager"]
 [ext_resource type="Script" path="res://autoload/inventory_manager.gd" id="4_inventory"]
@@ -147,6 +148,49 @@ offset_left = 400.0
 offset_top = 200.0
 offset_right = 880.0
 offset_bottom = 520.0
+
+[node name="AlmanacPanel" type="Panel" parent="UILayer"]
+visible = false
+offset_left = 320.0
+offset_top = 80.0
+offset_right = 960.0
+offset_bottom = 520.0
+script = ExtResource("9_almanac")
+
+[node name="Margin" type="MarginContainer" parent="UILayer/AlmanacPanel"]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 440.0
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="UILayer/AlmanacPanel/Margin"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Fish & Minerals — Collection (J)"
+
+[node name="FishLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+text = "Fish"
+
+[node name="FishItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 140)
+
+[node name="MineralLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+text = "Minerals"
+
+[node name="MineralItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 140)
 
 [node name="AIConfigButton" type="Button" parent="UILayer"]
 offset_left = 1100.0
