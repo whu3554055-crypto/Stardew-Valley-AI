@@ -80,6 +80,7 @@ var scenario_library = {}
 # Active daily narrative
 var current_narrative = {}
 var narrative_history = []
+var last_generated_day_key = ""
 
 # Configuration
 var config = {
@@ -337,6 +338,10 @@ func _on_new_day(_new_day: int):
 
 func generate_daily_narrative(force_theme: String = "") -> Dictionary:
 	"""Generate a complete daily narrative script"""
+	var day_key = get_current_day_key()
+	if force_theme == "" and day_key == last_generated_day_key and not current_narrative.is_empty():
+		return current_narrative
+	
 	print("[DailyNarrativeSystem] Generating daily narrative...")
 	
 	# Step 1: Select theme
@@ -369,6 +374,7 @@ func generate_daily_narrative(force_theme: String = "") -> Dictionary:
 	# Store as current
 	current_narrative = narrative
 	current_cast = cast
+	last_generated_day_key = day_key
 	
 	# Emit signals
 	narrative_generated.emit(narrative.id, narrative)
@@ -1317,6 +1323,16 @@ func get_current_date_string() -> String:
 			"day": GameManager.player_data.day
 		})
 	return "Unknown Date"
+
+func get_current_day_key() -> String:
+	"""Compact key for per-day generation guard."""
+	if GameManager and GameManager.player_data:
+		return "{y}-{s}-{d}".format({
+			"y": GameManager.player_data.year,
+			"s": GameManager.player_data.season,
+			"d": GameManager.player_data.day
+		})
+	return "unknown-day"
 
 func get_current_narrative() -> Dictionary:
 	"""Get current active narrative"""
