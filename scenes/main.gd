@@ -29,6 +29,8 @@ const WORLD_EVENT_FEED_SAVE_PATH := "user://world_event_feed.save"
 const FARM_SAVE_PATH := "user://farm.save"
 const INVENTORY_SAVE_PATH := "user://inventory.save"
 const QUEST_SAVE_PATH := "user://quests.save"
+const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
+const SAVE_BUNDLE_VERSION := 2
 
 func _ready():
 	# Connect signals
@@ -41,12 +43,15 @@ func _ready():
 	farm_manager.crop_planted.connect(_on_crop_planted)
 	farm_manager.crop_harvested.connect(_on_crop_harvested)
 	
-	# Initialize systems
-	if GatheringAlmanac:
-		GatheringAlmanac.load_data()
-	_load_world_event_feed()
+	# Initialize systems — prefer unified bundle; else legacy multi-file + almanac/world feed files
+	var loaded_from_bundle: bool = _try_load_save_bundle()
+	var had_savegame: bool = loaded_from_bundle
+	if not loaded_from_bundle:
+		had_savegame = _load_legacy_persistent()
+		if GatheringAlmanac:
+			GatheringAlmanac.load_data()
+		_load_world_event_feed()
 	_refresh_world_event_feed_ui()
-	var had_savegame: bool = _load_persistent_game_state()
 	if not had_savegame:
 		give_starter_items()
 	update_ui()
@@ -66,8 +71,57 @@ func _ready():
 	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection")
 	print("======================================")
 
-func _load_persistent_game_state() -> bool:
-	## Loads `GameManager` player blob, farm, quests, inventory. Returns true if `user://savegame.save` existed.
+func _try_load_save_bundle() -> bool:
+	if not FileAccess.file_exists(GAME_SAVE_BUNDLE_PATH):
+		return false
+	var f: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.READ)
+	if f == null:
+		return false
+	var bundle: Variant = f.get_var()
+	f.close()
+	if bundle is Dictionary and int(bundle.get("version", 0)) >= 2:
+		_apply_save_bundle(bundle)
+		return true
+	return false
+
+
+func _apply_save_bundle(bundle: Dictionary) -> void:
+	if bundle.get("player") is Dictionary:
+		GameManager.player_data = bundle["player"].duplicate(true)
+		if not GameManager.player_data.has("stamina"):
+			GameManager.player_data["stamina"] = 100.0
+		if not GameManager.player_data.has("stamina_max"):
+			GameManager.player_data["stamina_max"] = 100.0
+	if bundle.get("farm") is Dictionary and farm_manager:
+		farm_manager.load_farm_data(bundle["farm"])
+	if bundle.get("inventory") is Dictionary and InventoryManager:
+		InventoryManager.load_snapshot(bundle["inventory"])
+	if bundle.get("quests") is Dictionary and QuestSystem:
+		QuestSystem.load_snapshot(bundle["quests"])
+	if bundle.get("world_event_feed") is Array:
+		world_event_feed.clear()
+		for item in bundle["world_event_feed"]:
+			world_event_feed.append(str(item))
+			if world_event_feed.size() >= WORLD_EVENT_FEED_MAX:
+				break
+	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
+		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
+
+
+func _build_save_bundle() -> Dictionary:
+	return {
+		"version": SAVE_BUNDLE_VERSION,
+		"player": GameManager.player_data.duplicate(true),
+		"farm": farm_manager.save_farm_data(),
+		"inventory": InventoryManager.save_snapshot(),
+		"quests": QuestSystem.save_snapshot(),
+		"world_event_feed": world_event_feed.duplicate(),
+		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {}
+	}
+
+
+func _load_legacy_persistent() -> bool:
+	## Loads split save files from before unified bundle. Returns true if `user://savegame.save` existed.
 	var had_player_save: bool = false
 	if FileAccess.file_exists("user://savegame.save"):
 		had_player_save = GameManager.load_game()
@@ -93,7 +147,6 @@ func _load_persistent_game_state() -> bool:
 			if InventoryManager:
 				InventoryManager.load_snapshot(inv_data)
 	elif had_player_save:
-		# Save from before inventory persistence — grant starter kit once.
 		give_starter_items()
 	return had_player_save
 
@@ -558,24 +611,12 @@ func toggle_inventory():
 	inventory_ui.visible = not inventory_ui.visible
 
 func save_game():
-	GameManager.save_game()
+	var bundle: Dictionary = _build_save_bundle()
+	var bf: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.WRITE)
+	if bf:
+		bf.store_var(bundle)
+		bf.close()
 	_save_world_event_feed()
-	var farm_data: Dictionary = farm_manager.save_farm_data()
-	var farm_file: FileAccess = FileAccess.open(FARM_SAVE_PATH, FileAccess.WRITE)
-	if farm_file:
-		farm_file.store_var(farm_data)
-		farm_file.close()
-	if InventoryManager:
-		var inv_data: Dictionary = InventoryManager.save_snapshot()
-		var inv_file: FileAccess = FileAccess.open(INVENTORY_SAVE_PATH, FileAccess.WRITE)
-		if inv_file:
-			inv_file.store_var(inv_data)
-			inv_file.close()
-	if QuestSystem:
-		var qfile: FileAccess = FileAccess.open(QUEST_SAVE_PATH, FileAccess.WRITE)
-		if qfile:
-			qfile.store_var(QuestSystem.save_snapshot())
-			qfile.close()
 	# Save NPC memories and emotions
 	if NPCMemorySystem:
 		NPCMemorySystem.save_memories()

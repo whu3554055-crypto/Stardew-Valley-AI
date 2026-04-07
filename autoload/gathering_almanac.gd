@@ -61,11 +61,25 @@ func load_data() -> void:
 	var data = f.get_var()
 	f.close()
 	if data is Dictionary:
-		if data.get("fish") is Dictionary:
-			fish_caught = data.fish
-		if data.get("minerals") is Dictionary:
-			minerals_mined = data.minerals
-		if data.get("smelted") is Dictionary:
-			smelted_bars = data.smelted
-		if data.get("meals") is Dictionary:
-			meals_cooked = data.meals
+		apply_save_snapshot(data)
+
+
+func get_snapshot() -> Dictionary:
+	return {
+		"fish": fish_caught.duplicate(true),
+		"minerals": minerals_mined.duplicate(true),
+		"smelted": smelted_bars.duplicate(true),
+		"meals": meals_cooked.duplicate(true)
+	}
+
+
+func apply_save_snapshot(data: Dictionary) -> void:
+	if data.get("fish") is Dictionary:
+		fish_caught = data["fish"]
+	if data.get("minerals") is Dictionary:
+		minerals_mined = data["minerals"]
+	if data.get("smelted") is Dictionary:
+		smelted_bars = data["smelted"]
+	if data.get("meals") is Dictionary:
+		meals_cooked = data["meals"]
+	collection_updated.emit()
