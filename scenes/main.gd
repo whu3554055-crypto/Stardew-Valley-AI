@@ -26,6 +26,7 @@ var ai_config_instance = null
 var world_event_feed: Array[String] = []
 const WORLD_EVENT_FEED_MAX := 6
 const WORLD_EVENT_FEED_SAVE_PATH := "user://world_event_feed.save"
+const FARM_SAVE_PATH := "user://farm.save"
 
 func _ready():
 	# Connect signals
@@ -39,15 +40,15 @@ func _ready():
 	farm_manager.crop_harvested.connect(_on_crop_harvested)
 	
 	# Initialize systems
-	update_ui()
 	if GatheringAlmanac:
 		GatheringAlmanac.load_data()
 	_load_world_event_feed()
 	_refresh_world_event_feed_ui()
+	var had_savegame: bool = _load_persistent_game_state()
+	if not had_savegame:
+		give_starter_items()
+	update_ui()
 	initialize_playable_first_loop()
-	
-	# Give starter items
-	give_starter_items()
 	
 	# Setup AI config button
 	if ai_config_button:
@@ -62,6 +63,20 @@ func _ready():
 	print("NPCs with AI: Pierre, Abigail, Lewis")
 	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection")
 	print("======================================")
+
+func _load_persistent_game_state() -> bool:
+	## Loads `GameManager` player blob + farm (`farm_manager.load_farm_data`). Returns true if `user://savegame.save` existed.
+	var had_player_save: bool = false
+	if FileAccess.file_exists("user://savegame.save"):
+		had_player_save = GameManager.load_game()
+	if FileAccess.file_exists(FARM_SAVE_PATH):
+		var ff: FileAccess = FileAccess.open(FARM_SAVE_PATH, FileAccess.READ)
+		if ff:
+			var farm_data: Variant = ff.get_var()
+			ff.close()
+			if farm_data is Dictionary and farm_manager:
+				farm_manager.load_farm_data(farm_data)
+	return had_player_save
 
 func initialize_playable_first_loop():
 	"""
@@ -526,7 +541,11 @@ func toggle_inventory():
 func save_game():
 	GameManager.save_game()
 	_save_world_event_feed()
-	var farm_data = farm_manager.save_farm_data()
+	var farm_data: Dictionary = farm_manager.save_farm_data()
+	var farm_file: FileAccess = FileAccess.open(FARM_SAVE_PATH, FileAccess.WRITE)
+	if farm_file:
+		farm_file.store_var(farm_data)
+		farm_file.close()
 	# Save NPC memories and emotions
 	if NPCMemorySystem:
 		NPCMemorySystem.save_memories()

@@ -269,14 +269,14 @@ func save_farm_data():
 	return save_data
 
 func load_farm_data(data: Dictionary):
-	tilled_soil = _deserialize_tile_dict(data.get("tilled_soil", {}))
-	planted_crops = data.get("planted_crops", {})
+	tilled_soil = _deserialize_vec2i_key_dict(data.get("tilled_soil", {}))
+	planted_crops = _deserialize_vec2i_key_dict(data.get("planted_crops", {}))
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
 	call_deferred("_refresh_sprinkler_visuals")
 	call_deferred("_refresh_crop_visuals")
 	call_deferred("_refresh_tilled_tilemap")
 
-func _deserialize_tile_dict(raw) -> Dictionary:
+func _deserialize_vec2i_key_dict(raw: Variant) -> Dictionary:
 	var out: Dictionary = {}
 	if raw is Dictionary:
 		for k in raw.keys():
@@ -303,8 +303,8 @@ func _refresh_tilled_tilemap() -> void:
 		if k is Vector2i:
 			tm.set_cell(0, k, 0, _TILLED_ATLAS)
 
-func _deserialize_sprinklers(raw) -> Dictionary:
-	var base: Dictionary = _deserialize_tile_dict(raw)
+func _deserialize_sprinklers(raw: Variant) -> Dictionary:
+	var base: Dictionary = _deserialize_vec2i_key_dict(raw)
 	var out: Dictionary = {}
 	for k in base.keys():
 		out[k] = true
