@@ -64,6 +64,9 @@ temp/
 *.tmp
 *.bak
 
+# Windows artifact (reserved name; accidental empty files)
+nul
+
 # Documentation build
 docs/_build/
 docs/build/
