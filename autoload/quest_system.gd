@@ -173,6 +173,8 @@ func add_story_daily_quest(event_data: Dictionary):
 		"id": quest_id,
 		"title": title,
 		"description": "Talk to %s to follow today's story." % npc_id.capitalize(),
+		"story_npc_id": npc_id,
+		"source": "daily_narrative",
 		"objectives": [
 			{"type": "talk", "npc_id": npc_id, "count": 1, "current": 0}
 		],

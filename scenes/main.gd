@@ -118,8 +118,27 @@ func _on_day_changed(new_day):
 
 func _on_quest_completed(quest_id: String):
 	if QuestSystem and QuestSystem.quests.has(quest_id):
-		var title = QuestSystem.quests[quest_id].get("title", quest_id)
+		var quest_data: Dictionary = QuestSystem.quests[quest_id]
+		var title = quest_data.get("title", quest_id)
 		show_dialogue("Quest completed: " + str(title))
+		_apply_story_completion_feedback(quest_data)
+
+func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
+	if quest_data.get("source", "") != "daily_narrative":
+		return
+
+	var story_npc_id: String = str(quest_data.get("story_npc_id", ""))
+	if story_npc_id.is_empty():
+		return
+
+	# Immediate "world reacts to player action" feedback.
+	if NPCEmotionSystem:
+		NPCEmotionSystem.set_emotion(story_npc_id, "happy")
+
+	if NPCAudioManager:
+		NPCAudioManager.speak(story_npc_id, "Thanks! Today's story moved forward because of you.", "happy")
+
+	show_dialogue("%s now feels encouraged by your help." % story_npc_id.capitalize())
 
 func _apply_narrative_daily_quest(narrative: Dictionary):
 	if narrative.is_empty():
