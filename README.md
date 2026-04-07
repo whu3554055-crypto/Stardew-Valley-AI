@@ -88,7 +88,7 @@ test -d "hello_agent_backend" && echo "✓ Python 后端存在"
 
 ### 🎯 快速开始（新玩家必读）
 - **[执行摘要](docs/00-执行摘要.md)** ⭐ - 项目概览、技术方案、商业计划一页纸总结
-- **[TODO 路线图](TODO.md)** 🚀 - **当前任务进度与开发计划 (推荐阅读)**
+- **[TODO 路线图](TODO.md)** 🚀 - **当前任务进度与开发计划 (推荐阅读)**（含 **「分阶段迭代顺序」**：先玩法 A1→A4，后 AI B1→B4）
 - **[文档索引](docs/README.md)** - 完整文档体系导航
 - **[快速参考卡片](docs/CHEATSHEET.md)** - 日常开发速查表
 
@@ -286,7 +286,7 @@ See [AI_NPC_GUIDE.md](AI_NPC_GUIDE.md) for full AI setup instructions.
 
 ## Planned Features (TODO)
 
-详细的进度跟踪和未来计划，请参阅 [TODO.md](TODO.md)。
+详细的进度跟踪和未来计划，请参阅 [TODO.md](TODO.md)；**当前约定迭代顺序**见其中 **「分阶段迭代顺序（先玩法，后 AI）」** 章节，按 A1→A4、再 B1→B4 逐项勾选。
 
 - [ ] 钓鱼系统与小游戏 (Fishing)
 - [ ] 挖矿与战斗系统 (Mining & Combat)
