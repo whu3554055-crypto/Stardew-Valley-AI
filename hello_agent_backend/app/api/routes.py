@@ -6,6 +6,7 @@ Integrates with the multi-LLM router for intelligent provider selection.
 """
 
 import logging
+import os
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -13,6 +14,9 @@ from pydantic import BaseModel, Field
 from llm.providers.base import LLMMessage
 from llm.router import LLMRouter
 from app.services.memory_store import VectorMemoryStore
+from app.services.social_manager import social_manager
+from app.services.daily_narrative_manager import daily_narrative_manager
+from app.services.quest_manager import quest_manager
 from app.core.mcp_protocol import game_mcp, MCPRequest
 
 logger = logging.getLogger(__name__)
@@ -66,6 +70,38 @@ class NPCDialogueResponse(BaseModel):
     emotion: Optional[str] = None
     provider: str
     latency_ms: float
+
+
+class RelationshipEventRequest(BaseModel):
+    npc_id: str
+    player_id: str
+    event_type: str
+    delta: Optional[int] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DailyNarrativeRequest(BaseModel):
+    season: str
+    day: int
+    year: int
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
+class QuestVerifyRequest(BaseModel):
+    player_id: str
+    player_state: Dict[str, Any] = Field(default_factory=dict)
+
+
+class QuestChainRequest(BaseModel):
+    npc_id: str
+    player_id: str
+    chain_length: int = Field(default=3, ge=2, le=5)
+
+
+class TTSRequest(BaseModel):
+    npc_id: str
+    text: str
+    emotion: str = "neutral"
 
 
 class StoryGenerationRequest(BaseModel):
@@ -181,6 +217,18 @@ async def generate_npc_dialogue(request: NPCDialogueRequest):
             f"Your personality: {personality_str}. "
             f"Stay in character and respond naturally to the player."
         )
+        relationship_stage = await social_manager.record_event(
+            request.npc_id,
+            request.context.get("player_id", "player"),
+            "dialogue_positive" if "!" in request.player_message else "dialogue_negative",
+            metadata={"message": request.player_message},
+        )
+        if relationship_stage.get("success"):
+            system_prompt += (
+                "\nRelationship stage with player: "
+                f"{relationship_stage.get('relationship_stage', 'neutral')}. "
+                "Reflect this stage in tone and trust level."
+            )
 
         # Add relevant memories to context if available
         if relevant_memories:
@@ -239,6 +287,81 @@ async def generate_npc_dialogue(request: NPCDialogueRequest):
     except Exception as e:
         logger.error(f"NPC dialogue generation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/social/relationship-event")
+async def post_relationship_event(request: RelationshipEventRequest):
+    """Record relationship event and return updated social stage."""
+    result = await social_manager.record_event(
+        npc_id=request.npc_id,
+        player_id=request.player_id,
+        event_type=request.event_type,
+        delta=request.delta,
+        metadata=request.metadata,
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "unknown error"))
+    return result
+
+
+@router.post("/narrative/daily")
+async def get_daily_narrative(request: DailyNarrativeRequest):
+    """Get cached daily narrative or generate it once per day."""
+    return await daily_narrative_manager.get_or_generate(
+        season=request.season,
+        day=request.day,
+        year=request.year,
+        context=request.context,
+    )
+
+
+@router.post("/quest/{quest_id}/verify")
+async def verify_quest_objectives(quest_id: str, request: QuestVerifyRequest):
+    """Auto-verify objectives (collect/deliver/talk/location/time)."""
+    result = await quest_manager.verify_quest_objectives(
+        quest_id=quest_id, player_id=request.player_id, player_state=request.player_state
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "verification failed"))
+    return result
+
+
+@router.post("/quest/chain/generate")
+async def generate_quest_chain(request: QuestChainRequest):
+    """Generate short quest chain with prerequisites."""
+    chain = await quest_manager.generate_quest_chain(
+        npc_id=request.npc_id, player_id=request.player_id, chain_length=request.chain_length
+    )
+    return {"success": True, "chain": chain}
+
+
+@router.post("/tts/generate")
+async def generate_tts(request: TTSRequest):
+    """
+    Lightweight TTS gateway with graceful fallback.
+    Returns text fallback when no provider is configured.
+    """
+    provider_enabled = os.getenv("ENABLE_MOCK_TTS_URL", "false").lower() == "true"
+    if provider_enabled:
+        # Mock URL mode helps front-end integration without a real TTS provider.
+        return {
+            "success": True,
+            "npc_id": request.npc_id,
+            "text": request.text,
+            "emotion": request.emotion,
+            "audio_url": f"/mock-audio/{request.npc_id}/{abs(hash(request.text)) % 100000}.wav",
+            "fallback_mode": "mock_audio_url",
+        }
+
+    # Default MVP fallback behavior; can be swapped with a real provider.
+    return {
+        "success": True,
+        "npc_id": request.npc_id,
+        "text": request.text,
+        "emotion": request.emotion,
+        "audio_url": None,
+        "fallback_mode": "text_only",
+    }
 
 
 # ============================================================================

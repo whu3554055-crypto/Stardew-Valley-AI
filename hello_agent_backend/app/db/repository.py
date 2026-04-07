@@ -102,6 +102,29 @@ class DatabaseRepository(GameDatabase):
         except Exception as e:
             logger.error(f"Transactional execution failed: {e}")
             return False
+
+    async def transactional_update(self, operations: List[tuple]) -> None:
+        """
+        Execute atomic batch operations from tuple inputs.
+
+        Args:
+            operations: List of `(sql, params)` tuples.
+
+        Raises:
+            Exception: Re-raises any SQL/connection exception after rollback.
+        """
+        if not operations:
+            return
+
+        async with aiosqlite.connect(self.db_path) as db:
+            try:
+                await db.execute("BEGIN IMMEDIATE")
+                for sql, params in operations:
+                    await db.execute(sql, params)
+                await db.commit()
+            except Exception:
+                await db.rollback()
+                raise
     
     async def atomic_friendship_update(self, npc_id: str, player_id: str, 
                                        points: int, interaction_type: str) -> bool:
@@ -273,6 +296,54 @@ class DatabaseRepository(GameDatabase):
             logger.info(f"Applied {applied_count} migration(s), now at v{await self.get_schema_version()}")
         else:
             logger.info("Schema is up to date")
+
+    async def _column_exists(self, db: aiosqlite.Connection, table: str, column: str) -> bool:
+        """Check whether a column exists in a table."""
+        async with db.execute(f"PRAGMA table_info({table})") as cursor:
+            rows = await cursor.fetchall()
+            return any(row[1] == column for row in rows)
+
+    async def migrate_v1_to_v2(self) -> bool:
+        """
+        Perform idempotent schema/data migration from v1 to v2.
+
+        v2 changes:
+        - `quests.objectives` JSON text column
+        - `quests.prerequisites` JSON text column
+        - `quests.deadline` timestamp text column
+        - index on `quests.assigned_to`
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            try:
+                await db.execute("BEGIN IMMEDIATE")
+
+                if not await self._column_exists(db, "quests", "objectives"):
+                    await db.execute("ALTER TABLE quests ADD COLUMN objectives TEXT DEFAULT '[]'")
+                if not await self._column_exists(db, "quests", "prerequisites"):
+                    await db.execute("ALTER TABLE quests ADD COLUMN prerequisites TEXT DEFAULT '[]'")
+                if not await self._column_exists(db, "quests", "deadline"):
+                    await db.execute("ALTER TABLE quests ADD COLUMN deadline TIMESTAMP")
+
+                await db.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_quests_assigned_to ON quests(assigned_to)"
+                )
+
+                # Backfill existing rows for consistent downstream JSON parsing
+                await db.execute(
+                    "UPDATE quests SET objectives = '[]' WHERE objectives IS NULL OR objectives = ''"
+                )
+                await db.execute(
+                    "UPDATE quests SET prerequisites = '[]' "
+                    "WHERE prerequisites IS NULL OR prerequisites = ''"
+                )
+
+                await db.commit()
+                logger.info("Migration v1 -> v2 completed")
+                return True
+            except Exception as e:
+                await db.rollback()
+                logger.error(f"Migration v1 -> v2 failed: {e}")
+                raise
     
     async def rollback_migration(self, target_version: int = None):
         """
@@ -705,6 +776,146 @@ class DatabaseRepository(GameDatabase):
 
         logger.info(f"Created/verified {created} performance indexes")
         return created
+
+    # ========================================================================
+    # Agentic Social & Narrative Features
+    # ========================================================================
+
+    async def _ensure_agentic_tables(self) -> None:
+        """Create social/narrative tables required by agentic features."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS relationship_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    npc_id TEXT NOT NULL,
+                    player_id TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    delta INTEGER NOT NULL,
+                    metadata TEXT DEFAULT '{}',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+            await db.execute(
+                "CREATE INDEX IF NOT EXISTS idx_rel_events_npc_player "
+                "ON relationship_events(npc_id, player_id, created_at)"
+            )
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS daily_narratives (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    season TEXT NOT NULL,
+                    day INTEGER NOT NULL,
+                    year INTEGER NOT NULL,
+                    summary TEXT NOT NULL,
+                    events_json TEXT DEFAULT '[]',
+                    source TEXT DEFAULT 'fallback',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(season, day, year)
+                )
+                """
+            )
+            await db.commit()
+
+    async def record_relationship_event(
+        self,
+        npc_id: str,
+        player_id: str,
+        event_type: str,
+        delta: int,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Persist a relationship event and update friendship atomically."""
+        await self._ensure_agentic_tables()
+        payload = json.dumps(metadata or {}, ensure_ascii=False)
+        try:
+            await self.transactional_update(
+                [
+                    (
+                        """
+                        INSERT INTO relationship_events (npc_id, player_id, event_type, delta, metadata)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (npc_id, player_id, event_type, delta, payload),
+                    ),
+                    (
+                        """
+                        INSERT INTO relationships (npc_id, player_id, friendship_points, level)
+                        VALUES (?, ?, ?, ?)
+                        ON CONFLICT(npc_id, player_id) DO UPDATE SET
+                            friendship_points = friendship_points + excluded.friendship_points,
+                            level = (friendship_points + excluded.friendship_points) / 250,
+                            last_interaction = excluded.player_id || ':' || excluded.npc_id,
+                            last_interaction_date = CURRENT_TIMESTAMP
+                        """,
+                        (npc_id, player_id, delta, max(delta, 0) // 250),
+                    ),
+                ]
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed recording relationship event: {e}")
+            return False
+
+    async def get_relationship_stage(self, npc_id: str, player_id: str) -> str:
+        """Map friendship points into a coarse social stage."""
+        relationship = await self.get_relationship(npc_id, player_id)
+        points = relationship.get("friendship_points", 0) if relationship else 0
+        if points >= 750:
+            return "close"
+        if points >= 250:
+            return "warming"
+        if points <= -250:
+            return "conflict"
+        if points < 0:
+            return "tense"
+        return "neutral"
+
+    async def save_daily_narrative(
+        self,
+        season: str,
+        day: int,
+        year: int,
+        summary: str,
+        events: List[Dict[str, Any]],
+        source: str = "llm",
+    ) -> bool:
+        """Upsert daily narrative summary/events."""
+        await self._ensure_agentic_tables()
+        try:
+            await self.transactional_update(
+                [
+                    (
+                        """
+                        INSERT INTO daily_narratives (season, day, year, summary, events_json, source)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(season, day, year) DO UPDATE SET
+                            summary = excluded.summary,
+                            events_json = excluded.events_json,
+                            source = excluded.source,
+                            created_at = CURRENT_TIMESTAMP
+                        """,
+                        (season, day, year, summary, json.dumps(events, ensure_ascii=False), source),
+                    )
+                ]
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed saving daily narrative: {e}")
+            return False
+
+    async def get_daily_narrative(self, season: str, day: int, year: int) -> Optional[Dict[str, Any]]:
+        """Retrieve narrative for a game day."""
+        await self._ensure_agentic_tables()
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                "SELECT * FROM daily_narratives WHERE season = ? AND day = ? AND year = ?",
+                (season, day, year),
+            ) as cursor:
+                row = await cursor.fetchone()
+                return dict(row) if row else None
 
 
 # Global enhanced repository instance

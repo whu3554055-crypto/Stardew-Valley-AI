@@ -16,7 +16,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
 from ..db.repository import db_repo
-from ..llm.router import LLMRouter
+from llm.router import LLMRouter
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +182,17 @@ NPC信息：
             )
             
             if success:
+                # Persist objectives/progress for automatic verification.
+                await db_repo.transactional_update([
+                    (
+                        "UPDATE quests SET objectives = ?, progress = ? WHERE id = ?",
+                        (
+                            json.dumps(quest_data.get("objectives", []), ensure_ascii=False),
+                            json.dumps({}, ensure_ascii=False),
+                            quest_id,
+                        ),
+                    ),
+                ])
                 logger.info(f"Generated daily quest: {quest_data['title']}")
                 quest_data['id'] = quest_id
                 quest_data['success'] = True
@@ -261,6 +272,15 @@ NPC信息：
                 quest['prerequisites'] = [previous_quest_id]
                 quest['chain_position'] = i + 1
                 quest['chain_total'] = chain_length
+                if quest.get("id"):
+                    await db_repo.transactional_update(
+                        [
+                            (
+                                "UPDATE quests SET prerequisites = ? WHERE id = ?",
+                                (json.dumps([previous_quest_id], ensure_ascii=False), quest["id"]),
+                            )
+                        ]
+                    )
             
             chain.append(quest)
             previous_quest_id = quest.get('id')
@@ -355,8 +375,14 @@ NPC信息：
                 return {"success": False, "error": "Failed to complete quest"}
             
             # Distribute rewards
+            progress = json.loads(quest.get("progress", "{}")) if quest.get("progress") else {}
+            completed_objectives = sum(1 for val in progress.values() if bool(val))
+            has_chain_bonus = bool(json.loads(quest.get("prerequisites", "[]")) if quest.get("prerequisites") else [])
+            reward_multiplier = 1.0
+            if has_chain_bonus:
+                reward_multiplier = 1.0 + min(completed_objectives * 0.05, 0.25)
             rewards = {
-                "gold": quest.get('reward_gold', 0),
+                "gold": int(quest.get('reward_gold', 0) * reward_multiplier),
                 "friendship": 0,
                 "items": []
             }
@@ -433,6 +459,12 @@ NPC信息：
         
         # Update progress
         progress[f"objective_{objective_index}"] = completed
+        await db_repo.transactional_update([
+            (
+                "UPDATE quests SET progress = ? WHERE id = ?",
+                (json.dumps(progress, ensure_ascii=False), quest_id),
+            ),
+        ])
         
         # Check if all objectives are complete
         all_complete = all(
@@ -445,6 +477,108 @@ NPC信息：
             await self.complete_quest(quest_id, quest['assigned_to'])
         
         return True
+
+    def _is_objective_completed(self, objective: Dict[str, Any], player_state: Dict[str, Any]) -> bool:
+        """Validate a single objective against current player state."""
+        objective_type = objective.get("type", "").lower()
+
+        if objective_type == "collect_item":
+            item_id = objective.get("item_id")
+            required = int(objective.get("required", 1))
+            inventory = player_state.get("inventory", {})
+            return int(inventory.get(item_id, 0)) >= required
+
+        if objective_type == "deliver_item":
+            item_id = objective.get("item_id")
+            required = int(objective.get("required", 1))
+            delivered = player_state.get("delivered_items", {})
+            return int(delivered.get(item_id, 0)) >= required
+
+        if objective_type == "talk_to_npc":
+            npc_id = objective.get("npc_id")
+            talked_to = player_state.get("talked_to_npcs", [])
+            return npc_id in talked_to
+
+        if objective_type == "reach_location":
+            required_location = objective.get("location")
+            return player_state.get("location") == required_location
+
+        if objective_type == "time_window":
+            # objective sample: {"type":"time_window","start_hour":18,"end_hour":22}
+            current_hour = int(player_state.get("current_hour", -1))
+            start_hour = int(objective.get("start_hour", 0))
+            end_hour = int(objective.get("end_hour", 24))
+            return start_hour <= current_hour <= end_hour
+
+        # Backward-compatible fallback for simple string objectives
+        # e.g. "收集木材 x10" / "与Pierre交谈"
+        objective_text = objective.get("text", "")
+        if objective_text.startswith("收集") and "x" in objective_text:
+            try:
+                item_name, amount_text = objective_text.replace("收集", "", 1).split("x", 1)
+                required = int(amount_text.strip())
+                inventory_names = player_state.get("inventory_by_name", {})
+                return int(inventory_names.get(item_name.strip(), 0)) >= required
+            except (ValueError, TypeError):
+                return False
+        if objective_text.startswith("与") and objective_text.endswith("交谈"):
+            npc_name = objective_text.replace("与", "", 1).replace("交谈", "").strip()
+            talked_names = player_state.get("talked_to_npc_names", [])
+            return npc_name in talked_names
+
+        return False
+
+    async def verify_quest_objectives(
+        self, quest_id: str, player_id: str, player_state: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Verify quest objectives automatically and update quest progress/status.
+
+        Supports objective types:
+        - collect_item
+        - deliver_item
+        - talk_to_npc
+        - reach_location
+        - time_window
+        """
+        quest = await db_repo.get_quest(quest_id)
+        if not quest:
+            return {"success": False, "error": "Quest not found"}
+        if quest.get("assigned_to") != player_id:
+            return {"success": False, "error": "Quest is not assigned to this player"}
+        if quest.get("status") != "active":
+            return {"success": False, "error": "Quest is not active"}
+
+        raw_objectives = quest.get("objectives", "[]")
+        objectives_data = json.loads(raw_objectives) if raw_objectives else []
+        if not objectives_data:
+            return {"success": False, "error": "Quest has no objectives"}
+
+        progress_map = {}
+        for idx, obj in enumerate(objectives_data):
+            normalized = obj if isinstance(obj, dict) else {"text": str(obj)}
+            progress_map[f"objective_{idx}"] = self._is_objective_completed(normalized, player_state)
+
+        all_complete = all(progress_map.values())
+        await db_repo.transactional_update([
+            (
+                "UPDATE quests SET progress = ? WHERE id = ?",
+                (json.dumps(progress_map, ensure_ascii=False), quest_id),
+            ),
+        ])
+
+        result = {
+            "success": True,
+            "quest_id": quest_id,
+            "progress": progress_map,
+            "all_completed": all_complete,
+        }
+
+        if all_complete:
+            completion = await self.complete_quest(quest_id, player_id)
+            result["completion"] = completion
+
+        return result
 
 
 # Global quest manager instance
