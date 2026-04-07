@@ -751,6 +751,29 @@ func force_flush_tts_metrics():
 	"""Manual flush hook for debug/admin tools."""
 	_save_tts_metrics_snapshot()
 
+func reset_tts_metrics(npc_id: String = ""):
+	"""Reset metrics globally or for a specific NPC lane."""
+	if npc_id == "":
+		tts_metrics_total = {
+			"requested": 0,
+			"success": 0,
+			"fallback": 0,
+			"timeouts_or_stalls": 0,
+			"lane_rebuilds": 0
+		}
+		tts_metrics_by_npc.clear()
+		return
+	tts_metrics_by_npc.erase(npc_id)
+
+func rebuild_tts_lane_for_npc(npc_id: String):
+	"""Manual lane rebuild hook for operator/debug tools."""
+	_rebuild_tts_lane(npc_id, "manual_rebuild")
+
+func rebuild_all_tts_lanes():
+	"""Manual bulk lane rebuild for recovery scenarios."""
+	for npc_id in tts_request_by_npc.keys():
+		_rebuild_tts_lane(npc_id, "manual_rebuild_all")
+
 func _get_total_tts_queue_size() -> int:
 	var total = 0
 	for lane in tts_queue_by_npc.values():
