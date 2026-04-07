@@ -403,9 +403,9 @@ func initialize_items():
 
 	items["sprinkler_basic"] = {
 		"id": "sprinkler_basic",
-		"name": "Basic Sprinkler Frame",
-		"description": "Crafted at the workbench. Field placement may be added later.",
-		"type": "resource",
+		"name": "Basic Sprinkler",
+		"description": "Select it and press E to water all planted crops once (uses the item, costs stamina).",
+		"type": "tool",
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 420

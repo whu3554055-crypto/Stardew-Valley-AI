@@ -264,6 +264,23 @@ func _on_player_interact(tile_position: Vector2):
 				show_dialogue(ch_msg)
 				return
 
+	# Basic sprinkler — water every planted crop once (consumes item)
+	if selected_item and str(selected_item.get("id", "")) == "sprinkler_basic":
+		if not farm_manager:
+			return
+		if farm_manager.planted_crops.is_empty():
+			show_quick_tip("No crops to water.")
+			return
+		if GameManager and GameManager.try_consume_stamina(5.0):
+			for pos in farm_manager.planted_crops.keys():
+				farm_manager.water_plant(pos)
+			InventoryManager.remove_item(InventoryManager.selected_slot, 1)
+			show_quick_tip("Sprinkler used — all crops watered.")
+			update_ui()
+			return
+		show_quick_tip("Too tired to use the sprinkler.")
+		return
+
 	# Eat food / crops / fish with stamina_restore (select item, press E)
 	if selected_item and _try_eat_selected_food():
 		return

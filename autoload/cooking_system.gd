@@ -11,9 +11,6 @@ func can_cook_here(player_pos: Vector2) -> bool:
 		and player_pos.y >= KITCHEN_Y_MIN and player_pos.y <= KITCHEN_Y_MAX
 
 func try_cook_one() -> Dictionary:
-	if GameManager and not GameManager.try_consume_stamina(2.0):
-		return {"ok": false, "message": "Too tired to cook."}
-
 	var recipes: Array = [
 		{"in": {"bread": 1, "fish_sardine": 1}, "out": "fish_sandwich", "qty": 1},
 		{"in": {"fish_sardine": 1}, "out": "grilled_sardine", "qty": 1},
@@ -33,6 +30,11 @@ func try_cook_one() -> Dictionary:
 		if template.is_empty():
 			return {"ok": false, "message": "Recipe output missing."}
 		var qty: int = int(r.get("qty", 1))
+		if not InventoryManager.can_add_quantity(template, qty):
+			var nm: String = str(template.get("name", out_id))
+			return {"ok": false, "message": "Inventory full — need room for %s ×%d." % [nm, qty]}
+		if GameManager and not GameManager.try_consume_stamina(2.0):
+			return {"ok": false, "message": "Too tired to cook."}
 		for i in range(qty):
 			if not InventoryManager.add_item(template.duplicate(true)):
 				return {"ok": false, "message": "Inventory full."}
@@ -41,9 +43,12 @@ func try_cook_one() -> Dictionary:
 			QuestSystem.track_event("cook_meal", {"dish_id": out_id, "count": 1})
 		if GatheringSfx:
 			GatheringSfx.play_cook()
-		var nm: String = str(template.get("name", out_id))
-		return {"ok": true, "message": "Cooked: %s" % nm}
-	return {"ok": false, "message": "Need ingredients (fish, vegetables, or bread+fish)."}
+		var nm2: String = str(template.get("name", out_id))
+		return {"ok": true, "message": "Cooked: %s" % nm2}
+	var hint: String = RecipeHelpers.hint_first_unaffordable(recipes)
+	if hint.is_empty():
+		return {"ok": false, "message": "Nothing to cook."}
+	return {"ok": false, "message": "Can't cook yet. %s" % hint}
 
 func _can_afford(costs: Dictionary) -> bool:
 	for k in costs.keys():

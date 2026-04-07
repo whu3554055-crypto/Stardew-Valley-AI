@@ -35,6 +35,28 @@ func add_item(item_data: Dictionary) -> bool:
 
 	return false  # Inventory full
 
+## Whether qty units of the same item can be added (respects stacking).
+func can_add_quantity(template: Dictionary, qty: int) -> bool:
+	if qty <= 0:
+		return true
+	var id: String = str(template.get("id", ""))
+	if id.is_empty():
+		return false
+	var max_stack: int = int(template.get("max_stack", 99))
+	var remaining: int = qty
+	for i in range(INVENTORY_SIZE):
+		if inventory[i] != null and inventory[i].id == id:
+			var room: int = max_stack - int(inventory[i].stack)
+			remaining -= mini(room, remaining)
+			if remaining <= 0:
+				return true
+	for i in range(INVENTORY_SIZE):
+		if inventory[i] == null:
+			remaining -= mini(max_stack, remaining)
+			if remaining <= 0:
+				return true
+	return remaining <= 0
+
 func remove_item(slot: int, amount: int = 1) -> bool:
 	if slot >= 0 and slot < INVENTORY_SIZE and inventory[slot] != null:
 		inventory[slot].stack -= amount
