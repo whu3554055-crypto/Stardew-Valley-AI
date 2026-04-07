@@ -97,6 +97,8 @@ FishingSystem="*res://autoload/fishing_system.gd"
 MiningSystem="*res://autoload/mining_system.gd"
 SmeltingSystem="*res://autoload/smelting_system.gd"
 CookingSystem="*res://autoload/cooking_system.gd"
+ChoppingSystem="*res://autoload/chopping_system.gd"
+CraftingSystem="*res://autoload/crafting_system.gd"
 
 [rendering]
 

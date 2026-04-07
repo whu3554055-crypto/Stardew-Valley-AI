@@ -59,7 +59,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest (empty hands) | kitchen cook | smelter | fish | mine | eat (select food) | J = collection")
+	print("Press E: NPCs | harvest | kitchen | smelter | workbench craft | fish | mine | chop (axe, west) | eat | J = collection")
 	print("======================================")
 
 func initialize_playable_first_loop():
@@ -75,6 +75,8 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("intro_smelt")
 		QuestSystem.start_quest("intro_eat")
 		QuestSystem.start_quest("intro_cook")
+		QuestSystem.start_quest("intro_chop")
+		QuestSystem.start_quest("intro_craft")
 	
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
@@ -111,6 +113,9 @@ func give_starter_items():
 	var bread = ItemDatabase.get_item("bread")
 	if not bread.is_empty():
 		InventoryManager.add_item(bread.duplicate(true))
+	var axe_item = ItemDatabase.get_item("axe")
+	if not axe_item.is_empty():
+		InventoryManager.add_item(axe_item.duplicate(true))
 
 func _try_eat_selected_food() -> bool:
 	var slot: int = InventoryManager.selected_slot
@@ -196,6 +201,19 @@ func _on_player_interact(tile_position: Vector2):
 				show_dialogue(sm_msg)
 				return
 
+	# Workbench / crafting (empty hands, east of kitchen)
+	if selected_item == null and CraftingSystem:
+		if CraftingSystem.can_craft_here(player.global_position):
+			var craft_result: Dictionary = CraftingSystem.try_craft_one()
+			var cr_msg: String = str(craft_result.get("message", ""))
+			if craft_result.get("ok", false):
+				show_dialogue(cr_msg)
+				record_world_event(cr_msg)
+				return
+			if not cr_msg.is_empty():
+				show_dialogue(cr_msg)
+				return
+
 	# Fishing: equip rod; ocean (south) or river (right); bite QTE — second E in time window
 	if selected_item and str(selected_item.get("id", "")) == "fishing_rod" and FishingSystem:
 		if FishingSystem.can_fish_here(player.global_position):
@@ -229,6 +247,21 @@ func _on_player_interact(tile_position: Vector2):
 				return
 			if not mine_msg.is_empty():
 				show_dialogue(mine_msg)
+				return
+
+	# Chopping: axe in forest (west, below mine entrance)
+	if selected_item and str(selected_item.get("id", "")) == "axe" and ChoppingSystem:
+		if ChoppingSystem.can_chop_here(player.global_position):
+			var chop_result: Dictionary = ChoppingSystem.try_chop_one()
+			var ch_msg: String = str(chop_result.get("message", ""))
+			if chop_result.get("ok", false):
+				InventoryManager.damage_tool_slot(InventoryManager.selected_slot, 1)
+				show_dialogue(ch_msg)
+				record_world_event(ch_msg)
+				_play_fx_mine()
+				return
+			if not ch_msg.is_empty():
+				show_dialogue(ch_msg)
 				return
 
 	# Eat food / crops / fish with stamina_restore (select item, press E)

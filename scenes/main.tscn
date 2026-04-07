@@ -69,6 +69,40 @@ theme_override_font_sizes/font_size = 11
 text = "Kitchen — empty hands (E) to cook"
 horizontal_alignment = 1
 
+[node name="WorkbenchArea" type="Node2D" parent="."]
+z_index = -1
+position = Vector2(825, 275)
+
+[node name="BenchTop" type="Polygon2D" parent="WorkbenchArea"]
+color = Color(0.42, 0.38, 0.32, 0.8)
+polygon = PackedVector2Array(0, 0, 215, 0, 215, 155, 0, 155)
+
+[node name="WorkbenchHint" type="Label" parent="WorkbenchArea"]
+offset_left = 0.0
+offset_top = -24.0
+offset_right = 215.0
+offset_bottom = 0.0
+theme_override_font_sizes/font_size = 11
+text = "Workbench — empty hands (E) to craft"
+horizontal_alignment = 1
+
+[node name="ForestArea" type="Node2D" parent="."]
+z_index = -2
+position = Vector2(40, 90)
+
+[node name="ForestFloor" type="Polygon2D" parent="ForestArea"]
+color = Color(0.22, 0.42, 0.24, 0.55)
+polygon = PackedVector2Array(0, 0, 300, 0, 300, 195, 0, 195)
+
+[node name="ForestHint" type="Label" parent="ForestArea"]
+offset_left = 0.0
+offset_top = -24.0
+offset_right = 300.0
+offset_bottom = 0.0
+theme_override_font_sizes/font_size = 12
+text = "Forest — axe (E) to chop wood"
+horizontal_alignment = 1
+
 [node name="MineArea" type="Node2D" parent="."]
 z_index = -2
 position = Vector2(70, 300)

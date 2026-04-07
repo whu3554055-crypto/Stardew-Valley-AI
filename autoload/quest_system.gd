@@ -111,6 +111,28 @@ func initialize_quests():
 		"reward": {"gold": 35, "items": ["bread:1"]}
 	}
 
+	quests["intro_chop"] = {
+		"id": "intro_chop",
+		"title": "Lumberjack",
+		"description": "Chop wood in the forest (west) with the axe equipped.",
+		"objectives": [
+			{"type": "chop_wood", "count": 1, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 30, "items": ["coal:2"]}
+	}
+
+	quests["intro_craft"] = {
+		"id": "intro_craft",
+		"title": "Workbench",
+		"description": "Craft something at the workbench (east of kitchen, empty hands, E).",
+		"objectives": [
+			{"type": "craft_item", "count": 1, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 40, "items": ["wood_log:3"]}
+	}
+
 func start_quest(quest_id: String):
 	if not quests.has(quest_id):
 		return
@@ -227,6 +249,12 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "cook_meal":
 		if objective.has("dish_id"):
 			return str(data.get("dish_id", "")) == str(objective.get("dish_id", ""))
+		return true
+	if ot == "chop_wood":
+		return true
+	if ot == "craft_item":
+		if objective.has("item_id"):
+			return str(data.get("item_id", "")) == str(objective.get("item_id", ""))
 		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")

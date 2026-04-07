@@ -26,6 +26,12 @@ func play_smelt() -> void:
 func play_cook() -> void:
 	_play_path(PATH_SMELT)
 
+func play_chop() -> void:
+	_play_path(PATH_MINE)
+
+func play_craft() -> void:
+	_play_path(PATH_SMELT)
+
 func _play_path(path: String) -> void:
 	var st: Resource = load(path)
 	if st is AudioStream and _player:

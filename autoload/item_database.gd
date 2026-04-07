@@ -204,11 +204,12 @@ func initialize_items():
 	items["axe"] = {
 		"id": "axe",
 		"name": "Axe",
-		"description": "Used to chop wood.",
+		"description": "Equip and press E in the forest (west) to chop wood.",
 		"type": "tool",
 		"stack": 1,
 		"max_stack": 1,
-		"sell_price": 0
+		"sell_price": 0,
+		"max_durability": 100
 	}
 
 	items["pickaxe"] = {
@@ -388,6 +389,26 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 650
+	}
+
+	items["wood_log"] = {
+		"id": "wood_log",
+		"name": "Wood",
+		"description": "Logs from chopping trees.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 5
+	}
+
+	items["sprinkler_basic"] = {
+		"id": "sprinkler_basic",
+		"name": "Basic Sprinkler Frame",
+		"description": "Crafted at the workbench. Field placement may be added later.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 420
 	}
 
 func get_item(item_id: String) -> Dictionary:
