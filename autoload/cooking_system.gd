@@ -29,6 +29,8 @@ func try_recipe(recipe: Dictionary) -> Dictionary:
 	_consume(cost)
 	if QuestSystem:
 		QuestSystem.track_event("cook_meal", {"dish_id": out_id, "count": 1})
+	if GatheringAlmanac:
+		GatheringAlmanac.record_meal(out_id)
 	if GatheringSfx:
 		GatheringSfx.play_cook()
 	var nm2: String = str(template.get("name", out_id))

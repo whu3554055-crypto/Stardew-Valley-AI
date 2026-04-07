@@ -13,12 +13,16 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 		t["fish_carp"] = 1.2
 		t["fish_perch"] = 1.0
 		t["fish_trout"] = 0.9 if not night else 1.2
-		t["junk_boot"] = 0.35
+		t["junk_boot"] = 0.32
+		t["junk_seaweed"] = 0.12
 	elif zone == "ocean":
-		t["fish_sardine"] = 1.3
-		t["fish_perch"] = 0.7
-		t["fish_trout"] = 0.5
-		t["junk_boot"] = 0.4
+		t["fish_sardine"] = 1.35
+		t["fish_perch"] = 0.72
+		t["fish_trout"] = 0.48
+		# Rare ocean prize — more likely at night / summer rain
+		t["fish_tuna"] = 0.22 if not night else 0.38
+		t["junk_boot"] = 0.36
+		t["junk_seaweed"] = 0.55
 	else:
 		t["junk_boot"] = 1.0
 
@@ -29,6 +33,8 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 		"summer":
 			if "fish_sardine" in t:
 				t["fish_sardine"] *= 1.2
+			if "fish_tuna" in t:
+				t["fish_tuna"] *= 1.12
 		"fall":
 			if "fish_carp" in t:
 				t["fish_carp"] *= 1.15
@@ -42,6 +48,8 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 				t[k] *= 1.12
 		if "junk_boot" in t:
 			t["junk_boot"] *= 1.05
+		if "junk_seaweed" in t:
+			t["junk_seaweed"] *= 1.08
 
 	if morning and "fish_carp" in t:
 		t["fish_carp"] *= 1.08
@@ -62,6 +70,8 @@ static func mining_ore_weights(depth: int, pickaxe_tier: int) -> Dictionary:
 		w["iron_ore"] = 0.5 if pickaxe_tier >= 1 else 0.25
 	if depth >= 2:
 		w["iron_ore"] = float(w.get("iron_ore", 0.0)) + 0.35
+		# Small chance for a shiny drop (sell or display)
+		w["quartz"] = 0.14
 		if pickaxe_tier >= 2:
 			w["gold_ore"] = 0.45
 		else:

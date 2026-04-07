@@ -3,6 +3,7 @@ extends Panel
 @onready var fish_list: ItemList = $Margin/VBox/FishItemList
 @onready var mineral_list: ItemList = $Margin/VBox/MineralItemList
 @onready var smelt_list: ItemList = $Margin/VBox/SmeltItemList
+@onready var meal_list: ItemList = $Margin/VBox/MealItemList
 
 func _ready() -> void:
 	if GatheringAlmanac:
@@ -18,11 +19,12 @@ func _on_collection_updated() -> void:
 	refresh()
 
 func refresh() -> void:
-	if not fish_list or not mineral_list or not smelt_list or not GatheringAlmanac:
+	if not fish_list or not mineral_list or not smelt_list or not meal_list or not GatheringAlmanac:
 		return
 	fish_list.clear()
 	mineral_list.clear()
 	smelt_list.clear()
+	meal_list.clear()
 	var fish_ids: Array = GatheringAlmanac.fish_caught.keys()
 	fish_ids.sort()
 	for fid in fish_ids:
@@ -41,3 +43,9 @@ func refresh() -> void:
 		var n3: int = int(GatheringAlmanac.smelted_bars.get(bid, 0))
 		var nm3: String = str(ItemDatabase.get_item(str(bid)).get("name", bid))
 		smelt_list.add_item("%s  ×%d" % [nm3, n3])
+	var meal_ids: Array = GatheringAlmanac.meals_cooked.keys()
+	meal_ids.sort()
+	for mid in meal_ids:
+		var n4: int = int(GatheringAlmanac.meals_cooked.get(mid, 0))
+		var nm4: String = str(ItemDatabase.get_item(str(mid)).get("name", mid))
+		meal_list.add_item("%s  ×%d" % [nm4, n4])

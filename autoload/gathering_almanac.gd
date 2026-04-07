@@ -6,6 +6,7 @@ signal collection_updated
 var fish_caught: Dictionary = {}
 var minerals_mined: Dictionary = {}
 var smelted_bars: Dictionary = {}
+var meals_cooked: Dictionary = {}
 
 const SAVE_PATH := "user://gathering_almanac.save"
 
@@ -25,6 +26,12 @@ func record_smelt(bar_id: String) -> void:
 	if bar_id.is_empty():
 		return
 	smelted_bars[bar_id] = int(smelted_bars.get(bar_id, 0)) + 1
+	collection_updated.emit()
+
+func record_meal(dish_id: String) -> void:
+	if dish_id.is_empty():
+		return
+	meals_cooked[dish_id] = int(meals_cooked.get(dish_id, 0)) + 1
 	collection_updated.emit()
 
 func get_fish_discovered_count() -> int:
@@ -55,3 +62,5 @@ func load_data() -> void:
 			minerals_mined = data.minerals
 		if data.get("smelted") is Dictionary:
 			smelted_bars = data.smelted
+		if data.get("meals") is Dictionary:
+			meals_cooked = data.meals

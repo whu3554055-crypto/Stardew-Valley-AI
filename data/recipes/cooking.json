@@ -54,5 +54,26 @@
     "output_qty": 1,
     "inputs": { "cauliflower": 1 },
     "stamina": 2
+  },
+  {
+    "id": "grilled_tuna",
+    "output_id": "grilled_tuna",
+    "output_qty": 1,
+    "inputs": { "fish_tuna": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "fish_stew",
+    "output_id": "fish_stew",
+    "output_qty": 1,
+    "inputs": { "fish_carp": 1, "potato": 1 },
+    "stamina": 3
+  },
+  {
+    "id": "field_stir_fry",
+    "output_id": "field_stir_fry",
+    "output_qty": 1,
+    "inputs": { "parsnip": 1, "potato": 1 },
+    "stamina": 2
   }
 ]

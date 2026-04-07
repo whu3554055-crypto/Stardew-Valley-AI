@@ -180,6 +180,39 @@ func initialize_items():
 		"stamina_restore": 42.0
 	}
 
+	items["grilled_tuna"] = {
+		"id": "grilled_tuna",
+		"name": "Grilled Tuna",
+		"description": "Hearty ocean flavor from the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 155,
+		"stamina_restore": 48.0
+	}
+
+	items["fish_stew"] = {
+		"id": "fish_stew",
+		"name": "Fish Stew",
+		"description": "Carp and potato in one warm bowl.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 175,
+		"stamina_restore": 58.0
+	}
+
+	items["field_stir_fry"] = {
+		"id": "field_stir_fry",
+		"name": "Field Stir-Fry",
+		"description": "Parsnip and potato — simple farm comfort food.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 130,
+		"stamina_restore": 44.0
+	}
+
 	# Tools
 	items["hoe"] = {
 		"id": "hoe",
@@ -300,6 +333,17 @@ func initialize_items():
 		"stamina_restore": 18.0
 	}
 
+	items["fish_tuna"] = {
+		"id": "fish_tuna",
+		"name": "Tuna",
+		"description": "A hefty ocean fish — rarest toward the south sea at night.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 95,
+		"stamina_restore": 28.0
+	}
+
 	items["junk_boot"] = {
 		"id": "junk_boot",
 		"name": "Old Boot",
@@ -308,6 +352,16 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 2
+	}
+
+	items["junk_seaweed"] = {
+		"id": "junk_seaweed",
+		"name": "Seaweed Clump",
+		"description": "Ocean junk. Not worth much.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 1
 	}
 
 	# Mining (MVP)
@@ -359,6 +413,16 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 120
+	}
+
+	items["quartz"] = {
+		"id": "quartz",
+		"name": "Quartz",
+		"description": "A clear shard from deep rock — sells for a little extra.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 85
 	}
 
 	items["copper_bar"] = {

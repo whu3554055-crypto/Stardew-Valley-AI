@@ -2,8 +2,9 @@ extends Node
 
 const GT := preload("res://scripts/gathering_tables.gd")
 
-const CAST_COOLDOWN_SEC := 1.6
-const HOOK_WINDOW_SEC := 1.65
+const CAST_COOLDOWN_SEC := 1.45
+const HOOK_WINDOW_SEC := 1.78
+const BAIT_FISH_WEIGHT_MULT := 1.25
 
 var _last_catch_time: float = -100.0
 var _fish_phase: String = "idle"  # idle | hook
@@ -73,7 +74,7 @@ func _resolve_catch(player_pos: Vector2) -> Dictionary:
 	if _bait_flag:
 		for k in weights.keys():
 			if str(k).begins_with("fish_"):
-				weights[k] = float(weights[k]) * 1.18
+				weights[k] = float(weights[k]) * BAIT_FISH_WEIGHT_MULT
 
 	var item_id: String = _weighted_pick(weights)
 	if item_id.is_empty():
@@ -107,9 +108,19 @@ func _grant_catch(item_id: String, junk_message: String) -> Dictionary:
 		InventoryManager.consume_item_by_id("worm_bait", 1)
 	if GatheringAlmanac:
 		GatheringAlmanac.record_fish(item_id)
-	if QuestSystem:
+	# Quests: count real fish only (junk_* does not advance "catch fish" tutorials).
+	if QuestSystem and str(item_id).begins_with("fish_"):
 		QuestSystem.track_event("fish_caught", {"fish_id": item_id, "count": 1})
 	var msg: String = junk_message
 	if msg.is_empty():
-		msg = "You caught a %s!" % str(template.get("name", item_id))
+		msg = _catch_message(item_id, template)
 	return {"ok": true, "message": msg, "item_id": item_id}
+
+func _catch_message(item_id: String, template: Dictionary) -> String:
+	match item_id:
+		"junk_boot":
+			return "Only an old boot… better luck next cast."
+		"junk_seaweed":
+			return "A soggy clump of seaweed. The sea mocks you."
+		_:
+			return "You caught a %s!" % str(template.get("name", item_id))

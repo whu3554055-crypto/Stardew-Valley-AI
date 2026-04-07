@@ -52,7 +52,11 @@ func try_swing(player_pos: Vector2, pickaxe_id: String) -> Dictionary:
 	var item_id: String = _weighted_pick(weights)
 	if item_id.is_empty():
 		item_id = "stone_chunk"
-	return _grant_ore(item_id, "")
+	var res: Dictionary = _grant_ore(item_id, "", depth, tier)
+	if res.get("ok", false) and depth >= 2 and tier == 1:
+		if str(res.get("item_id", "")) == "stone_chunk" and randf() < 0.16:
+			res["hint"] = "Deep gold is stubborn — try an iron pickaxe on the lowest band."
+	return res
 
 func _weighted_pick(weights: Dictionary) -> String:
 	var total := 0.0
@@ -69,7 +73,7 @@ func _weighted_pick(weights: Dictionary) -> String:
 		return str(k)
 	return ""
 
-func _grant_ore(item_id: String, empty_msg: String) -> Dictionary:
+func _grant_ore(item_id: String, empty_msg: String, _depth: int = 0, _tier: int = 0) -> Dictionary:
 	var template: Dictionary = ItemDatabase.get_item(item_id)
 	if template.is_empty():
 		return {"ok": false, "message": "Mine yielded nothing (missing item data)."}
@@ -81,5 +85,11 @@ func _grant_ore(item_id: String, empty_msg: String) -> Dictionary:
 		QuestSystem.track_event("mine_ore", {"ore_id": item_id, "count": 1})
 	var msg: String = empty_msg
 	if msg.is_empty():
-		msg = "Mined: %s" % str(template.get("name", item_id))
+		var nm: String = str(template.get("name", item_id))
+		if item_id == "quartz":
+			msg = "A chip of %s catches the light." % nm
+		elif item_id == "gold_ore":
+			msg = "Rich vein! Mined: %s" % nm
+		else:
+			msg = "Mined: %s" % nm
 	return {"ok": true, "message": msg, "item_id": item_id}

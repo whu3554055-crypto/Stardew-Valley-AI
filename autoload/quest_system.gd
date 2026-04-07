@@ -59,7 +59,7 @@ func initialize_quests():
 	quests["intro_fish"] = {
 		"id": "intro_fish",
 		"title": "First Catch",
-		"description": "Catch any fish 3 times.",
+		"description": "Catch real fish (not junk) 3 times — river east, ocean south.",
 		"objectives": [
 			{"type": "fish_caught", "count": 3, "current": 0}
 		],

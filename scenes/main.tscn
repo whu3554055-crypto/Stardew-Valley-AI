@@ -276,7 +276,7 @@ layout_mode = 2
 [node name="Title" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Fish / Minerals / Smelted — Collection (J)"
+text = "Gathering — Collection (J)"
 
 [node name="FishLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
@@ -301,6 +301,15 @@ layout_mode = 2
 text = "Smelted bars"
 
 [node name="SmeltItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 100)
+
+[node name="MealLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+layout_mode = 2
+text = "Cooked meals"
+
+[node name="MealItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 100)

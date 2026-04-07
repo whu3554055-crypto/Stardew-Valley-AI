@@ -257,6 +257,9 @@ func _on_player_interact(tile_position: Vector2):
 				InventoryManager.damage_tool_slot(InventoryManager.selected_slot, 1)
 				show_dialogue(mine_msg)
 				record_world_event(mine_msg)
+				var mine_hint: String = str(mine_result.get("hint", ""))
+				if not mine_hint.is_empty():
+					show_quick_tip(mine_hint)
 				_play_fx_mine()
 				return
 			if not mine_msg.is_empty():
