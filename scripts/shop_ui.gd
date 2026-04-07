@@ -35,11 +35,12 @@ func populate_shop_items():
 	for item_id in shop_stock:
 		var item_data = shop_stock[item_id]
 		var item_template = ItemDatabase.get_item(item_id)
+		var live_price: int = ShopSystem.get_buy_price(item_id)
 
 		var item_button = Button.new()
-		item_button.text = "%s - %dg (Stock: %d)" % [item_template.name, item_data.price, item_data.stock]
+		item_button.text = "%s - %dg (Stock: %d)" % [item_template.name, live_price, item_data.stock]
 		item_button.custom_minimum_size = Vector2(200, 40)
-		item_button.pressed.connect(_on_item_selected.bind(item_id, item_data.price))
+		item_button.pressed.connect(_on_item_selected.bind(item_id, live_price))
 		shop_items_container.add_child(item_button)
 
 func _on_item_selected(item_id: String, price: int):

@@ -638,6 +638,19 @@ func get_ai_decision_history(count: int = 10) -> Array:
 	"""Get recent AI decisions"""
 	return ai_decisions.slice(-count)
 
+func get_shop_buy_price(item_id: String, catalog_price: int) -> int:
+	"""Apply simulated market movement to a fixed shop list price."""
+	if catalog_price <= 0:
+		return 0
+	if not market_state.items.has(item_id):
+		return catalog_price
+	var m: Dictionary = market_state.items[item_id]
+	var base_p: float = float(m.get("base_price", 1))
+	var cur_p: float = float(m.get("current_price", base_p))
+	var ratio: float = cur_p / max(1.0, base_p)
+	ratio = clamp(ratio, 0.75, 1.35)
+	return int(round(float(catalog_price) * ratio))
+
 # ============================================
 # QUEST ↔ ECONOMY (playable-first feedback loop)
 # ============================================

@@ -121,5 +121,11 @@ func initialize_items():
 func get_item(item_id: String) -> Dictionary:
 	return items.get(item_id, {})
 
+func get_item_by_id(item_id: String) -> Dictionary:
+	return get_item(item_id)
+
+func get_all_item_ids() -> Array:
+	return items.keys()
+
 func get_all_items() -> Array:
 	return items.values()

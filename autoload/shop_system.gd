@@ -24,12 +24,21 @@ func open_shop():
 	shop_opened.emit()
 	return shop_stock
 
+func get_buy_price(item_id: String) -> int:
+	if not shop_stock.has(item_id):
+		return 0
+	var catalog: int = int(shop_stock[item_id].price)
+	if AIEconomySystem:
+		return AIEconomySystem.get_shop_buy_price(item_id, catalog)
+	return catalog
+
 func purchase_item(item_id: String, quantity: int = 1) -> bool:
 	if not shop_stock.has(item_id):
 		return false
 
 	var item_data = shop_stock[item_id]
-	var total_cost = item_data.price * quantity
+	var unit = get_buy_price(item_id)
+	var total_cost = unit * quantity
 
 	if GameManager.player_data.gold < total_cost:
 		return false
