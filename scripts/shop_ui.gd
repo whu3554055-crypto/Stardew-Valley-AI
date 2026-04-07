@@ -5,6 +5,8 @@ class_name ShopUI
 @onready var shop_items_container = $ShopItemsContainer
 @onready var player_gold_label = $PlayerGoldLabel
 @onready var total_label = $TotalLabel
+@onready var title_label = $TitleLabel
+@onready var close_button = $CloseButton
 
 var current_total = 0
 var cart = {}
@@ -14,7 +16,39 @@ signal purchase_confirmed(item_id, quantity)
 
 func _ready():
 	visible = false
+	_apply_shop_chrome()
 	update_gold_display()
+
+func _apply_shop_chrome() -> void:
+	if title_label:
+		title_label.add_theme_font_size_override("font_size", 22)
+		title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+		title_label.add_theme_constant_override("shadow_offset_x", 1)
+		title_label.add_theme_constant_override("shadow_offset_y", 1)
+	if player_gold_label:
+		player_gold_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+		player_gold_label.add_theme_constant_override("shadow_offset_x", 1)
+		player_gold_label.add_theme_constant_override("shadow_offset_y", 1)
+	if total_label:
+		total_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
+		total_label.add_theme_constant_override("shadow_offset_x", 1)
+		total_label.add_theme_constant_override("shadow_offset_y", 1)
+	if close_button:
+		var csb := StyleBoxFlat.new()
+		csb.bg_color = Color(0.14, 0.13, 0.12, 0.95)
+		csb.set_border_width_all(1)
+		csb.border_color = Color(0.4, 0.36, 0.26)
+		close_button.add_theme_stylebox_override("normal", csb)
+		close_button.add_theme_stylebox_override("hover", csb)
+		close_button.add_theme_stylebox_override("pressed", csb)
+		close_button.flat = true
+
+func _shop_item_button_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.16, 0.14, 0.12, 0.96)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.38, 0.34, 0.24)
+	return sb
 
 func open_shop():
 	visible = true
@@ -35,11 +69,18 @@ func populate_shop_items():
 	for item_id in shop_stock:
 		var item_data = shop_stock[item_id]
 		var item_template = ItemDatabase.get_item(item_id)
+		if item_template.is_empty():
+			continue
 		var live_price: int = ShopSystem.get_buy_price(item_id)
 
 		var item_button = Button.new()
 		item_button.text = "%s - %dg (Stock: %d)" % [item_template.name, live_price, item_data.stock]
 		item_button.custom_minimum_size = Vector2(200, 40)
+		item_button.flat = true
+		var row := _shop_item_button_style()
+		item_button.add_theme_stylebox_override("normal", row)
+		item_button.add_theme_stylebox_override("hover", _shop_item_button_style())
+		item_button.add_theme_stylebox_override("pressed", _shop_item_button_style())
 		item_button.pressed.connect(_on_item_selected.bind(item_id, live_price))
 		shop_items_container.add_child(item_button)
 

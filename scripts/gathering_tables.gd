@@ -2,7 +2,7 @@ class_name GatheringTables
 
 ## Central weight tables for fishing/mining (gameplay tuning).
 
-static func get_fish_table(zone: String, season: String, hour: int, raining: bool) -> Dictionary:
+static func get_fish_table(zone: String, season: String, hour: int, raining: bool, weather: String = "") -> Dictionary:
 	# Returns item_id -> relative weight (not normalized).
 	var t: Dictionary = {}
 	var night := hour < 6 or hour >= 22
@@ -14,6 +14,8 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 		t["fish_perch"] = 1.0
 		t["fish_trout"] = 0.9 if not night else 1.2
 		t["fish_catfish"] = 0.42 if not night else 0.55
+		# Pike — ambush predator; stronger at night and in cold seasons
+		t["fish_pike"] = 0.28 if night else 0.09
 		t["junk_boot"] = 0.32
 		t["junk_seaweed"] = 0.12
 	elif zone == "ocean":
@@ -23,6 +25,8 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 		t["fish_mackerel"] = 0.58 if afternoon else 0.42
 		# Rare ocean prize — more likely at night / summer rain
 		t["fish_tuna"] = 0.22 if not night else 0.38
+		# Halibut — bottom fish; better morning/dusk than bright midday
+		t["fish_halibut"] = 0.16 if not afternoon else 0.095
 		t["junk_boot"] = 0.36
 		t["junk_seaweed"] = 0.55
 	else:
@@ -32,6 +36,8 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 		"spring":
 			if "fish_trout" in t:
 				t["fish_trout"] *= 1.15
+			if "fish_pike" in t:
+				t["fish_pike"] *= 1.12
 		"summer":
 			if "fish_sardine" in t:
 				t["fish_sardine"] *= 1.2
@@ -42,11 +48,17 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 				t["fish_carp"] *= 1.15
 			if "fish_catfish" in t:
 				t["fish_catfish"] *= 1.18
+			if "fish_halibut" in t:
+				t["fish_halibut"] *= 1.28
 		"winter":
 			if "fish_perch" in t:
 				t["fish_perch"] *= 1.1
 			if "fish_mackerel" in t:
 				t["fish_mackerel"] *= 1.08
+			if "fish_pike" in t:
+				t["fish_pike"] *= 1.85
+			if "fish_halibut" in t:
+				t["fish_halibut"] *= 1.32
 
 	if raining:
 		for k in t.keys():
@@ -63,6 +75,19 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 		t["fish_sardine"] *= 1.08
 	if afternoon and "fish_mackerel" in t:
 		t["fish_mackerel"] *= 1.1
+	if morning and "fish_halibut" in t:
+		t["fish_halibut"] *= 1.14
+
+	# Rough water — pike in rivers; general bite on open ocean
+	if weather == "storm":
+		if zone == "river" and "fish_pike" in t:
+			t["fish_pike"] *= 1.22
+		elif zone == "ocean":
+			for k in t.keys():
+				if str(k).begins_with("fish_"):
+					t[k] *= 1.06
+			if "junk_boot" in t:
+				t["junk_boot"] *= 1.06
 
 	return t
 
@@ -96,6 +121,8 @@ static func mining_ore_weights(depth: int, pickaxe_tier: int) -> Dictionary:
 		w["quartz"] = 0.14
 		if pickaxe_tier >= 2:
 			w["gold_ore"] = 0.45
+			# Deep vein + iron pick — softer precious vein than gold
+			w["silver_ore"] = 0.28
 		else:
 			w["stone_chunk"] *= 1.15
 
@@ -117,4 +144,6 @@ static func mining_ore_weights(depth: int, pickaxe_tier: int) -> Dictionary:
 				w["copper_ore"] = float(w["copper_ore"]) * 0.75
 			if "quartz" in w:
 				w["quartz"] = float(w["quartz"]) * 1.15
+			if "silver_ore" in w:
+				w["silver_ore"] = float(w["silver_ore"]) * 1.1
 	return w

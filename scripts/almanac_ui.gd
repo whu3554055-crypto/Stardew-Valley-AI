@@ -6,6 +6,28 @@ extends Panel
 @onready var meal_list: ItemList = $Margin/VBox/MealItemList
 
 func _ready() -> void:
+	var psb := StyleBoxFlat.new()
+	psb.bg_color = Color(0.06, 0.07, 0.09, 0.96)
+	psb.set_border_width_all(1)
+	psb.border_color = Color(0.38, 0.34, 0.24)
+	psb.content_margin_left = 10
+	psb.content_margin_top = 10
+	psb.content_margin_right = 10
+	psb.content_margin_bottom = 10
+	add_theme_stylebox_override("panel", psb)
+	for lst in [fish_list, mineral_list, smelt_list, meal_list]:
+		if lst:
+			lst.add_theme_font_size_override("font_size", 13)
+			lst.add_theme_color_override("font_selected_color", Color(0.98, 0.9, 0.55))
+			lst.add_theme_color_override("font_hovered_color", Color(0.92, 0.92, 0.94))
+	var vbox: Node = get_node_or_null("Margin/VBox")
+	if vbox:
+		for c in vbox.get_children():
+			if c is Label:
+				var lb: Label = c as Label
+				lb.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.42))
+				lb.add_theme_constant_override("shadow_offset_x", 1)
+				lb.add_theme_constant_override("shadow_offset_y", 1)
 	if GatheringAlmanac:
 		GatheringAlmanac.collection_updated.connect(_on_collection_updated)
 	visibility_changed.connect(_on_visibility_changed)

@@ -10,10 +10,13 @@ class_name AIAgentConfigUI
 @onready var status_label = $VBoxContainer/StatusLabel
 @onready var test_button = $VBoxContainer/TestButton
 @onready var save_button = $VBoxContainer/SaveButton
+@onready var close_button = $VBoxContainer/CloseButton
+@onready var title_label = $VBoxContainer/TitleLabel
 
 var is_connected = false
 
 func _ready():
+	_apply_config_chrome()
 	load_current_config()
 	
 	# Connect signals
@@ -23,6 +26,50 @@ func _ready():
 	
 	# Hide initially
 	visible = false
+
+func _config_btn_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.14, 0.15, 0.2, 0.95)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.38, 0.36, 0.28)
+	return sb
+
+func _config_lineedit_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.09, 0.12, 0.98)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.28, 0.28, 0.32)
+	sb.content_margin_left = 8
+	sb.content_margin_top = 6
+	sb.content_margin_right = 8
+	sb.content_margin_bottom = 6
+	return sb
+
+func _apply_config_chrome() -> void:
+	if title_label:
+		title_label.add_theme_font_size_override("font_size", 20)
+		title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+		title_label.add_theme_constant_override("shadow_offset_x", 1)
+		title_label.add_theme_constant_override("shadow_offset_y", 1)
+	if status_label:
+		status_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.4))
+		status_label.add_theme_constant_override("shadow_offset_x", 1)
+		status_label.add_theme_constant_override("shadow_offset_y", 1)
+	for node in [base_url_input, model_input, max_tokens_input]:
+		if node:
+			node.add_theme_stylebox_override("normal", _config_lineedit_style())
+			var f := _config_lineedit_style()
+			f.border_color = Color(0.42, 0.48, 0.58)
+			f.set_border_width_all(2)
+			node.add_theme_stylebox_override("focus", f)
+	for b in [test_button, save_button, close_button]:
+		if b:
+			b.flat = true
+			b.add_theme_stylebox_override("normal", _config_btn_style())
+			var bh := _config_btn_style()
+			bh.bg_color = Color(0.18, 0.2, 0.28)
+			b.add_theme_stylebox_override("hover", bh)
+			b.add_theme_stylebox_override("pressed", _config_btn_style())
 
 func load_current_config():
 	if AIAgentManager:

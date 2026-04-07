@@ -18,6 +18,8 @@ func initialize_shop():
 		"parsnip_seeds": {"price": 20, "stock": 99},
 		"cauliflower_seeds": {"price": 80, "stock": 99},
 		"potato_seeds": {"price": 50, "stock": 99},
+		"corn_seeds": {"price": 150, "stock": 99},
+		"basic_fertilizer": {"price": 35, "stock": 99},
 		"bread": {"price": 50, "stock": 99},
 		"fishing_rod": {"price": 120, "stock": 10},
 		"worm_bait": {"price": 8, "stock": 99},
@@ -93,6 +95,33 @@ func sell_item(item_id: String, quantity: int = 1) -> bool:
 
 	GameManager.player_data.gold += sell_price
 	item_sold.emit(item_id, quantity)
+	if QuestSystem:
+		QuestSystem.track_event("earn_gold", {"gold": sell_price})
+	return true
+
+
+func sell_from_slot(slot: int, quantity: int = 1) -> bool:
+	"""Sell from a specific inventory slot (e.g. selected slot)."""
+	var item = InventoryManager.get_item(slot)
+	if item == null:
+		return false
+	var item_id: String = str(item.get("id", ""))
+	if item_id.is_empty():
+		return false
+	var unit: int = get_sell_price_per_unit(item_id)
+	if unit <= 0:
+		return false
+	var stack: int = int(item.get("stack", 1))
+	var q: int = mini(maxi(quantity, 1), stack)
+	if q <= 0:
+		return false
+	var sell_price: int = unit * q
+	if not InventoryManager.remove_item(slot, q):
+		return false
+	GameManager.player_data.gold += sell_price
+	item_sold.emit(item_id, q)
+	if QuestSystem:
+		QuestSystem.track_event("earn_gold", {"gold": sell_price})
 	return true
 
 func get_sell_value(item_id: String) -> int:

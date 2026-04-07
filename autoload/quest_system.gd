@@ -48,9 +48,9 @@ func initialize_quests():
 	quests["earn_gold"] = {
 		"id": "earn_gold",
 		"title": "Entrepreneur",
-		"description": "Earn 1000 gold from selling crops.",
+		"description": "Earn 1000 gold by selling items at the shop.",
 		"objectives": [
-			{"type": "earn_gold", "amount": 1000, "current": 0}
+			{"type": "earn_gold", "count": 1000, "current": 0}
 		],
 		"status": QuestStatus.NOT_STARTED,
 		"reward": {"gold": 200, "items": []}
@@ -133,6 +133,13 @@ func initialize_quests():
 		"reward": {"gold": 40, "items": ["wood_log:3"]}
 	}
 
+func _objective_goal_max(o: Dictionary) -> int:
+	if o.has("count"):
+		return int(o["count"])
+	if o.has("amount"):
+		return int(o["amount"])
+	return 1
+
 func start_quest(quest_id: String):
 	if not quests.has(quest_id):
 		return
@@ -152,10 +159,10 @@ func update_quest_progress(quest_id: String, objective_index: int, amount: int =
 		return
 
 	var objective = quest.objectives[objective_index]
+	var goal: int = _objective_goal_max(objective)
 	objective.current += amount
-
-	if objective.current >= objective.count:
-		objective.current = objective.count
+	if objective.current >= goal:
+		objective.current = goal
 		check_quest_completion(quest_id)
 
 	quest_updated.emit(quest_id, objective_index)
@@ -164,7 +171,7 @@ func check_quest_completion(quest_id: String):
 	var quest = quests[quest_id]
 
 	for objective in quest.objectives:
-		if objective.current < objective.count:
+		if int(objective.get("current", 0)) < _objective_goal_max(objective):
 			return
 
 	# All objectives complete
@@ -218,14 +225,24 @@ func get_completed_quests() -> Array:
 	return result
 
 func track_event(event_type: String, data: Dictionary):
-	# Check all active quests for progress
 	for quest_id in active_quests:
 		var quest = quests[quest_id]
 		for i in range(quest.objectives.size()):
 			var objective = quest.objectives[i]
-			if objective.type == event_type:
-				if _objective_matches_event(objective, data):
-					update_quest_progress(quest_id, i, data.get("count", 1))
+			if str(objective.get("type", "")) != event_type:
+				continue
+			if not _objective_matches_event(objective, data):
+				continue
+			if event_type == "earn_gold":
+				var g: int = int(data.get("gold", 0))
+				if g <= 0:
+					continue
+				var goal: int = _objective_goal_max(objective)
+				objective.current = mini(goal, int(objective.get("current", 0)) + g)
+				check_quest_completion(quest_id)
+				quest_updated.emit(quest_id, i)
+			else:
+				update_quest_progress(quest_id, i, int(data.get("count", 1)))
 
 func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	"""Generic matcher for objective/event payload compatibility."""
@@ -255,6 +272,8 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "craft_item":
 		if objective.has("item_id"):
 			return str(data.get("item_id", "")) == str(objective.get("item_id", ""))
+		return true
+	if ot == "earn_gold":
 		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")

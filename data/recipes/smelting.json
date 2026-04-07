@@ -19,5 +19,12 @@
     "output_qty": 1,
     "inputs": { "gold_ore": 5, "coal": 2 },
     "stamina": 3
+  },
+  {
+    "id": "silver_bar",
+    "output_id": "silver_bar",
+    "output_qty": 1,
+    "inputs": { "silver_ore": 5, "coal": 1 },
+    "stamina": 3
   }
 ]

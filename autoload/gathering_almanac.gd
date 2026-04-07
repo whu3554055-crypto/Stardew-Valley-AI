@@ -8,8 +8,6 @@ var minerals_mined: Dictionary = {}
 var smelted_bars: Dictionary = {}
 var meals_cooked: Dictionary = {}
 
-const SAVE_PATH := "user://gathering_almanac.save"
-
 func record_fish(fish_id: String) -> void:
 	if fish_id.is_empty():
 		return
@@ -39,29 +37,6 @@ func get_fish_discovered_count() -> int:
 
 func get_unique_fish_ids() -> Array:
 	return fish_caught.keys()
-
-func save_data() -> void:
-	var f = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if not f:
-		return
-	f.store_var({
-		"fish": fish_caught,
-		"minerals": minerals_mined,
-		"smelted": smelted_bars,
-		"meals": meals_cooked
-	})
-	f.close()
-
-func load_data() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-	var f = FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if not f:
-		return
-	var data = f.get_var()
-	f.close()
-	if data is Dictionary:
-		apply_save_snapshot(data)
 
 
 func get_snapshot() -> Dictionary:

@@ -82,22 +82,3 @@ func get_time_string() -> String:
 	var display_hours = hours if hours <= 12 else hours - 12
 	display_hours = 12 if display_hours == 0 else display_hours
 	return "%02d:%02d %s" % [display_hours, minutes, am_pm]
-
-func save_game():
-	var save_file = FileAccess.open("user://savegame.save", FileAccess.WRITE)
-	save_file.store_var(player_data)
-	save_file.close()
-
-func load_game():
-	if FileAccess.file_exists("user://savegame.save"):
-		var save_file = FileAccess.open("user://savegame.save", FileAccess.READ)
-		var loaded = save_file.get_var()
-		save_file.close()
-		if loaded is Dictionary:
-			player_data = loaded
-			if not player_data.has("stamina"):
-				player_data["stamina"] = 100.0
-			if not player_data.has("stamina_max"):
-				player_data["stamina_max"] = 100.0
-		return true
-	return false

@@ -14,11 +14,15 @@ var tilled_soil = {}
 ## Placed basic sprinklers: tile under the sprinkler (must be tilled, no crop). Waters 4 ortho neighbors each morning.
 var sprinkler_tiles: Dictionary = {}
 
+## Tilled empty tiles prepped with fertilizer — next successful plant on this cell gets −1 `growth_days` (min 2).
+var pending_fertilizer: Dictionary = {}
+
 signal crop_planted(position, crop_id)
 signal crop_harvested(position, crop_id, quantity)
 signal soil_tilled(position)
 
 var _sprinkler_layer: Node2D
+var _fertilizer_layer: Node2D
 var _crop_layer: Node2D
 
 ## Matches `TileType.TILLED_SOIL` atlas column in `terrain_atlas_32.png` / GameTileMap.
@@ -29,6 +33,10 @@ func _ready():
 	_sprinkler_layer.name = "SprinklerVisuals"
 	_sprinkler_layer.z_index = 2
 	add_child(_sprinkler_layer)
+	_fertilizer_layer = Node2D.new()
+	_fertilizer_layer.name = "FertilizerMarkers"
+	_fertilizer_layer.z_index = 1
+	add_child(_fertilizer_layer)
 	_crop_layer = Node2D.new()
 	_crop_layer.name = "CropVisuals"
 	_crop_layer.z_index = 3
@@ -77,6 +85,18 @@ func load_crop_database():
 		"seasons": ["spring"]
 	}
 
+	# Summer — multi-harvest (first full grow, then shorter regrow)
+	crops_db["corn"] = {
+		"id": "corn",
+		"name": "Corn",
+		"growth_days": 14,
+		"regrow_days": 4,
+		"harvest_product": "corn",
+		"harvest_count": 1,
+		"regrows": true,
+		"seasons": ["summer"]
+	}
+
 func till_soil(position: Vector2i):
 	if sprinkler_tiles.has(position):
 		return false
@@ -87,28 +107,37 @@ func till_soil(position: Vector2i):
 		return true
 	return false
 
-func plant_seed(position: Vector2i, crop_id: String) -> bool:
+func plant_seed(position: Vector2i, crop_id: String) -> Dictionary:
 	if not tilled_soil.has(position):
-		return false
-
+		return {"ok": false, "reason": "not_tilled"}
 	if sprinkler_tiles.has(position):
-		return false
-
+		return {"ok": false, "reason": "sprinkler_tile"}
 	if not crops_db.has(crop_id):
-		return false
-
+		return {"ok": false, "reason": "unknown_crop"}
 	if planted_crops.has(position):
-		return false
+		return {"ok": false, "reason": "occupied"}
 
-	var crop_data = crops_db[crop_id].duplicate(true)
+	var def: Dictionary = crops_db[crop_id]
+	var seasons: Array = def.get("seasons", [])
+	if seasons.size() > 0 and GameManager:
+		var cur: String = str(GameManager.player_data.get("season", "spring"))
+		if not cur in seasons:
+			return {"ok": false, "reason": "wrong_season"}
+
+	var crop_data = def.duplicate(true)
 	crop_data["days_grown"] = 0
 	crop_data["planted_day"] = GameManager.player_data.day
+	if pending_fertilizer.has(position):
+		pending_fertilizer.erase(position)
+		crop_data["growth_days"] = maxi(2, int(crop_data["growth_days"]) - 1)
+		crop_data["fertilized"] = true
 
 	planted_crops[position] = crop_data
 	crop_planted.emit(position, crop_id)
+	_refresh_fertilizer_visuals()
 	_refresh_crop_visuals()
 
-	return true
+	return {"ok": true}
 
 func harvest_crop(position: Vector2i) -> Dictionary:
 	if not planted_crops.has(position):
@@ -128,9 +157,11 @@ func harvest_crop(position: Vector2i) -> Dictionary:
 
 	crop_harvested.emit(position, crop.id, harvest_data.count)
 
-	# Remove crop or mark for regrowth
+	# Remove crop or mark for regrowth (optional `regrow_days` vs full `growth_days`)
 	if crop.regrows:
-		crop.days_grown = 0
+		var gd: int = int(crop.growth_days)
+		var rr: int = int(crop.get("regrow_days", gd))
+		crop.days_grown = maxi(0, gd - rr)
 	else:
 		planted_crops.erase(position)
 
@@ -161,6 +192,18 @@ func is_tile_tilled(position: Vector2i) -> bool:
 
 func can_plant_here(position: Vector2i) -> bool:
 	return tilled_soil.has(position) and not planted_crops.has(position) and not sprinkler_tiles.has(position)
+
+func can_fertilize_here(position: Vector2i) -> bool:
+	return can_plant_here(position)
+
+func try_apply_fertilizer(position: Vector2i) -> Dictionary:
+	if not can_fertilize_here(position):
+		return {"ok": false, "reason": "cannot_fertilize"}
+	if pending_fertilizer.has(position):
+		return {"ok": false, "reason": "already_fertilized"}
+	pending_fertilizer[position] = true
+	_refresh_fertilizer_visuals()
+	return {"ok": true}
 
 func try_place_sprinkler(position: Vector2i) -> Dictionary:
 	if not tilled_soil.has(position):
@@ -209,6 +252,30 @@ func _refresh_sprinkler_visuals() -> void:
 		])
 		_sprinkler_layer.add_child(poly)
 
+func _refresh_fertilizer_visuals() -> void:
+	if _fertilizer_layer == null:
+		return
+	for c in _fertilizer_layer.get_children():
+		c.queue_free()
+	var tm: TileMap = _tilemap()
+	if tm == null:
+		return
+	var cell: Vector2 = Vector2(32, 32)
+	if tm.tile_set:
+		cell = Vector2(tm.tile_set.tile_size)
+	var half: float = minf(cell.x, cell.y) * 0.5
+	for pos in pending_fertilizer.keys():
+		var poly := Polygon2D.new()
+		poly.color = Color(0.55, 0.42, 0.18, 0.28)
+		var center_world: Vector2 = tm.to_global(tm.map_to_local(pos))
+		var top_left: Vector2 = _fertilizer_layer.to_local(center_world) - Vector2(half, half)
+		poly.position = top_left
+		var s: float = half * 2.0
+		poly.polygon = PackedVector2Array([
+			Vector2(0, 0), Vector2(s, 0), Vector2(s, s), Vector2(0, s)
+		])
+		_fertilizer_layer.add_child(poly)
+
 func _crop_stage_texture_path(crop_id: String, growth_stage: int) -> String:
 	var g: int = clampi(growth_stage, 0, 4)
 	match crop_id:
@@ -219,6 +286,9 @@ func _crop_stage_texture_path(crop_id: String, growth_stage: int) -> String:
 		"cauliflower":
 			var idx: int = clampi(int(round(float(g) * 5.0 / 4.0)), 0, 5)
 			return "res://assets/sprites/crops/cauliflower_stage_%d.png" % idx
+		"corn":
+			var cidx: int = clampi(int(round(float(g) * 6.0 / 4.0)), 0, 6)
+			return "res://assets/sprites/crops/corn_stage_%d.png" % cidx
 		_:
 			return ""
 
@@ -244,6 +314,7 @@ func _refresh_crop_visuals() -> void:
 			continue
 		var spr := Sprite2D.new()
 		spr.texture = tex
+		spr.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		spr.centered = true
 		var center_world: Vector2 = tm.to_global(tm.map_to_local(pos))
 		spr.position = _crop_layer.to_local(center_world)
@@ -264,7 +335,8 @@ func save_farm_data():
 	var save_data = {
 		"tilled_soil": tilled_soil,
 		"planted_crops": planted_crops,
-		"sprinkler_tiles": sprinkler_tiles
+		"sprinkler_tiles": sprinkler_tiles,
+		"pending_fertilizer": pending_fertilizer
 	}
 	return save_data
 
@@ -272,7 +344,9 @@ func load_farm_data(data: Dictionary):
 	tilled_soil = _deserialize_vec2i_key_dict(data.get("tilled_soil", {}))
 	planted_crops = _deserialize_vec2i_key_dict(data.get("planted_crops", {}))
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
+	pending_fertilizer = _deserialize_sprinklers(data.get("pending_fertilizer", {}))
 	call_deferred("_refresh_sprinkler_visuals")
+	call_deferred("_refresh_fertilizer_visuals")
 	call_deferred("_refresh_crop_visuals")
 	call_deferred("_refresh_tilled_tilemap")
 

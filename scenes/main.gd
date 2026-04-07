@@ -7,6 +7,7 @@ extends Node2D
 @onready var time_label = $UILayer/TimeLabel
 @onready var gold_label = $UILayer/GoldLabel
 @onready var dialogue_box = $UILayer/DialogueBox
+@onready var dialogue_label = $UILayer/DialogueBox/Label
 @onready var weather_label = $UILayer/WeatherLabel
 @onready var season_label = $UILayer/SeasonLabel
 @onready var day_label = $UILayer/DayLabel
@@ -15,22 +16,22 @@ extends Node2D
 @onready var world_event_feed_label = $UILayer/WorldEventFeed/Content
 @onready var quick_tip_label = $UILayer/QuickTipLabel
 @onready var quick_tip_timer = $UILayer/QuickTipTimer
+@onready var activity_zone_label = $UILayer/ActivityZoneLabel
 @onready var fx_fish = $FXLayer/FishSplash
 @onready var fx_mine = $FXLayer/MineSpark
 @onready var almanac_panel = $UILayer/AlmanacPanel
 @onready var recipe_picker = $UILayer/RecipePicker
+@onready var shop_ui = $UILayer/ShopUI
+@onready var quest_log_label = $UILayer/QuestLogLabel
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
 var ai_config_instance = null
 var world_event_feed: Array[String] = []
 const WORLD_EVENT_FEED_MAX := 6
-const WORLD_EVENT_FEED_SAVE_PATH := "user://world_event_feed.save"
-const FARM_SAVE_PATH := "user://farm.save"
-const INVENTORY_SAVE_PATH := "user://inventory.save"
-const QUEST_SAVE_PATH := "user://quests.save"
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
 const SAVE_BUNDLE_VERSION := 2
+const PIERRE_SHOP_RADIUS_PX := 140.0
 
 func _ready():
 	# Connect signals
@@ -43,17 +44,17 @@ func _ready():
 	farm_manager.crop_planted.connect(_on_crop_planted)
 	farm_manager.crop_harvested.connect(_on_crop_harvested)
 	
-	# Initialize systems — prefer unified bundle; else legacy multi-file + almanac/world feed files
-	var loaded_from_bundle: bool = _try_load_save_bundle()
-	var had_savegame: bool = loaded_from_bundle
-	if not loaded_from_bundle:
-		had_savegame = _load_legacy_persistent()
-		if GatheringAlmanac:
-			GatheringAlmanac.load_data()
-		_load_world_event_feed()
+	# Single save file: `game_save.bundle` (see `save_game` / `_build_save_bundle`)
+	var had_savegame: bool = _try_load_save_bundle()
 	_refresh_world_event_feed_ui()
 	if not had_savegame:
 		give_starter_items()
+	if QuestSystem:
+		QuestSystem.quest_started.connect(_on_quest_log_changed)
+		QuestSystem.quest_updated.connect(_on_quest_log_changed)
+		QuestSystem.quest_completed.connect(_on_quest_completed)
+	if shop_ui:
+		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
 	update_ui()
 	initialize_playable_first_loop()
 	
@@ -62,14 +63,130 @@ func _ready():
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
+	_apply_a3_ui_polish()
 	
 	print("======================================")
 	print("  Stardew Valley Clone - AI Edition")
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop near Pierre")
 	print("======================================")
+
+func _process(_delta: float) -> void:
+	_update_activity_zone_label()
+
+func _apply_a3_ui_polish() -> void:
+	## Readability + panel chrome (A3 presentation pass).
+	if dialogue_box:
+		var dsb := StyleBoxFlat.new()
+		dsb.bg_color = Color(0.06, 0.07, 0.1, 0.94)
+		dsb.set_border_width_all(1)
+		dsb.border_color = Color(0.42, 0.38, 0.26)
+		dsb.content_margin_left = 18
+		dsb.content_margin_top = 14
+		dsb.content_margin_right = 18
+		dsb.content_margin_bottom = 14
+		dialogue_box.add_theme_stylebox_override("panel", dsb)
+	if dialogue_label:
+		dialogue_label.add_theme_font_size_override("font_size", 17)
+		dialogue_label.add_theme_color_override("font_color", Color(0.94, 0.93, 0.88))
+		dialogue_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+		dialogue_label.add_theme_constant_override("shadow_offset_x", 1)
+		dialogue_label.add_theme_constant_override("shadow_offset_y", 1)
+	var hud_labels: Array[Node] = [
+		time_label, gold_label, stamina_label, day_label, season_label, weather_label
+	]
+	for n in hud_labels:
+		if n is Label:
+			var lb: Label = n as Label
+			lb.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.62))
+			lb.add_theme_constant_override("shadow_offset_x", 1)
+			lb.add_theme_constant_override("shadow_offset_y", 1)
+	if quick_tip_label:
+		quick_tip_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.65))
+		quick_tip_label.add_theme_constant_override("shadow_offset_x", 1)
+		quick_tip_label.add_theme_constant_override("shadow_offset_y", 1)
+	if activity_zone_label:
+		activity_zone_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
+		activity_zone_label.add_theme_constant_override("shadow_offset_x", 1)
+		activity_zone_label.add_theme_constant_override("shadow_offset_y", 1)
+	var wef: Panel = ui_layer.get_node_or_null("WorldEventFeed") as Panel
+	if wef:
+		var wsb := StyleBoxFlat.new()
+		wsb.bg_color = Color(0.05, 0.06, 0.08, 0.88)
+		wsb.set_border_width_all(1)
+		wsb.border_color = Color(0.35, 0.32, 0.22)
+		wsb.content_margin_left = 8
+		wsb.content_margin_top = 6
+		wsb.content_margin_right = 8
+		wsb.content_margin_bottom = 6
+		wef.add_theme_stylebox_override("panel", wsb)
+	if world_event_feed_label:
+		world_event_feed_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
+		world_event_feed_label.add_theme_constant_override("shadow_offset_x", 1)
+		world_event_feed_label.add_theme_constant_override("shadow_offset_y", 1)
+	var wef_title: Label = ui_layer.get_node_or_null("WorldEventFeed/Title") as Label
+	if wef_title:
+		wef_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
+		wef_title.add_theme_constant_override("shadow_offset_x", 1)
+		wef_title.add_theme_constant_override("shadow_offset_y", 1)
+	if ai_config_button:
+		var bsb := StyleBoxFlat.new()
+		bsb.bg_color = Color(0.11, 0.12, 0.16, 0.92)
+		bsb.set_border_width_all(1)
+		bsb.border_color = Color(0.38, 0.34, 0.24)
+		ai_config_button.add_theme_stylebox_override("normal", bsb)
+		ai_config_button.add_theme_stylebox_override("hover", bsb)
+		ai_config_button.add_theme_stylebox_override("pressed", bsb)
+		ai_config_button.flat = true
+	if quest_log_label:
+		quest_log_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
+		quest_log_label.add_theme_constant_override("shadow_offset_x", 1)
+		quest_log_label.add_theme_constant_override("shadow_offset_y", 1)
+	if ui_layer and ui_layer.get_node_or_null("HUDBackdrop") == null:
+		var hud_bg := Panel.new()
+		hud_bg.name = "HUDBackdrop"
+		hud_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hud_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		hud_bg.offset_left = 4.0
+		hud_bg.offset_top = 4.0
+		hud_bg.offset_right = 428.0
+		hud_bg.offset_bottom = 188.0
+		var hsb := StyleBoxFlat.new()
+		hsb.bg_color = Color(0.04, 0.05, 0.075, 0.58)
+		hsb.set_border_width_all(1)
+		hsb.border_color = Color(0.22, 0.24, 0.3)
+		hud_bg.add_theme_stylebox_override("panel", hsb)
+		ui_layer.add_child(hud_bg)
+		ui_layer.move_child(hud_bg, 0)
+
+func _update_activity_zone_label() -> void:
+	if not activity_zone_label or not player:
+		return
+	if not InventoryManager:
+		activity_zone_label.text = ""
+		return
+	var item = InventoryManager.get_item(InventoryManager.selected_slot)
+	var sid: String = str(item.get("id", "")) if item else ""
+	if sid == "fishing_rod" and FishingSystem and FishingSystem.can_fish_here(player.global_position):
+		var z: String = FishingSystem.get_fish_zone(player.global_position)
+		if z == "river":
+			activity_zone_label.text = "钓鱼 · 河流"
+		elif z == "ocean":
+			activity_zone_label.text = "钓鱼 · 海洋"
+		else:
+			activity_zone_label.text = ""
+		return
+	if sid in ["pickaxe", "pickaxe_iron"] and MiningSystem and MiningSystem.can_mine_here(player.global_position):
+		var d: int = MiningSystem.depth_from_global_y(player.global_position.y)
+		var band: Array[String] = ["表层", "铁矿带", "深脉"]
+		if d >= 0 and d < band.size():
+			activity_zone_label.text = "矿区 · %s" % band[d]
+		else:
+			activity_zone_label.text = ""
+		return
+	activity_zone_label.text = ""
 
 func _try_load_save_bundle() -> bool:
 	if not FileAccess.file_exists(GAME_SAVE_BUNDLE_PATH):
@@ -120,36 +237,6 @@ func _build_save_bundle() -> Dictionary:
 	}
 
 
-func _load_legacy_persistent() -> bool:
-	## Loads split save files from before unified bundle. Returns true if `user://savegame.save` existed.
-	var had_player_save: bool = false
-	if FileAccess.file_exists("user://savegame.save"):
-		had_player_save = GameManager.load_game()
-	if FileAccess.file_exists(FARM_SAVE_PATH):
-		var ff: FileAccess = FileAccess.open(FARM_SAVE_PATH, FileAccess.READ)
-		if ff:
-			var farm_data: Variant = ff.get_var()
-			ff.close()
-			if farm_data is Dictionary and farm_manager:
-				farm_manager.load_farm_data(farm_data)
-	if FileAccess.file_exists(QUEST_SAVE_PATH):
-		var qf: FileAccess = FileAccess.open(QUEST_SAVE_PATH, FileAccess.READ)
-		if qf:
-			var qdata: Variant = qf.get_var()
-			qf.close()
-			if QuestSystem:
-				QuestSystem.load_snapshot(qdata)
-	if FileAccess.file_exists(INVENTORY_SAVE_PATH):
-		var invf: FileAccess = FileAccess.open(INVENTORY_SAVE_PATH, FileAccess.READ)
-		if invf:
-			var inv_data: Variant = invf.get_var()
-			invf.close()
-			if InventoryManager:
-				InventoryManager.load_snapshot(inv_data)
-	elif had_player_save:
-		give_starter_items()
-	return had_player_save
-
 func initialize_playable_first_loop():
 	"""
 	Playable-first bootstrap:
@@ -165,6 +252,7 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("intro_cook")
 		QuestSystem.start_quest("intro_chop")
 		QuestSystem.start_quest("intro_craft")
+		QuestSystem.start_quest("earn_gold")
 	
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
@@ -172,9 +260,6 @@ func initialize_playable_first_loop():
 			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
 			record_world_event("Daily story generated: %s" % str(narrative.get("title", "A new day begins")))
 			_apply_narrative_daily_quest(narrative)
-
-	if QuestSystem:
-		QuestSystem.quest_completed.connect(_on_quest_completed)
 
 func give_starter_items():
 	var hoe_item = ItemDatabase.get_item("hoe")
@@ -201,6 +286,9 @@ func give_starter_items():
 	var bread = ItemDatabase.get_item("bread")
 	if not bread.is_empty():
 		InventoryManager.add_item(bread.duplicate(true))
+	var fert = ItemDatabase.get_item("basic_fertilizer")
+	if not fert.is_empty():
+		InventoryManager.add_item(fert.duplicate(true))
 	var axe_item = ItemDatabase.get_item("axe")
 	if not axe_item.is_empty():
 		InventoryManager.add_item(axe_item.duplicate(true))
@@ -397,6 +485,24 @@ func _on_player_interact(tile_position: Vector2):
 				show_quick_tip("无法在此放置洒水器。")
 		return
 
+	# Fertilizer — empty tilled tile only; next successful plant gets −1 growth day (see FarmManager).
+	if selected_item and str(selected_item.get("type", "")) == "fertilizer" and farm_manager:
+		if farm_manager.can_fertilize_here(tile_coords):
+			var fert_res: Dictionary = farm_manager.try_apply_fertilizer(tile_coords)
+			if fert_res.get("ok", false):
+				InventoryManager.remove_item(InventoryManager.selected_slot, 1)
+				show_quick_tip("已施肥：本格下次播种少需 1 天成熟（最短仍 2 天）。")
+				update_ui()
+				return
+			if str(fert_res.get("reason", "")) == "already_fertilized":
+				show_quick_tip("这块地已经施过肥了。")
+				return
+		elif farm_manager.is_tile_tilled(tile_coords):
+			show_quick_tip("请在没有作物、没有洒水器的空地上施肥。")
+		else:
+			show_quick_tip("只能给已犁好的空地施肥。")
+		return
+
 	# Eat food / crops / fish with stamina_restore (select item, press E)
 	if selected_item and _try_eat_selected_food():
 		return
@@ -405,9 +511,20 @@ func _on_player_interact(tile_position: Vector2):
 	if selected_item:
 		if selected_item.type == "seed":
 			if farm_manager.can_plant_here(tile_coords):
-				farm_manager.plant_seed(tile_coords, selected_item.id)
-				InventoryManager.remove_item(InventoryManager.selected_slot)
-				QuestSystem.track_event("plant", {"crop_id": selected_item.id, "count": 1})
+				var crop_id: String = str(selected_item.get("crop_id", ""))
+				if crop_id.is_empty():
+					return
+				var plant_res: Dictionary = farm_manager.plant_seed(tile_coords, crop_id)
+				if plant_res.get("ok", false):
+					InventoryManager.remove_item(InventoryManager.selected_slot)
+					if QuestSystem:
+						QuestSystem.track_event("plant", {"crop_id": crop_id, "count": 1})
+				else:
+					match str(plant_res.get("reason", "")):
+						"wrong_season":
+							show_quick_tip("当前季节不适合种这种作物。")
+						_:
+							pass
 		elif selected_item.id == "hoe":
 			farm_manager.till_soil(tile_coords)
 		elif selected_item.id == "watering_can":
@@ -430,12 +547,108 @@ func _on_day_changed(new_day):
 		record_world_event("New day, new story seed is ready.")
 		_apply_narrative_daily_quest(narrative)
 
+func _on_quest_log_changed(_a = null, _b = null) -> void:
+	_refresh_quest_log()
+
+
+func _quest_objective_goal(o: Dictionary) -> int:
+	if o.has("count"):
+		return int(o["count"])
+	if o.has("amount"):
+		return int(o["amount"])
+	return 1
+
+
+func _refresh_quest_log() -> void:
+	if not quest_log_label or not QuestSystem:
+		return
+	if QuestSystem.active_quests.is_empty():
+		quest_log_label.text = "Quests\n(none active)"
+		return
+	var lines: PackedStringArray = []
+	for qid in QuestSystem.active_quests:
+		var q: Dictionary = QuestSystem.quests.get(qid, {})
+		if q.is_empty():
+			continue
+		var title: String = str(q.get("title", qid))
+		var obj_list: Array = q.get("objectives", [])
+		var suffix: String = ""
+		if obj_list.size() == 1:
+			var od: Dictionary = obj_list[0]
+			var cur: int = int(od.get("current", 0))
+			var goal: int = _quest_objective_goal(od)
+			suffix = " %d/%d" % [cur, goal]
+		elif obj_list.size() > 1:
+			suffix = " (%d steps)" % obj_list.size()
+		lines.append("• %s%s" % [title, suffix])
+	quest_log_label.text = "Quests\n" + "\n".join(lines)
+
+
+func _is_near_pierre() -> bool:
+	var pierre = get_node_or_null("Pierre")
+	if not pierre or not player:
+		return false
+	return player.global_position.distance_to(pierre.global_position) <= PIERRE_SHOP_RADIUS_PX
+
+
+func _try_open_shop_near_pierre() -> void:
+	if not shop_ui:
+		return
+	if shop_ui.visible:
+		shop_ui.close_shop()
+		return
+	if not _is_near_pierre():
+		show_quick_tip("Open the shop near Pierre.")
+		return
+	shop_ui.open_shop()
+
+
+func _try_sell_selected_inventory() -> bool:
+	if not ShopSystem:
+		return false
+	var slot: int = InventoryManager.selected_slot
+	var item = InventoryManager.get_item(slot)
+	if item == null:
+		show_quick_tip("Nothing selected to sell.")
+		return false
+	var item_id: String = str(item.get("id", ""))
+	if item_id.is_empty():
+		return false
+	if ShopSystem.get_sell_price_per_unit(item_id) <= 0:
+		show_quick_tip("This item can't be sold.")
+		return false
+	if ShopSystem.sell_from_slot(slot, 1):
+		update_ui()
+		if shop_ui and shop_ui.visible:
+			shop_ui.update_gold_display()
+		var unit: int = ShopSystem.get_sell_price_per_unit(item_id)
+		show_quick_tip("Sold for %dg." % unit)
+		return true
+	return false
+
+
+func _on_shop_purchase(item_id: String, quantity: int) -> void:
+	if not ShopSystem:
+		return
+	if ShopSystem.purchase_item(item_id, quantity):
+		var tpl: Dictionary = ItemDatabase.get_item(item_id)
+		var nm: String = str(tpl.get("name", item_id)) if not tpl.is_empty() else item_id
+		show_quick_tip("Bought %s" % nm)
+		update_ui()
+		if shop_ui:
+			shop_ui.populate_shop_items()
+			shop_ui.update_gold_display()
+	else:
+		show_quick_tip("Can't afford or out of stock.")
+
+
 func _on_quest_completed(quest_id: String):
 	if QuestSystem and QuestSystem.quests.has(quest_id):
 		var quest_data: Dictionary = QuestSystem.quests[quest_id]
 		var title = quest_data.get("title", quest_id)
 		show_dialogue("Quest completed: " + str(title))
 		_apply_story_completion_feedback(quest_data)
+	_refresh_quest_log()
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
@@ -498,7 +711,6 @@ func record_world_event(event_text: String) -> void:
 	if world_event_feed.size() > WORLD_EVENT_FEED_MAX:
 		world_event_feed.resize(WORLD_EVENT_FEED_MAX)
 	_refresh_world_event_feed_ui()
-	_save_world_event_feed()
 
 func _refresh_world_event_feed_ui() -> void:
 	if not world_event_feed_label:
@@ -507,28 +719,6 @@ func _refresh_world_event_feed_ui() -> void:
 		world_event_feed_label.text = "No events yet."
 		return
 	world_event_feed_label.text = "\n".join(world_event_feed)
-
-func _save_world_event_feed() -> void:
-	var save_file = FileAccess.open(WORLD_EVENT_FEED_SAVE_PATH, FileAccess.WRITE)
-	if not save_file:
-		return
-	save_file.store_var(world_event_feed)
-	save_file.close()
-
-func _load_world_event_feed() -> void:
-	if not FileAccess.file_exists(WORLD_EVENT_FEED_SAVE_PATH):
-		return
-	var save_file = FileAccess.open(WORLD_EVENT_FEED_SAVE_PATH, FileAccess.READ)
-	if not save_file:
-		return
-	var loaded = save_file.get_var()
-	save_file.close()
-	if loaded is Array:
-		world_event_feed.clear()
-		for item in loaded:
-			world_event_feed.append(str(item))
-		if world_event_feed.size() > WORLD_EVENT_FEED_MAX:
-			world_event_feed.resize(WORLD_EVENT_FEED_MAX)
 
 func _apply_narrative_daily_quest(narrative: Dictionary):
 	if narrative.is_empty():
@@ -552,9 +742,6 @@ func _on_crop_planted(position, crop_id):
 func _on_crop_harvested(position, crop_id, quantity):
 	QuestSystem.track_event("harvest", {"crop_id": crop_id, "count": quantity})
 
-func _on_time_changed(new_time):
-	update_ui()
-
 func update_ui():
 	time_label.text = GameManager.get_time_string()
 	gold_label.text = "Gold: %d" % GameManager.player_data.gold
@@ -565,9 +752,11 @@ func update_ui():
 	weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
 	season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
 	day_label.text = "Day %d, Year %d" % [GameManager.player_data.day, GameManager.player_data.year]
+	_refresh_quest_log()
 
 func show_dialogue(text: String):
-	dialogue_box.text = text
+	if dialogue_label:
+		dialogue_label.text = text
 	dialogue_box.visible = true
 	await get_tree().create_timer(3.0).timeout
 	dialogue_box.visible = false
@@ -601,6 +790,12 @@ func _unhandled_input(event):
 	if event.is_action_pressed("toggle_almanac") and almanac_panel:
 		almanac_panel.visible = not almanac_panel.visible
 		return
+	if event.is_action_pressed("sell_selected"):
+		_try_sell_selected_inventory()
+		return
+	if event.is_action_pressed("open_shop"):
+		_try_open_shop_near_pierre()
+		return
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()
 	if event.is_action_pressed("ui_cancel"):
@@ -616,14 +811,10 @@ func save_game():
 	if bf:
 		bf.store_var(bundle)
 		bf.close()
-	_save_world_event_feed()
-	# Save NPC memories and emotions
 	if NPCMemorySystem:
 		NPCMemorySystem.save_memories()
 	if NPCEmotionSystem:
 		NPCEmotionSystem.save_emotion_state()
-	if GatheringAlmanac:
-		GatheringAlmanac.save_data()
 	print("Game saved!")
 
 func _on_ai_config_pressed():

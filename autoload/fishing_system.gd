@@ -70,7 +70,11 @@ func _resolve_catch(player_pos: Vector2) -> Dictionary:
 	if WeatherSystem:
 		raining = WeatherSystem.is_raining()
 
-	var weights: Dictionary = GT.get_fish_table(zone, season, hour, raining)
+	var wx: String = ""
+	if WeatherSystem:
+		wx = str(WeatherSystem.get_weather_name()).to_lower()
+
+	var weights: Dictionary = GT.get_fish_table(zone, season, hour, raining, wx)
 	if _bait_flag:
 		for k in weights.keys():
 			if str(k).begins_with("fish_"):
@@ -122,5 +126,9 @@ func _catch_message(item_id: String, template: Dictionary) -> String:
 			return "Only an old boot… better luck next cast."
 		"junk_seaweed":
 			return "A soggy clump of seaweed. The sea mocks you."
+		"fish_pike":
+			return "A fierce northern pike — long jaws, cold water."
+		"fish_halibut":
+			return "A flat halibut from the deep — heavy pull on the line."
 		_:
 			return "You caught a %s!" % str(template.get("name", item_id))

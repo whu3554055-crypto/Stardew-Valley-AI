@@ -17,8 +17,48 @@ var recipes: Array = []
 
 signal recipe_chosen(recipe: Dictionary, mode: String)
 
+func _recipe_btn_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.13, 0.12, 0.11, 0.96)
+	sb.set_border_width_all(1)
+	sb.border_color = Color(0.4, 0.36, 0.26)
+	return sb
+
 func _ready() -> void:
 	visible = false
+	var psb := StyleBoxFlat.new()
+	psb.bg_color = Color(0.06, 0.07, 0.1, 0.96)
+	psb.set_border_width_all(1)
+	psb.border_color = Color(0.4, 0.36, 0.26)
+	psb.content_margin_left = 10
+	psb.content_margin_top = 10
+	psb.content_margin_right = 10
+	psb.content_margin_bottom = 10
+	add_theme_stylebox_override("panel", psb)
+	if item_list:
+		item_list.add_theme_font_size_override("font_size", 14)
+		item_list.add_theme_color_override("font_selected_color", Color(0.98, 0.9, 0.55))
+		item_list.add_theme_color_override("font_hovered_color", Color(0.92, 0.92, 0.94))
+	if detail:
+		detail.add_theme_font_size_override("font_size", 13)
+		detail.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.4))
+		detail.add_theme_constant_override("shadow_offset_x", 1)
+		detail.add_theme_constant_override("shadow_offset_y", 1)
+	if _title:
+		_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
+		_title.add_theme_constant_override("shadow_offset_x", 1)
+		_title.add_theme_constant_override("shadow_offset_y", 1)
+	var rbtn := _recipe_btn_style()
+	if btn_confirm:
+		btn_confirm.flat = true
+		btn_confirm.add_theme_stylebox_override("normal", rbtn)
+		btn_confirm.add_theme_stylebox_override("hover", _recipe_btn_style())
+		btn_confirm.add_theme_stylebox_override("pressed", _recipe_btn_style())
+	if btn_close:
+		btn_close.flat = true
+		btn_close.add_theme_stylebox_override("normal", _recipe_btn_style())
+		btn_close.add_theme_stylebox_override("hover", _recipe_btn_style())
+		btn_close.add_theme_stylebox_override("pressed", _recipe_btn_style())
 	btn_confirm.pressed.connect(_on_confirm_pressed)
 	btn_close.pressed.connect(close_picker)
 	item_list.item_selected.connect(_on_item_selected)

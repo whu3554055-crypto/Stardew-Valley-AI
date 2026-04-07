@@ -47,6 +47,8 @@ func _default_cooking() -> Array:
 	return [
 		{"id": "fish_sandwich", "output_id": "fish_sandwich", "output_qty": 1, "inputs": {"bread": 1, "fish_sardine": 1}, "stamina": 2},
 		{"id": "grilled_sardine", "output_id": "grilled_sardine", "output_qty": 1, "inputs": {"fish_sardine": 1}, "stamina": 2},
+		{"id": "grilled_pike", "output_id": "grilled_pike", "output_qty": 1, "inputs": {"fish_pike": 1}, "stamina": 2},
+		{"id": "grilled_halibut", "output_id": "grilled_halibut", "output_qty": 1, "inputs": {"fish_halibut": 1}, "stamina": 2},
 	]
 
 func _default_crafting() -> Array:
@@ -57,4 +59,5 @@ func _default_crafting() -> Array:
 func _default_smelting() -> Array:
 	return [
 		{"id": "copper_bar", "output_id": "copper_bar", "output_qty": 1, "inputs": {"copper_ore": 5, "coal": 1}, "stamina": 3},
+		{"id": "silver_bar", "output_id": "silver_bar", "output_qty": 1, "inputs": {"silver_ore": 5, "coal": 1}, "stamina": 3},
 	]

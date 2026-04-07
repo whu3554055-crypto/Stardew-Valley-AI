@@ -713,5 +713,5 @@ func _boost_town_commerce_from_quest_reward(gold: int) -> void:
 			break
 
 func _pulse_village_interest_in_farming() -> void:
-	for item_id in ["parsnip_seeds", "parsnip", "hoe", "watering_can"]:
+	for item_id in ["parsnip_seeds", "parsnip", "corn_seeds", "corn", "basic_fertilizer", "hoe", "watering_can"]:
 		_bump_item_demand(item_id, 1.03)

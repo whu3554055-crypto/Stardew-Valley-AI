@@ -77,6 +77,20 @@
     "stamina": 2
   },
   {
+    "id": "grilled_pike",
+    "output_id": "grilled_pike",
+    "output_qty": 1,
+    "inputs": { "fish_pike": 1 },
+    "stamina": 2
+  },
+  {
+    "id": "grilled_halibut",
+    "output_id": "grilled_halibut",
+    "output_qty": 1,
+    "inputs": { "fish_halibut": 1 },
+    "stamina": 2
+  },
+  {
     "id": "fish_stew",
     "output_id": "fish_stew",
     "output_qty": 1,

@@ -13,6 +13,9 @@ signal interacted(tile_position)
 
 func _ready():
 	_animation_player = get_node_or_null("AnimationPlayer") as AnimationPlayer
+	if sprite:
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.z_index = 4
 
 func _physics_process(delta):
 	var velocity_input = Vector2.ZERO

@@ -43,8 +43,14 @@ func _ready():
 	if npc_id == "npc_default":
 		npc_id = name.to_lower().replace(" ", "_")
 	
+	if sprite:
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	
 	name_label.text = npc_name
 	name_label.visible = false
+	name_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.58))
+	name_label.add_theme_constant_override("shadow_offset_x", 1)
+	name_label.add_theme_constant_override("shadow_offset_y", 1)
 	
 	# Initialize AI systems
 	if use_ai_dialogue:

@@ -59,9 +59,12 @@ func try_swing(player_pos: Vector2, pickaxe_id: String) -> Dictionary:
 	if item_id.is_empty():
 		item_id = "stone_chunk"
 	var res: Dictionary = _grant_ore(item_id, "", depth, tier)
-	if res.get("ok", false) and depth >= 2 and tier == 1:
-		if str(res.get("item_id", "")) == "stone_chunk" and randf() < 0.16:
+	if res.get("ok", false) and depth >= 2 and tier == 1 and str(res.get("item_id", "")) == "stone_chunk":
+		var rh: float = randf()
+		if rh < 0.14:
 			res["hint"] = "Deep gold is stubborn — try an iron pickaxe on the lowest band."
+		elif rh < 0.24:
+			res["hint"] = "Pale glints in this band — silver needs the deep vein and an iron pick."
 	return res
 
 func _weighted_pick(weights: Dictionary) -> String:
@@ -98,6 +101,8 @@ func _grant_ore(item_id: String, empty_msg: String, _depth: int = 0, _tier: int 
 			msg = "A rattling %s — the surface layer hides curios." % nm
 		elif item_id == "gold_ore":
 			msg = "Rich vein! Mined: %s" % nm
+		elif item_id == "silver_ore":
+			msg = "Pale glint in the rock — %s." % nm
 		else:
 			msg = "Mined: %s" % nm
 	var prefix: String = GT.mining_layer_prefix(_depth)

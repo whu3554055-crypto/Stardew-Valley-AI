@@ -46,6 +46,29 @@ func initialize_items():
 		"sell_price": 25
 	}
 
+	items["corn_seeds"] = {
+		"id": "corn_seeds",
+		"name": "Corn Seeds",
+		"description": "Summer crop — tall stalks that keep producing after the first harvest.",
+		"type": "seed",
+		"crop_id": "corn",
+		"stack": 1,
+		"max_stack": 99,
+		"buy_price": 150,
+		"sell_price": 75
+	}
+
+	items["basic_fertilizer"] = {
+		"id": "basic_fertilizer",
+		"name": "Basic Fertilizer",
+		"description": "Use on empty tilled soil before planting — the next crop matures one day sooner (min 2 days).",
+		"type": "fertilizer",
+		"stack": 1,
+		"max_stack": 99,
+		"buy_price": 35,
+		"sell_price": 12
+	}
+
 	# Crops (harvested)
 	items["parsnip"] = {
 		"id": "parsnip",
@@ -78,6 +101,17 @@ func initialize_items():
 		"max_stack": 99,
 		"sell_price": 80,
 		"stamina_restore": 22.0
+	}
+
+	items["corn"] = {
+		"id": "corn",
+		"name": "Corn",
+		"description": "Sweet summer corn — harvest repeats the stalk after the first pick.",
+		"type": "crop",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 55,
+		"stamina_restore": 20.0
 	}
 
 	items["bread"] = {
@@ -211,6 +245,28 @@ func initialize_items():
 		"max_stack": 99,
 		"sell_price": 92,
 		"stamina_restore": 34.0
+	}
+
+	items["grilled_pike"] = {
+		"id": "grilled_pike",
+		"name": "Grilled Pike",
+		"description": "Firm white meat from a river hunter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 118,
+		"stamina_restore": 40.0
+	}
+
+	items["grilled_halibut"] = {
+		"id": "grilled_halibut",
+		"name": "Grilled Halibut",
+		"description": "Thick flakes — worth the long fight.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 158,
+		"stamina_restore": 44.0
 	}
 
 	items["fish_stew"] = {
@@ -432,6 +488,28 @@ func initialize_items():
 		"stamina_restore": 20.0
 	}
 
+	items["fish_pike"] = {
+		"id": "fish_pike",
+		"name": "Northern Pike",
+		"description": "River predator — more common at night, in winter, and when the water churns.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 78,
+		"stamina_restore": 24.0
+	}
+
+	items["fish_halibut"] = {
+		"id": "fish_halibut",
+		"name": "Halibut",
+		"description": "Flat ocean fish — favors mornings and cold seasons.",
+		"type": "fish",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 105,
+		"stamina_restore": 26.0
+	}
+
 	items["junk_boot"] = {
 		"id": "junk_boot",
 		"name": "Old Boot",
@@ -503,6 +581,16 @@ func initialize_items():
 		"sell_price": 120
 	}
 
+	items["silver_ore"] = {
+		"id": "silver_ore",
+		"name": "Silver Ore",
+		"description": "Found in the lowest mine band with an iron pick — smelt into bars.",
+		"type": "mineral",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 88
+	}
+
 	items["quartz"] = {
 		"id": "quartz",
 		"name": "Quartz",
@@ -541,6 +629,16 @@ func initialize_items():
 		"stack": 1,
 		"max_stack": 99,
 		"sell_price": 250
+	}
+
+	items["silver_bar"] = {
+		"id": "silver_bar",
+		"name": "Silver Bar",
+		"description": "Refined silver — between iron and gold in value.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 420
 	}
 
 	items["gold_bar"] = {
@@ -610,6 +708,9 @@ func resolve_icon_path(item_id: String) -> String:
 		"sprinkler_basic":
 			if ResourceLoader.exists("res://assets/sprites/items/tools/watering_can.png"):
 				return "res://assets/sprites/items/tools/watering_can.png"
+		"basic_fertilizer":
+			if ResourceLoader.exists("res://assets/sprites/environment/greenery/grass_clump.png"):
+				return "res://assets/sprites/environment/greenery/grass_clump.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:
