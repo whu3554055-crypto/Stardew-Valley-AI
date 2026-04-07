@@ -61,12 +61,22 @@ func purchase_item(item_id: String, quantity: int = 1) -> bool:
 	item_purchased.emit(item_id, quantity)
 	return true
 
+func get_sell_price_per_unit(item_id: String) -> int:
+	var item_template: Dictionary = ItemDatabase.get_item(item_id)
+	var base: int = int(item_template.get("sell_price", 0))
+	if base <= 0:
+		return 0
+	if AIEconomySystem:
+		return AIEconomySystem.get_shop_sell_price(item_id, base)
+	return base
+
 func sell_item(item_id: String, quantity: int = 1) -> bool:
 	var item_template = ItemDatabase.get_item(item_id)
 	if item_template.is_empty():
 		return false
 
-	var sell_price = item_template.get("sell_price", 0) * quantity
+	var unit: int = get_sell_price_per_unit(item_id)
+	var sell_price: int = unit * quantity
 
 	# Remove from inventory and add gold
 	for i in range(quantity):
@@ -82,5 +92,4 @@ func sell_item(item_id: String, quantity: int = 1) -> bool:
 	return true
 
 func get_sell_value(item_id: String) -> int:
-	var item_template = ItemDatabase.get_item(item_id)
-	return item_template.get("sell_price", 0)
+	return get_sell_price_per_unit(item_id)

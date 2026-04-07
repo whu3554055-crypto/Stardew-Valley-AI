@@ -651,6 +651,10 @@ func get_shop_buy_price(item_id: String, catalog_price: int) -> int:
 	ratio = clamp(ratio, 0.75, 1.35)
 	return int(round(float(catalog_price) * ratio))
 
+func get_shop_sell_price(item_id: String, base_sell_price: int) -> int:
+	"""Apply the same market ratio to sell values as to buy prices (base = item sell_price)."""
+	return get_shop_buy_price(item_id, base_sell_price)
+
 # ============================================
 # QUEST ↔ ECONOMY (playable-first feedback loop)
 # ============================================
