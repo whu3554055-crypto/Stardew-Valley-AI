@@ -205,6 +205,31 @@ func get_conversation_history(npc_id: String, count: int = 5) -> Array:
 	conversations.reverse()  # Most recent first
 	return conversations.slice(0, count)
 
+# Recent non-conversation memories (events, etc.) for prompt injection
+func get_recent_event_summaries(npc_id: String, max_count: int = 3) -> Array:
+	if not npc_memories.has(npc_id):
+		return []
+	var events: Array = []
+	for memory in npc_memories[npc_id]:
+		if memory.type == MemoryType.EVENT:
+			events.append(memory)
+	if events.is_empty():
+		return []
+	events.sort_custom(func(a, b):
+		if a.day != b.day:
+			return a.day > b.day
+		return a.timestamp > b.timestamp
+	)
+	var result: Array = []
+	for i in range(min(max_count, events.size())):
+		var m = events[i]
+		result.append({
+			"day": m.day,
+			"summary": m.content,
+			"emotion": m.emotion
+		})
+	return result
+
 # Calculate emotional state based on memories
 func calculate_emotional_state(npc_id: String) -> Dictionary:
 	if not npc_memories.has(npc_id):

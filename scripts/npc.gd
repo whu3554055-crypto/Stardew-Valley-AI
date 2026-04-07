@@ -129,10 +129,16 @@ func generate_ai_response(player_message: String) -> String:
 	var relationship = NPCMemorySystem.get_relationship(npc_id) if NPCMemorySystem else 5
 	context["relationship"] = relationship
 	
-	# Get recent interactions
-	var recent_interactions = []
+	# Recent interactions: gossip/events first, then conversation history (newest-first lists)
+	var recent_interactions: Array = []
 	if NPCMemorySystem:
-		recent_interactions = NPCMemorySystem.get_conversation_history(npc_id, 3)
+		var events = NPCMemorySystem.get_recent_event_summaries(npc_id, 3)
+		var conv = NPCMemorySystem.get_conversation_history(npc_id, 5)
+		for e in events:
+			recent_interactions.append({"day": e.day, "summary": e.summary})
+		for c in conv:
+			recent_interactions.append({"day": c.day, "summary": c.summary})
+	context["recent_interactions"] = recent_interactions
 	
 	# Trigger appropriate emotion
 	if NPCEmotionSystem and player_message != "":

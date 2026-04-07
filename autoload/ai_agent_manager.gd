@@ -180,7 +180,9 @@ func format_interaction_history(history: Array) -> String:
 		return "(No previous interactions)"
 	
 	var formatted = ""
-	for i in range(max(0, history.size() - 5), history.size()):  # Last 5 interactions
+	# History is newest-first; show up to the 5 most recent entries from the start
+	var n = min(5, history.size())
+	for i in range(n):
 		var interaction = history[i]
 		formatted += "- Day %d: %s\n" % [interaction.get("day", 0), interaction.get("summary", "")]
 	

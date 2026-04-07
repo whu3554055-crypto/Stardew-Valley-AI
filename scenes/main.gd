@@ -158,6 +158,20 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 			var neighbor_id: String = str(result.get("npc_id", ""))
 			if not neighbor_id.is_empty():
 				record_world_event("%s was uplifted after hearing about your help to %s." % [neighbor_id.capitalize(), story_npc_id.capitalize()])
+				if NPCMemorySystem:
+					NPCMemorySystem.record_event(
+						neighbor_id,
+						"I heard the player helped %s with today's story. People are talking about it." % story_npc_id.capitalize(),
+						0.78,
+						"happy"
+					)
+		if NPCMemorySystem:
+			NPCMemorySystem.record_event(
+				story_npc_id,
+				"The player helped me with today's story quest. I'm grateful.",
+				0.82,
+				"happy"
+			)
 
 	if NPCAudioManager:
 		NPCAudioManager.speak(story_npc_id, "Thanks! Today's story moved forward because of you.", "happy")
