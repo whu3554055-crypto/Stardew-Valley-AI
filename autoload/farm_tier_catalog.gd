@@ -1,0 +1,118 @@
+extends Node
+
+## Loads `res://data/farm/tiers.json` — tier bonuses, upgrade costs, and `farm_upgrade_rect`.
+## Edit the JSON to tune tiers without code changes; falls back to embedded defaults if the file is missing.
+
+const CONFIG_PATH := "res://data/farm/tiers.json"
+
+var _version: int = 1
+var _tiers: Array = []
+var _interaction: Dictionary = {}
+var _tier_by_num: Dictionary = {}
+
+
+func _ready() -> void:
+	_load_file()
+
+
+func _load_file() -> void:
+	var f: FileAccess = FileAccess.open(CONFIG_PATH, FileAccess.READ)
+	if f == null:
+		push_warning("FarmTierCatalog: missing %s — using defaults" % CONFIG_PATH)
+		_apply_defaults()
+		return
+	var txt: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(txt) != OK:
+		push_warning("FarmTierCatalog: JSON parse error — using defaults")
+		_apply_defaults()
+		return
+	var data = json.data
+	if data is Dictionary:
+		_apply_dict(data)
+	else:
+		_apply_defaults()
+
+
+func _apply_defaults() -> void:
+	_version = 1
+	_interaction = {
+		"farm_upgrade_rect": [400, 300, 360, 220],
+		"farm_upgrade_hint": "Stand on the field · U = upgrade farm tier"
+	}
+	_tiers = [
+		{
+			"tier": 1,
+			"display_name": "Homestead",
+			"growth_speed_multiplier": 1.0,
+			"upgrade_cost_gold": 0,
+			"upgrade_cost_items": {}
+		},
+		{
+			"tier": 2,
+			"display_name": "Expanded Plot",
+			"growth_speed_multiplier": 1.06,
+			"upgrade_cost_gold": 450,
+			"upgrade_cost_items": {"wood_log": 20}
+		}
+	]
+	_rebuild_index()
+
+
+func _apply_dict(data: Dictionary) -> void:
+	_version = int(data.get("version", 1))
+	_interaction = data.get("interaction", {})
+	var arr: Array = data.get("tiers", [])
+	_tiers = []
+	for e in arr:
+		if e is Dictionary:
+			_tiers.append(e.duplicate(true))
+	if _tiers.is_empty():
+		_apply_defaults()
+		return
+	_rebuild_index()
+
+
+func _rebuild_index() -> void:
+	_tier_by_num.clear()
+	for e in _tiers:
+		if e is Dictionary:
+			var n: int = int(e.get("tier", 0))
+			if n > 0:
+				_tier_by_num[n] = e
+
+
+func config_version() -> int:
+	return _version
+
+
+func tier_def(tier_num: int) -> Dictionary:
+	return _tier_by_num.get(tier_num, {})
+
+
+func max_tier() -> int:
+	var m := 0
+	for k in _tier_by_num.keys():
+		m = maxi(m, int(k))
+	return m
+
+
+func growth_speed_multiplier(tier_num: int) -> float:
+	var d: Dictionary = tier_def(tier_num)
+	return float(d.get("growth_speed_multiplier", 1.0))
+
+
+func get_farm_upgrade_rect() -> Rect2:
+	var r: Variant = _interaction.get("farm_upgrade_rect", [400.0, 300.0, 360.0, 220.0])
+	if r is Array and r.size() >= 4:
+		return Rect2(float(r[0]), float(r[1]), float(r[2]), float(r[3]))
+	return Rect2(400, 300, 360, 220)
+
+
+func get_farm_upgrade_hint() -> String:
+	return str(_interaction.get("farm_upgrade_hint", ""))
+
+
+func next_tier_def(current_tier: int) -> Dictionary:
+	return tier_def(current_tier + 1)

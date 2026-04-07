@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "interaction": {
+    "farm_upgrade_rect": [400, 300, 360, 220],
+    "farm_upgrade_hint": "Stand on the field · U = upgrade farm tier"
+  },
+  "tiers": [
+    {
+      "tier": 1,
+      "display_name": "Homestead",
+      "growth_speed_multiplier": 1.0,
+      "upgrade_cost_gold": 0,
+      "upgrade_cost_items": {}
+    },
+    {
+      "tier": 2,
+      "display_name": "Expanded Plot",
+      "growth_speed_multiplier": 1.06,
+      "upgrade_cost_gold": 450,
+      "upgrade_cost_items": { "wood_log": 20 }
+    }
+  ]
+}

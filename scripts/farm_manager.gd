@@ -17,6 +17,9 @@ var sprinkler_tiles: Dictionary = {}
 ## Tilled empty tiles prepped with fertilizer — next successful plant on this cell gets −1 `growth_days` (min 2).
 var pending_fertilizer: Dictionary = {}
 
+## Unlocked farm tier (1 = Homestead). Costs and multipliers: `data/farm/tiers.json` via `FarmTierCatalog`.
+var farm_tier: int = 1
+
 signal crop_planted(position, crop_id)
 signal crop_harvested(position, crop_id, quantity)
 signal soil_tilled(position)
@@ -127,6 +130,7 @@ func plant_seed(position: Vector2i, crop_id: String) -> Dictionary:
 	var crop_data = def.duplicate(true)
 	crop_data["days_grown"] = 0
 	crop_data["planted_day"] = GameManager.player_data.day
+	_apply_tier_growth_days(crop_data)
 	if pending_fertilizer.has(position):
 		pending_fertilizer.erase(position)
 		crop_data["growth_days"] = maxi(2, int(crop_data["growth_days"]) - 1)
@@ -186,6 +190,53 @@ func get_growth_stage(crop: Dictionary) -> int:
 	var progress = float(crop.days_grown) / crop.growth_days
 	var stage = int(progress * 4)
 	return clamp(stage, 0, 4)
+
+func _apply_tier_growth_days(crop_data: Dictionary) -> void:
+	var mult: float = 1.0
+	if FarmTierCatalog:
+		mult = FarmTierCatalog.growth_speed_multiplier(farm_tier)
+	if mult <= 0.01:
+		mult = 1.0
+	var gd0: int = int(crop_data.get("growth_days", 1))
+	crop_data["growth_days"] = _effective_growth_days(gd0, mult, false)
+	if bool(crop_data.get("regrows", false)):
+		var rr0: int = int(crop_data.get("regrow_days", gd0))
+		crop_data["regrow_days"] = _effective_growth_days(rr0, mult, true)
+
+
+func _effective_growth_days(base: int, mult: float, is_regrow: bool) -> int:
+	if base <= 0:
+		return base
+	var v: float = float(base) / mult
+	if is_regrow:
+		return maxi(1, int(round(v)))
+	return maxi(2, int(round(v)))
+
+
+func try_upgrade_next_tier() -> Dictionary:
+	if not FarmTierCatalog:
+		return {"ok": false, "message": "Farm tiers unavailable."}
+	var next_def: Dictionary = FarmTierCatalog.next_tier_def(farm_tier)
+	if next_def.is_empty():
+		return {"ok": false, "message": "Farm is already at max tier."}
+	var cost_g: int = int(next_def.get("upgrade_cost_gold", 0))
+	var items_cost: Dictionary = next_def.get("upgrade_cost_items", {})
+	if GameManager:
+		if int(GameManager.player_data.get("gold", 0)) < cost_g:
+			return {"ok": false, "message": "Not enough gold (%dg needed)." % cost_g}
+	for k in items_cost.keys():
+		var need: int = int(items_cost[k])
+		if InventoryManager.count_item(str(k)) < need:
+			return {"ok": false, "message": "Missing materials for upgrade."}
+	if GameManager:
+		GameManager.player_data.gold = int(GameManager.player_data.get("gold", 0)) - cost_g
+	for k in items_cost.keys():
+		var need: int = int(items_cost[k])
+		InventoryManager.consume_item_by_id(str(k), need)
+	farm_tier += 1
+	var nm: String = str(FarmTierCatalog.tier_def(farm_tier).get("display_name", str(farm_tier)))
+	return {"ok": true, "message": "Farm upgraded: %s — crops grow a bit faster." % nm}
+
 
 func is_tile_tilled(position: Vector2i) -> bool:
 	return tilled_soil.has(position)
@@ -336,7 +387,8 @@ func save_farm_data():
 		"tilled_soil": tilled_soil,
 		"planted_crops": planted_crops,
 		"sprinkler_tiles": sprinkler_tiles,
-		"pending_fertilizer": pending_fertilizer
+		"pending_fertilizer": pending_fertilizer,
+		"farm_tier": farm_tier
 	}
 	return save_data
 
@@ -345,6 +397,9 @@ func load_farm_data(data: Dictionary):
 	planted_crops = _deserialize_vec2i_key_dict(data.get("planted_crops", {}))
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
 	pending_fertilizer = _deserialize_sprinklers(data.get("pending_fertilizer", {}))
+	farm_tier = int(data.get("farm_tier", 1))
+	if FarmTierCatalog:
+		farm_tier = clampi(farm_tier, 1, maxi(1, FarmTierCatalog.max_tier()))
 	call_deferred("_refresh_sprinkler_visuals")
 	call_deferred("_refresh_fertilizer_visuals")
 	call_deferred("_refresh_crop_visuals")

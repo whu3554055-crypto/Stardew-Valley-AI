@@ -70,7 +70,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop near Pierre")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop near Pierre | U = farm tier (on field, see data/farm/tiers.json)")
 	print("======================================")
 
 func _process(_delta: float) -> void:
@@ -189,6 +189,17 @@ func _update_activity_zone_label() -> void:
 	if sid == "axe" and ChoppingSystem and ChoppingSystem.can_chop_here(player.global_position):
 		activity_zone_label.text = "伐木 · 森林"
 		return
+	if farm_manager and FarmTierCatalog:
+		var fr: Rect2 = FarmTierCatalog.get_farm_upgrade_rect()
+		if fr.has_point(player.global_position):
+			var ft: int = farm_manager.farm_tier
+			var td: Dictionary = FarmTierCatalog.tier_def(ft)
+			var nm: String = str(td.get("display_name", "?"))
+			if FarmTierCatalog.next_tier_def(ft).is_empty():
+				activity_zone_label.text = "农场 · T%d %s（已满级）" % [ft, nm]
+			else:
+				activity_zone_label.text = "农场 · T%d %s · U 升级" % [ft, nm]
+			return
 	activity_zone_label.text = ""
 
 func _try_load_save_bundle() -> bool:
@@ -594,6 +605,24 @@ func _is_near_pierre() -> bool:
 	return player.global_position.distance_to(pierre.global_position) <= PIERRE_SHOP_RADIUS_PX
 
 
+func _try_farm_tier_upgrade() -> void:
+	if not farm_manager or not FarmTierCatalog or not player:
+		return
+	var fr: Rect2 = FarmTierCatalog.get_farm_upgrade_rect()
+	if not fr.has_point(player.global_position):
+		show_quick_tip("Stand on the farm field to upgrade.")
+		return
+	var res: Dictionary = farm_manager.try_upgrade_next_tier()
+	if res.get("ok", false):
+		show_dialogue(str(res.get("message", "Farm upgraded.")))
+		record_world_event(str(res.get("message", "Farm upgraded.")))
+		update_ui()
+		return
+	var m: String = str(res.get("message", ""))
+	if not m.is_empty():
+		show_quick_tip(m)
+
+
 func _try_open_shop_near_pierre() -> void:
 	if not shop_ui:
 		return
@@ -798,6 +827,9 @@ func _unhandled_input(event):
 		return
 	if event.is_action_pressed("open_shop"):
 		_try_open_shop_near_pierre()
+		return
+	if event.is_action_pressed("farm_upgrade"):
+		_try_farm_tier_upgrade()
 		return
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()
