@@ -81,6 +81,7 @@ var scenario_library = {}
 var current_narrative = {}
 var narrative_history = []
 var last_generated_day_key = ""
+var backend_api_timeout_seconds = 8.0
 
 # Configuration
 var config = {
@@ -384,6 +385,78 @@ func generate_daily_narrative(force_theme: String = "") -> Dictionary:
 	print("[DailyNarrativeSystem] Cast size: ", cast.size())
 	
 	return narrative
+
+func generate_daily_narrative_playable(force_theme: String = "") -> Dictionary:
+	"""
+	Playable-first entry:
+	1) Try backend LLM daily narrative (if available)
+	2) Fallback to local generator
+	"""
+	var ai_narrative = await _generate_daily_narrative_from_backend()
+	if not ai_narrative.is_empty():
+		current_narrative = ai_narrative
+		last_generated_day_key = get_current_day_key()
+		narrative_generated.emit(ai_narrative.id, ai_narrative)
+		return ai_narrative
+	
+	return generate_daily_narrative(force_theme)
+
+func _generate_daily_narrative_from_backend() -> Dictionary:
+	if not AIAgentManager or not AIAgentManager._backend_available:
+		return {}
+	
+	var season = GameManager.player_data.season if GameManager else "spring"
+	var day = GameManager.player_data.day if GameManager else 1
+	var year = GameManager.player_data.year if GameManager else 1
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.timeout = backend_api_timeout_seconds
+	
+	var body = {
+		"season": season,
+		"day": day,
+		"year": year,
+		"context": {
+			"weather": WeatherSystem.get_weather_name().to_lower() if WeatherSystem else "sunny",
+			"active_npcs": NPCBehaviorController.get_all_npc_ids() if NPCBehaviorController else []
+		}
+	}
+	var error = http.request(
+		AIAgentManager.api_config.backend_url + "/api/v1/narrative/daily",
+		["Content-Type: application/json"],
+		HTTPClient.METHOD_POST,
+		JSON.stringify(body)
+	)
+	if error != OK:
+		http.queue_free()
+		return {}
+	
+	var result = await http.request_completed
+	var status = result[1]
+	var payload_raw = result[3].get_string_from_utf8()
+	http.queue_free()
+	
+	if status != 200:
+		return {}
+	
+	var parsed = JSON.parse_string(payload_raw)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	
+	var events = parsed.get("events", [])
+	return {
+		"id": "backend_narrative_" + get_current_day_key(),
+		"date": get_current_date_string(),
+		"theme": "dynamic",
+		"title": "Today's Storyline",
+		"description": parsed.get("summary", "A new story unfolds today."),
+		"status": "generated",
+		"script": {"scenes": []},
+		"events": events,
+		"source": parsed.get("source", "backend"),
+		"created_at": Time.get_unix_time_from_system()
+	}
 
 func select_theme(force_theme: String = "") -> String:
 	"""Select theme for today's narrative"""

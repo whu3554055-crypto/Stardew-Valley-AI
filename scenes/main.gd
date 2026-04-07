@@ -56,9 +56,10 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("tutorial_plant")
 	
 	if DailyNarrativeSystem:
-		var narrative = DailyNarrativeSystem.generate_daily_narrative()
+		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
 		if not narrative.is_empty():
 			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
+			_apply_narrative_daily_quest(narrative)
 
 	if QuestSystem:
 		QuestSystem.quest_completed.connect(_on_quest_completed)
@@ -110,12 +111,22 @@ func _on_day_changed(new_day):
 	
 	# Lightweight daily refresh keeps the game feeling alive.
 	if DailyNarrativeSystem:
-		DailyNarrativeSystem.generate_daily_narrative()
+		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
+		_apply_narrative_daily_quest(narrative)
 
 func _on_quest_completed(quest_id: String):
 	if QuestSystem and QuestSystem.quests.has(quest_id):
 		var title = QuestSystem.quests[quest_id].get("title", quest_id)
 		show_dialogue("Quest completed: " + str(title))
+
+func _apply_narrative_daily_quest(narrative: Dictionary):
+	if narrative.is_empty():
+		return
+	if not QuestSystem:
+		return
+	var events = narrative.get("events", [])
+	if events is Array and events.size() > 0:
+		QuestSystem.add_story_daily_quest(events[0])
 
 func _on_season_changed(new_season):
 	update_ui()

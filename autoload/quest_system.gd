@@ -12,6 +12,7 @@ enum QuestStatus {
 var quests = {}
 var active_quests = []
 var completed_quests = []
+var last_story_quest_day_key = ""
 
 signal quest_started(quest_id)
 signal quest_updated(quest_id, objective)
@@ -146,3 +147,29 @@ func track_event(event_type: String, data: Dictionary):
 			if objective.type == event_type:
 				if data.get("crop_id") == objective.get("crop_id") or objective.get("crop_id") == null:
 					update_quest_progress(quest_id, i, data.get("count", 1))
+
+func add_story_daily_quest(event_data: Dictionary):
+	"""
+	Create one lightweight daily quest from narrative event.
+	Playable-first: simple talk objective with clear reward.
+	"""
+	var day_key = "%d-%s-%d" % [GameManager.player_data.year, GameManager.player_data.season, GameManager.player_data.day]
+	if day_key == last_story_quest_day_key:
+		return
+	
+	var npc_id = str(event_data.get("npc_id", "pierre"))
+	var title = str(event_data.get("title", "Daily Story Task"))
+	var quest_id = "story_daily_%s" % day_key
+	
+	quests[quest_id] = {
+		"id": quest_id,
+		"title": title,
+		"description": "Talk to %s to follow today's story." % npc_id.capitalize(),
+		"objectives": [
+			{"type": "talk", "npc_id": npc_id, "count": 1, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 80, "items": []}
+	}
+	start_quest(quest_id)
+	last_story_quest_day_key = day_key
