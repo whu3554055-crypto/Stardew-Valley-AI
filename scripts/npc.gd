@@ -138,6 +138,13 @@ func generate_ai_response(player_message: String) -> String:
 			recent_interactions.append({"day": e.day, "summary": e.summary})
 		for c in conv:
 			recent_interactions.append({"day": c.day, "summary": c.summary})
+		var keywords = _build_dialogue_memory_keywords(player_message)
+		var scored = NPCMemorySystem.get_relevant_memories(npc_id, keywords, 4)
+		var snippets: Array = []
+		for m in scored:
+			snippets.append(m.content)
+		context["memory_snippets"] = snippets
+	
 	context["recent_interactions"] = recent_interactions
 	
 	# Trigger appropriate emotion
@@ -209,6 +216,51 @@ func generate_follow_up() -> String:
 		return get_static_dialogue()
 	
 	return generate_ai_response("Tell me more about yourself.")
+
+func _build_dialogue_memory_keywords(player_message: String) -> Array:
+	var seen := {}
+	var out: Array = []
+	var t := ""
+	for raw in [npc_id, npc_name]:
+		t = str(raw).strip_edges().to_lower()
+		if t.length() < 2:
+			continue
+		if not seen.has(t):
+			seen[t] = true
+			out.append(t)
+	for part in str(npc_name).split(" "):
+		t = part.strip_edges().to_lower()
+		if t.length() < 2:
+			continue
+		if not seen.has(t):
+			seen[t] = true
+			out.append(t)
+	if GameManager:
+		t = str(GameManager.player_data.season).to_lower()
+		if not seen.has(t):
+			seen[t] = true
+			out.append(t)
+		t = str(GameManager.player_data.day)
+		if not seen.has(t):
+			seen[t] = true
+			out.append(t)
+	if WeatherSystem:
+		t = WeatherSystem.get_weather_name().to_lower()
+		if not seen.has(t):
+			seen[t] = true
+			out.append(t)
+	for anchor in ["player", "daily_narrative", "story", "help", "town"]:
+		if not seen.has(anchor):
+			seen[anchor] = true
+			out.append(anchor)
+	for w in player_message.split(" "):
+		t = w.strip_edges().to_lower().replace(",", "").replace(".", "").replace("!", "")
+		if t.length() < 3:
+			continue
+		if not seen.has(t):
+			seen[t] = true
+			out.append(t)
+	return out
 
 # Build context for AI
 func build_context() -> Dictionary:

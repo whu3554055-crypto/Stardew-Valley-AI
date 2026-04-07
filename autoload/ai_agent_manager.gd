@@ -170,6 +170,13 @@ Respond with ONLY the dialogue text, no quotes or explanations.""" % [
 		get_speech_style_guide(speech_style)
 	]
 	
+	var memory_snippets = context.get("memory_snippets", [])
+	if memory_snippets is Array and memory_snippets.size() > 0:
+		prompt += "\n## RELEVANT MEMORIES (rumors, things you remember, town gossip)\n"
+		for s in memory_snippets:
+			prompt += "- %s\n" % str(s)
+		prompt += "\nUse these only when they fit the moment; do not dump the whole list.\n"
+	
 	if custom_template != "":
 		prompt += "\n\n" + custom_template
 	
