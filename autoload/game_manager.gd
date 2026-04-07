@@ -5,7 +5,9 @@ var player_data = {
 	"gold": 500,
 	"day": 1,
 	"season": "spring",
-	"year": 1
+	"year": 1,
+	"stamina": 100.0,
+	"stamina_max": 100.0
 }
 
 # Time system
@@ -24,6 +26,12 @@ func _ready():
 func _process(delta):
 	# Update time
 	current_time += delta / 60.0 * time_speed
+
+	# Stamina regen (per second)
+	var smax: float = float(player_data.get("stamina_max", 100.0))
+	var scur: float = float(player_data.get("stamina", smax))
+	if scur < smax:
+		player_data.stamina = minf(smax, scur + delta * 0.35)
 
 	if current_time >= 24.0:
 		current_time = 0.0
@@ -47,6 +55,19 @@ func advance_season():
 	player_data.year += 1
 	season_changed.emit(player_data.season)
 
+func try_consume_stamina(amount: float) -> bool:
+	if amount <= 0.0:
+		return true
+	var s: float = float(player_data.get("stamina", 0.0))
+	if s < amount:
+		return false
+	player_data.stamina = s - amount
+	return true
+
+func get_stamina_ratio() -> float:
+	var smax: float = float(player_data.get("stamina_max", 100.0))
+	return float(player_data.get("stamina", 0.0)) / maxf(1.0, smax)
+
 func get_time_string() -> String:
 	var hours = int(current_time)
 	var minutes = int((current_time - hours) * 60)
@@ -63,7 +84,13 @@ func save_game():
 func load_game():
 	if FileAccess.file_exists("user://savegame.save"):
 		var save_file = FileAccess.open("user://savegame.save", FileAccess.READ)
-		player_data = save_file.get_var()
+		var loaded = save_file.get_var()
 		save_file.close()
+		if loaded is Dictionary:
+			player_data = loaded
+			if not player_data.has("stamina"):
+				player_data["stamina"] = 100.0
+			if not player_data.has("stamina_max"):
+				player_data["stamina_max"] = 100.0
 		return true
 	return false

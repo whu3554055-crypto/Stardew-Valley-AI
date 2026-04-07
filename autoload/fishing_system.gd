@@ -34,6 +34,9 @@ func handle_fish_input(player_pos: Vector2) -> Dictionary:
 		if now > _hook_deadline:
 			_fish_phase = "idle"
 			return {"ok": false, "message": "The fish got away."}
+		if GameManager and not GameManager.try_consume_stamina(6.0):
+			_fish_phase = "idle"
+			return {"ok": false, "message": "Too tired to reel in."}
 		_fish_phase = "idle"
 		_last_catch_time = now
 		return _resolve_catch(player_pos)
@@ -41,6 +44,8 @@ func handle_fish_input(player_pos: Vector2) -> Dictionary:
 	# idle -> start hook window
 	if now - _last_catch_time < CAST_COOLDOWN_SEC:
 		return {"ok": false, "message": "The line needs a moment..."}
+	if GameManager and not GameManager.try_consume_stamina(4.0):
+		return {"ok": false, "message": "Too tired to fish."}
 
 	_bait_flag = InventoryManager.count_item("worm_bait") > 0
 	_fish_phase = "hook"

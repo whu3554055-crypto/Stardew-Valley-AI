@@ -10,6 +10,7 @@ extends Node2D
 @onready var weather_label = $UILayer/WeatherLabel
 @onready var season_label = $UILayer/SeasonLabel
 @onready var day_label = $UILayer/DayLabel
+@onready var stamina_label = $UILayer/StaminaLabel
 @onready var ai_config_button = $UILayer/AIConfigButton
 @onready var world_event_feed_label = $UILayer/WorldEventFeed/Content
 @onready var quick_tip_label = $UILayer/QuickTipLabel
@@ -143,6 +144,7 @@ func _on_player_interact(tile_position: Vector2):
 			)
 			var mine_msg: String = str(mine_result.get("message", ""))
 			if mine_result.get("ok", false):
+				InventoryManager.damage_tool_slot(InventoryManager.selected_slot, 1)
 				show_dialogue(mine_msg)
 				record_world_event(mine_msg)
 				_play_fx_mine()
@@ -306,6 +308,10 @@ func _on_time_changed(new_time):
 func update_ui():
 	time_label.text = GameManager.get_time_string()
 	gold_label.text = "Gold: %d" % GameManager.player_data.gold
+	if stamina_label:
+		var s: float = float(GameManager.player_data.get("stamina", 100.0))
+		var sm: float = float(GameManager.player_data.get("stamina_max", 100.0))
+		stamina_label.text = "Stamina: %d / %d" % [int(s), int(sm)]
 	weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
 	season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
 	day_label.text = "Day %d, Year %d" % [GameManager.player_data.day, GameManager.player_data.year]

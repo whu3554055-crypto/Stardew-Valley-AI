@@ -107,6 +107,13 @@ offset_right = 200.0
 offset_bottom = 75.0
 text = "Gold: 500"
 
+[node name="StaminaLabel" type="Label" parent="UILayer"]
+offset_left = 210.0
+offset_top = 45.0
+offset_right = 420.0
+offset_bottom = 75.0
+text = "Stamina: 100 / 100"
+
 [node name="DayLabel" type="Label" parent="UILayer"]
 offset_left = 10.0
 offset_top = 80.0

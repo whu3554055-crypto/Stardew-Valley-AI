@@ -37,6 +37,8 @@ func try_swing(player_pos: Vector2, pickaxe_id: String) -> Dictionary:
 	var tier := _pickaxe_tier(pickaxe_id)
 	if tier <= 0:
 		return {"ok": false, "message": "You need a pickaxe."}
+	if GameManager and not GameManager.try_consume_stamina(6.0):
+		return {"ok": false, "message": "Too tired to mine."}
 
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now - _last_swing_time < SWING_COOLDOWN_SEC:
