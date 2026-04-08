@@ -7,7 +7,8 @@ var player_data = {
 	"season": "spring",
 	"year": 1,
 	"stamina": 100.0,
-	"stamina_max": 100.0
+	"stamina_max": 100.0,
+	"stamina_regen_mult": 1.0
 }
 
 # Time system
@@ -30,8 +31,9 @@ func _process(delta):
 	# Stamina regen (per second)
 	var smax: float = float(player_data.get("stamina_max", 100.0))
 	var scur: float = float(player_data.get("stamina", smax))
+	var regen_mult: float = float(player_data.get("stamina_regen_mult", 1.0))
 	if scur < smax:
-		player_data.stamina = minf(smax, scur + delta * 0.35)
+		player_data.stamina = minf(smax, scur + delta * 0.35 * regen_mult)
 
 	if current_time >= 24.0:
 		current_time = 0.0

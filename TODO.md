@@ -38,7 +38,7 @@
 
 - [ ] **A4 — 长线玩法 MVP（按需排期）**  
   从下列中选做最小可用版本（不必一次全做）：**建筑升级** / **畜牧** / **洞穴与战斗**（若目标超出当前「矿区条带式」挖矿）。
-  *进度：建筑升级 MVP（房屋）已落地：`data/buildings/upgrades.json` 配置升级成本与体力上限收益；地图内房屋区域按 **H** 升级；`player_data.house_level` 持久化并驱动 `stamina_max`。*
+  *进度：建筑升级 MVP（房屋）已落地：`data/buildings/upgrades.json` 配置升级成本与收益；地图内房屋区域按 **H** 升级；`player_data.house_level` 持久化并驱动 `stamina_max` / `stamina_regen_mult`。新增 **Lv3 Family House**（上限与恢复倍率进一步提升）。*
 
 ### 阶段 B — AI（玩法阶段目标达成后再做）
 

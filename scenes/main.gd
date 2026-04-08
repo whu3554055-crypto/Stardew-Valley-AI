@@ -231,11 +231,12 @@ func _update_activity_zone_label() -> void:
 			var cur: Dictionary = BuildingUpgradeCatalog.level_def(lv)
 			var nm: String = str(cur.get("name", "Cabin"))
 			var bonus: int = int(cur.get("stamina_max_bonus", 0))
+			var regen_pct: int = int(round((float(cur.get("stamina_regen_multiplier", 1.0)) - 1.0) * 100.0))
 			var next: Dictionary = BuildingUpgradeCatalog.next_level_def(lv)
 			if next.is_empty():
-				activity_zone_label.text = BuildingUpgradeCatalog.format_message("hud_line_max", {"level": lv, "name": nm, "stamina_bonus": bonus})
+				activity_zone_label.text = BuildingUpgradeCatalog.format_message("hud_line_max", {"level": lv, "name": nm, "stamina_bonus": bonus, "regen_pct": regen_pct})
 			else:
-				activity_zone_label.text = BuildingUpgradeCatalog.format_message("hud_line_upgradable", {"level": lv, "name": nm, "stamina_bonus": bonus})
+				activity_zone_label.text = BuildingUpgradeCatalog.format_message("hud_line_upgradable", {"level": lv, "name": nm, "stamina_bonus": bonus, "regen_pct": regen_pct})
 			return
 	activity_zone_label.text = ""
 
@@ -683,8 +684,10 @@ func _apply_house_stamina_bonus() -> void:
 	var lv: int = int(GameManager.player_data.get("house_level", 1))
 	var d: Dictionary = BuildingUpgradeCatalog.level_def(lv) if BuildingUpgradeCatalog else {}
 	var bonus: float = float(d.get("stamina_max_bonus", 0.0))
+	var regen_mult: float = float(d.get("stamina_regen_multiplier", 1.0))
 	var smax: float = BASE_STAMINA_MAX + bonus
 	GameManager.player_data["stamina_max"] = smax
+	GameManager.player_data["stamina_regen_mult"] = maxf(0.1, regen_mult)
 	var scur: float = float(GameManager.player_data.get("stamina", smax))
 	GameManager.player_data["stamina"] = minf(scur, smax)
 
@@ -719,7 +722,8 @@ func _try_house_upgrade() -> void:
 	var now_def: Dictionary = BuildingUpgradeCatalog.level_def(lv + 1)
 	var nm: String = str(now_def.get("name", "House"))
 	var bonus: int = int(now_def.get("stamina_max_bonus", 0))
-	var msg: String = BuildingUpgradeCatalog.format_message("tip_upgraded", {"name": nm, "stamina_bonus": bonus})
+	var regen_pct: int = int(round((float(now_def.get("stamina_regen_multiplier", 1.0)) - 1.0) * 100.0))
+	var msg: String = BuildingUpgradeCatalog.format_message("tip_upgraded", {"name": nm, "stamina_bonus": bonus, "regen_pct": regen_pct})
 	show_dialogue(msg)
 	record_world_event(msg)
 	update_ui()
