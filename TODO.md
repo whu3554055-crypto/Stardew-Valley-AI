@@ -34,7 +34,7 @@
 
 - [ ] **A3 — 呈现与资源**  
   补齐或替换占位：**TileMap tileset、玩家/作物/工具相关美术**，让玩法反馈「看得见」（可与 A1/A2 并行，由人力安排）。  
-  *进度：`GameTileMap` + `terrain_atlas_32.png`；玩家/NPC 精灵 **NEAREST**；作物 **NEAREST**；背包格 + **体力条填色**；**对话/图鉴/配方/简报/商店** 面板与字阴影；**HUD 半透明底**、**AI Config** 按钮描边；**海洋区域**示意；**对话 Label 铺满**；**WorldEventFeed 标题** 阴影；**商店** 商品行 StyleBox；NPC **头顶名字** 阴影；**配方选择器** 按钮 + 列表选中色；**AI 配置界面** 输入框/按钮统一；**银矿/银锭** 32px 占位 PNG（`tools/gen_silver_placeholders.py`）+ `resolve_icon` 走资源路径；新增地图内 **Farm/House Upgrade Zone** 可视引导（U/H）。存档仅 `game_save.bundle`。*
+  *进度：`GameTileMap` + `terrain_atlas_32.png`；玩家/NPC 精灵 **NEAREST**；作物 **NEAREST**；背包格 + **体力条填色**；**对话/图鉴/配方/简报/商店** 面板与字阴影；**HUD 半透明底**、**AI Config** 按钮描边；**海洋区域**示意；**对话 Label 铺满**；**WorldEventFeed 标题** 阴影；**商店** 商品行 StyleBox；NPC **头顶名字** 阴影；**配方选择器** 按钮 + 列表选中色；**AI 配置界面** 输入框/按钮统一；**银矿/银锭** 32px 占位 PNG（`tools/gen_silver_placeholders.py`）+ `resolve_icon` 走资源路径；新增地图内 **Farm/House Upgrade Zone** 可视引导（U/H）；并统一世界区域提示（矿/林/河/海/升级区）文字阴影与视觉强度。存档仅 `game_save.bundle`。*
 
 - [ ] **A4 — 长线玩法 MVP（按需排期）**  
   从下列中选做最小可用版本（不必一次全做）：**建筑升级** / **畜牧** / **洞穴与战斗**（若目标超出当前「矿区条带式」挖矿）。

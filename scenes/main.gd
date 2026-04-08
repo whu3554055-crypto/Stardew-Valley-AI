@@ -162,6 +162,36 @@ func _apply_a3_ui_polish() -> void:
 		hud_bg.add_theme_stylebox_override("panel", hsb)
 		ui_layer.add_child(hud_bg)
 		ui_layer.move_child(hud_bg, 0)
+	_style_world_zone_presentation()
+
+
+func _style_world_zone_presentation() -> void:
+	# Unify in-world area hints (mine/river/ocean/workstations/upgrades) for readability.
+	var hint_paths: PackedStringArray = [
+		"SmelterArea/SmelterHint",
+		"KitchenArea/KitchenHint",
+		"WorkbenchArea/WorkbenchHint",
+		"ForestArea/ForestHint",
+		"MineArea/MineHint",
+		"RiverZone/RiverHint",
+		"OceanZone/OceanHint",
+		"FarmUpgradeArea/FarmUpgradeHint",
+		"HouseUpgradeArea/HouseUpgradeHint"
+	]
+	for p in hint_paths:
+		var lb: Label = get_node_or_null(p) as Label
+		if lb:
+			lb.add_theme_font_size_override("font_size", 11)
+			lb.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.58))
+			lb.add_theme_constant_override("shadow_offset_x", 1)
+			lb.add_theme_constant_override("shadow_offset_y", 1)
+
+	var farm_overlay: Polygon2D = get_node_or_null("FarmUpgradeArea/Overlay") as Polygon2D
+	if farm_overlay:
+		farm_overlay.color = Color(0.35, 0.62, 0.32, 0.26)
+	var house_overlay: Polygon2D = get_node_or_null("HouseUpgradeArea/Overlay") as Polygon2D
+	if house_overlay:
+		house_overlay.color = Color(0.66, 0.52, 0.34, 0.24)
 
 func _update_activity_zone_label() -> void:
 	if not activity_zone_label or not player:
