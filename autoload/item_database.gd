@@ -643,6 +643,16 @@ func initialize_items():
 		"sell_price": 155
 	}
 
+	items["amethyst_glass"] = {
+		"id": "amethyst_glass",
+		"name": "Amethyst Glass",
+		"description": "Refined violet glass from deep-mine shards.",
+		"type": "resource",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 360
+	}
+
 	items["copper_bar"] = {
 		"id": "copper_bar",
 		"name": "Copper Bar",
@@ -765,6 +775,9 @@ func resolve_icon_path(item_id: String) -> String:
 		"amethyst_shard":
 			if ResourceLoader.exists("res://assets/sprites/items/resources/silver_ore.png"):
 				return "res://assets/sprites/items/resources/silver_ore.png"
+		"amethyst_glass":
+			if ResourceLoader.exists("res://assets/sprites/items/resources/silver_bar.png"):
+				return "res://assets/sprites/items/resources/silver_bar.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:

@@ -60,4 +60,5 @@ func _default_smelting() -> Array:
 	return [
 		{"id": "copper_bar", "output_id": "copper_bar", "output_qty": 1, "inputs": {"copper_ore": 5, "coal": 1}, "stamina": 3},
 		{"id": "silver_bar", "output_id": "silver_bar", "output_qty": 1, "inputs": {"silver_ore": 5, "coal": 1}, "stamina": 3},
+		{"id": "amethyst_glass", "output_id": "amethyst_glass", "output_qty": 1, "inputs": {"amethyst_shard": 2, "coal": 1}, "stamina": 4},
 	]
