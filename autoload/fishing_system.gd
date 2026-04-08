@@ -4,6 +4,7 @@ const GT := preload("res://scripts/gathering_tables.gd")
 
 const CAST_COOLDOWN_SEC := 1.45
 const HOOK_WINDOW_SEC := 1.78
+const HOOK_EARLY_MIN_SEC := 0.22
 const BAIT_WEIGHT_MULT_BY_TIER := {
 	1: 1.25,  # worm bait
 	2: 1.55   # premium bait
@@ -12,6 +13,7 @@ const BAIT_WEIGHT_MULT_BY_TIER := {
 var _last_catch_time: float = -100.0
 var _fish_phase: String = "idle"  # idle | hook
 var _hook_deadline: float = 0.0
+var _hook_start_time: float = 0.0
 var _bait_tier: int = 0
 
 func get_fish_zone(player_pos: Vector2) -> String:
@@ -35,9 +37,12 @@ func handle_fish_input(player_pos: Vector2) -> Dictionary:
 	var now: float = Time.get_ticks_msec() / 1000.0
 
 	if _fish_phase == "hook":
+		if now < _hook_start_time + HOOK_EARLY_MIN_SEC:
+			_fish_phase = "idle"
+			return {"ok": false, "message": "Too soon — wait for a solid tug."}
 		if now > _hook_deadline:
 			_fish_phase = "idle"
-			return {"ok": false, "message": "The fish got away."}
+			return {"ok": false, "message": "The bite slipped — you were too slow."}
 		if GameManager and not GameManager.try_consume_stamina(6.0):
 			_fish_phase = "idle"
 			return {"ok": false, "message": "Too tired to reel in."}
@@ -53,6 +58,7 @@ func handle_fish_input(player_pos: Vector2) -> Dictionary:
 
 	_bait_tier = _resolve_best_bait_tier()
 	_fish_phase = "hook"
+	_hook_start_time = now
 	_hook_deadline = now + HOOK_WINDOW_SEC
 	if GatheringSfx:
 		GatheringSfx.play_fish_cast()

@@ -267,6 +267,12 @@ func _apply_seasonal_hud_tint() -> void:
 		if asb:
 			asb.border_color = accent
 			a_bg.add_theme_stylebox_override("panel", asb)
+	var wef_season: Panel = ui_layer.get_node_or_null("WorldEventFeed") as Panel
+	if wef_season:
+		var wsb2: StyleBoxFlat = wef_season.get_theme_stylebox("panel") as StyleBoxFlat
+		if wsb2:
+			wsb2.border_color = accent
+			wef_season.add_theme_stylebox_override("panel", wsb2)
 	if season_label:
 		season_label.add_theme_color_override("font_color", text_col)
 

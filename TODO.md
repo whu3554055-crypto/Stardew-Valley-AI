@@ -24,17 +24,19 @@
 
 ### 阶段 A — 玩法（优先）
 
+> **托管迭代**：每轮按 `docs/MANAGED_ITERATION_CHECKLIST.md` 执行 **A1 / A2 / A3 各一项**（单线最多细化 2 次），并更新本文件进度一句。
+
 - [ ] **A1 — 单系统加深（第一轮）**  
   在钓鱼 / 挖矿 / 烹饪 / 农场扩展中**选定一条**已有入口的系统，做一轮闭环：**更多内容或规则 + 数值 + 失败/成功提示与反馈**（比开新系统优先）。  
-  *进度：已加深钓鱼 / 挖矿 / 烹饪各一轮；农场：夏季玉米、季节播种、`crop_id`、基础肥料；新增 **Farm Tier 配置**（`data/farm/tiers.json`）与升级（U），并支持可配置收获加成（`harvest_bonus_chance` / `harvest_bonus_max`）；作物库迁移到 `data/farm/crops.json`，新增秋季作物 **pumpkin** 与 `roasted_pumpkin`；商店库存迁移到 `data/shop/stock.json`，种子按季节上架。钓鱼：**狗鱼（河，夜/冬/暴雨偏重）**、**比目鱼（海，秋冬与清晨偏重）**、暴风雨微调；新烤制 `grilled_pike` / `grilled_halibut`。伐木：**树液**随机掉落（约 12%）、装备斧头时活动区 HUD「伐木 · 森林」。烹饪：**树液闭环** — `sap_glazed_toast`（面包+树液）、`sap_glazed_catfish`（鲶鱼+树液）。挖矿：**深脉** 稀有掉落 `amethyst_shard`（铁镐权重略加成）；煤/铜/铁/石 成功文案区分；熔炉新增 `amethyst_glass`（2 碎块 + 1 煤）。*
+  *进度：已加深钓鱼 / 挖矿 / 烹饪各一轮；农场：夏季玉米、季节播种、`crop_id`、基础肥料；新增 **Farm Tier 配置**（`data/farm/tiers.json`）与升级（U），并支持可配置收获加成（`harvest_bonus_chance` / `harvest_bonus_max`）；作物库迁移到 `data/farm/crops.json`，新增秋季作物 **pumpkin** 与 `roasted_pumpkin`；商店库存迁移到 `data/shop/stock.json`，种子按季节上架。钓鱼：**狗鱼（河，夜/冬/暴雨偏重）**、**比目鱼（海，秋冬与清晨偏重）**、暴风雨微调；新烤制 `grilled_pike` / `grilled_halibut`。伐木：**树液**随机掉落（约 12%）、装备斧头时活动区 HUD「伐木 · 森林」。烹饪：**树液闭环** — `sap_glazed_toast`（面包+树液）、`sap_glazed_catfish`（鲶鱼+树液）；托管迭代本轮 **`hearty_pumpkin_bowl`**（南瓜+土豆+面包）。挖矿：**深脉** 稀有掉落 `amethyst_shard`（铁镐权重略加成）；煤/铜/铁/石 成功文案区分；熔炉新增 `amethyst_glass`（2 碎块 + 1 煤）。*
 
 - [ ] **A2 — 单系统加深（第二轮）**  
   换另一条系统重复 A1 的标准，避免长期只堆一条线。  
-  *进度：钓鱼新增鲶鱼/鲭鱼与表修正；新增鱼饵分级（`premium_bait` 优先消耗，显著提升鱼类权重），并开放商店购买与工作台制作；挖矿矿层前缀、主题权重、表层 geode；**银矿 / 银锭**（深脉 + 铁镐、熔炉 5 矿+1 煤）；烹饪四条三料复合食谱。*
+  *进度：钓鱼新增鲶鱼/鲭鱼与表修正；新增鱼饵分级（`premium_bait` 优先消耗，显著提升鱼类权重），并开放商店购买与工作台制作；咬钩窗口内区分 **过早按 E** / **超时** 提示；挖矿矿层前缀、主题权重、表层 geode；**银矿 / 银锭**（深脉 + 铁镐、熔炉 5 矿+1 煤）；烹饪四条三料复合食谱。*
 
 - [ ] **A3 — 呈现与资源**  
   补齐或替换占位：**TileMap tileset、玩家/作物/工具相关美术**，让玩法反馈「看得见」（可与 A1/A2 并行，由人力安排）。  
-  *进度：`GameTileMap` + `terrain_atlas_32.png`；玩家/NPC 精灵 **NEAREST**；作物 **NEAREST**；背包格 + **体力条填色**；**对话/图鉴/配方/简报/商店** 面板与字阴影；**HUD 半透明底**、**AI Config** 按钮描边；**海洋区域**示意；**对话 Label 铺满**；**WorldEventFeed 标题** 阴影；**商店** 商品行 StyleBox；NPC **头顶名字** 阴影；**配方选择器** 按钮 + 列表选中色；**AI 配置界面** 输入框/按钮统一；**银矿/银锭** 32px 占位 PNG（`tools/gen_silver_placeholders.py`）+ `resolve_icon` 走资源路径；新增地图内 **Farm/House Upgrade Zone** 可视引导（U/H）；并统一世界区域提示（矿/林/河/海/升级区）文字阴影与视觉强度；新增 **QuestLog/ActivityZone** 独立底板增强可读性。存档仅 `game_save.bundle`。*
+  *进度：`GameTileMap` + `terrain_atlas_32.png`；玩家/NPC 精灵 **NEAREST**；作物 **NEAREST**；背包格 + **体力条填色**；**对话/图鉴/配方/简报/商店** 面板与字阴影；**HUD 半透明底**、**AI Config** 按钮描边；**海洋区域**示意；**对话 Label 铺满**；**WorldEventFeed 标题** 阴影；**WorldEventFeed** 面板边框随 **季节色**（与 HUDBackdrop / QuestLog / ActivityZone 一致）；**商店** 商品行 StyleBox；NPC **头顶名字** 阴影；**配方选择器** 按钮 + 列表选中色；**AI 配置界面** 输入框/按钮统一；**银矿/银锭** 32px 占位 PNG（`tools/gen_silver_placeholders.py`）+ `resolve_icon` 走资源路径；新增地图内 **Farm/House Upgrade Zone** 可视引导（U/H）；并统一世界区域提示（矿/林/河/海/升级区）文字阴影与视觉强度；新增 **QuestLog/ActivityZone** 独立底板增强可读性。存档仅 `game_save.bundle`。*
 
 - [ ] **A4 — 长线玩法 MVP（按需排期）**  
   从下列中选做最小可用版本（不必一次全做）：**建筑升级** / **畜牧** / **洞穴与战斗**（若目标超出当前「矿区条带式」挖矿）。

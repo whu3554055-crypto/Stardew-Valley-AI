@@ -152,5 +152,12 @@
     "output_qty": 1,
     "inputs": { "pumpkin": 1 },
     "stamina": 2
+  },
+  {
+    "id": "hearty_pumpkin_bowl",
+    "output_id": "hearty_pumpkin_bowl",
+    "output_qty": 1,
+    "inputs": { "pumpkin": 1, "potato": 1, "bread": 1 },
+    "stamina": 5
   }
 ]

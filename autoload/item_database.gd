@@ -248,6 +248,17 @@ func initialize_items():
 		"stamina_restore": 36.0
 	}
 
+	items["hearty_pumpkin_bowl"] = {
+		"id": "hearty_pumpkin_bowl",
+		"name": "Hearty Pumpkin Bowl",
+		"description": "Pumpkin, potato, and bread — a warm autumn plate.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 198,
+		"stamina_restore": 52.0
+	}
+
 	items["grilled_tuna"] = {
 		"id": "grilled_tuna",
 		"name": "Grilled Tuna",
@@ -824,6 +835,9 @@ func resolve_icon_path(item_id: String) -> String:
 			if ResourceLoader.exists("res://assets/sprites/crops/cauliflower_stage_5.png"):
 				return "res://assets/sprites/crops/cauliflower_stage_5.png"
 		"roasted_pumpkin":
+			if ResourceLoader.exists("res://assets/sprites/items/consumables/bread.png"):
+				return "res://assets/sprites/items/consumables/bread.png"
+		"hearty_pumpkin_bowl":
 			if ResourceLoader.exists("res://assets/sprites/items/consumables/bread.png"):
 				return "res://assets/sprites/items/consumables/bread.png"
 		"amethyst_shard":
