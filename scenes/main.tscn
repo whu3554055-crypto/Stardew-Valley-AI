@@ -209,6 +209,48 @@ theme_override_font_sizes/font_size = 12
 text = "Ocean — fishing rod (E)"
 horizontal_alignment = 1
 
+[node name="FarmUpgradeArea" type="Node2D" parent="."]
+z_index = -1
+position = Vector2(400, 300)
+
+[node name="Overlay" type="Polygon2D" parent="FarmUpgradeArea"]
+color = Color(0.35, 0.62, 0.32, 0.22)
+polygon = PackedVector2Array(0, 0, 360, 0, 360, 220, 0, 220)
+
+[node name="BorderTop" type="Polygon2D" parent="FarmUpgradeArea"]
+color = Color(0.6, 0.9, 0.56, 0.45)
+polygon = PackedVector2Array(0, 0, 360, 0, 360, 2, 0, 2)
+
+[node name="FarmUpgradeHint" type="Label" parent="FarmUpgradeArea"]
+offset_left = 0.0
+offset_top = -22.0
+offset_right = 360.0
+offset_bottom = 2.0
+theme_override_font_sizes/font_size = 11
+text = "Field Upgrade Zone — U"
+horizontal_alignment = 1
+
+[node name="HouseUpgradeArea" type="Node2D" parent="."]
+z_index = -1
+position = Vector2(560, 240)
+
+[node name="Overlay" type="Polygon2D" parent="HouseUpgradeArea"]
+color = Color(0.66, 0.52, 0.34, 0.2)
+polygon = PackedVector2Array(0, 0, 300, 0, 300, 220, 0, 220)
+
+[node name="BorderTop" type="Polygon2D" parent="HouseUpgradeArea"]
+color = Color(0.9, 0.78, 0.58, 0.42)
+polygon = PackedVector2Array(0, 0, 300, 0, 300, 2, 0, 2)
+
+[node name="HouseUpgradeHint" type="Label" parent="HouseUpgradeArea"]
+offset_left = 0.0
+offset_top = -22.0
+offset_right = 300.0
+offset_bottom = 2.0
+theme_override_font_sizes/font_size = 11
+text = "House Upgrade Zone — H"
+horizontal_alignment = 1
+
 [node name="FXLayer" type="Node2D" parent="."]
 z_index = 4
 
