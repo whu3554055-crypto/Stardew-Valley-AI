@@ -344,6 +344,8 @@ func _try_harvest_facing_tile(tile_coords: Vector2i) -> bool:
 			return true
 	var pnm: String = str(template.get("name", product_id))
 	show_dialogue("Harvested: %s ×%d" % [pnm, count])
+	if int(h.get("tier_bonus", 0)) > 0:
+		show_quick_tip("Farm tier bonus: +%d yield" % int(h.get("tier_bonus", 0)))
 	record_world_event("Harvested %s ×%d" % [product_id, count])
 	update_ui()
 	return true

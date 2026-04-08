@@ -9,6 +9,8 @@
       "tier": 1,
       "display_name": "Homestead",
       "growth_speed_multiplier": 1.0,
+      "harvest_bonus_chance": 0.0,
+      "harvest_bonus_max": 0,
       "upgrade_cost_gold": 0,
       "upgrade_cost_items": {}
     },
@@ -16,6 +18,8 @@
       "tier": 2,
       "display_name": "Expanded Plot",
       "growth_speed_multiplier": 1.06,
+      "harvest_bonus_chance": 0.22,
+      "harvest_bonus_max": 1,
       "upgrade_cost_gold": 450,
       "upgrade_cost_items": { "wood_log": 20 }
     }

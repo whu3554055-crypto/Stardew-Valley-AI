@@ -158,6 +158,7 @@ func harvest_crop(position: Vector2i) -> Dictionary:
 		"product": crop.harvest_product,
 		"count": crop.harvest_count
 	}
+	_apply_tier_harvest_bonus(harvest_data)
 
 	crop_harvested.emit(position, crop.id, harvest_data.count)
 
@@ -171,6 +172,20 @@ func harvest_crop(position: Vector2i) -> Dictionary:
 
 	_refresh_crop_visuals()
 	return harvest_data
+
+
+func _apply_tier_harvest_bonus(harvest_data: Dictionary) -> void:
+	if not FarmTierCatalog:
+		return
+	var chance: float = FarmTierCatalog.harvest_bonus_chance(farm_tier)
+	var max_bonus: int = FarmTierCatalog.harvest_bonus_max(farm_tier)
+	if max_bonus <= 0:
+		return
+	if randf() > chance:
+		return
+	var bonus: int = 1 if max_bonus == 1 else (1 + (randi() % max_bonus))
+	harvest_data["count"] = int(harvest_data.get("count", 1)) + bonus
+	harvest_data["tier_bonus"] = bonus
 
 func water_plant(position: Vector2i):
 	if planted_crops.has(position):

@@ -46,6 +46,8 @@ func _apply_defaults() -> void:
 			"tier": 1,
 			"display_name": "Homestead",
 			"growth_speed_multiplier": 1.0,
+			"harvest_bonus_chance": 0.0,
+			"harvest_bonus_max": 0,
 			"upgrade_cost_gold": 0,
 			"upgrade_cost_items": {}
 		},
@@ -53,6 +55,8 @@ func _apply_defaults() -> void:
 			"tier": 2,
 			"display_name": "Expanded Plot",
 			"growth_speed_multiplier": 1.06,
+			"harvest_bonus_chance": 0.22,
+			"harvest_bonus_max": 1,
 			"upgrade_cost_gold": 450,
 			"upgrade_cost_items": {"wood_log": 20}
 		}
@@ -101,6 +105,17 @@ func max_tier() -> int:
 func growth_speed_multiplier(tier_num: int) -> float:
 	var d: Dictionary = tier_def(tier_num)
 	return float(d.get("growth_speed_multiplier", 1.0))
+
+
+func harvest_bonus_chance(tier_num: int) -> float:
+	var d: Dictionary = tier_def(tier_num)
+	var v: float = float(d.get("harvest_bonus_chance", 0.0))
+	return clampf(v, 0.0, 1.0)
+
+
+func harvest_bonus_max(tier_num: int) -> int:
+	var d: Dictionary = tier_def(tier_num)
+	return maxi(0, int(d.get("harvest_bonus_max", 0)))
 
 
 func get_farm_upgrade_rect() -> Rect2:
