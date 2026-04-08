@@ -172,22 +172,23 @@ func _update_activity_zone_label() -> void:
 	if sid == "fishing_rod" and FishingSystem and FishingSystem.can_fish_here(player.global_position):
 		var z: String = FishingSystem.get_fish_zone(player.global_position)
 		if z == "river":
-			activity_zone_label.text = "钓鱼 · 河流"
+			activity_zone_label.text = UITextCatalog.get_activity_text("fish_river")
 		elif z == "ocean":
-			activity_zone_label.text = "钓鱼 · 海洋"
+			activity_zone_label.text = UITextCatalog.get_activity_text("fish_ocean")
 		else:
 			activity_zone_label.text = ""
 		return
 	if sid in ["pickaxe", "pickaxe_iron"] and MiningSystem and MiningSystem.can_mine_here(player.global_position):
 		var d: int = MiningSystem.depth_from_global_y(player.global_position.y)
-		var band: Array[String] = ["表层", "铁矿带", "深脉"]
-		if d >= 0 and d < band.size():
-			activity_zone_label.text = "矿区 · %s" % band[d]
+		var band_key: String = "mine_band_%d" % d
+		var band_name: String = UITextCatalog.get_activity_text(band_key)
+		if not band_name.is_empty():
+			activity_zone_label.text = UITextCatalog.format_activity_text("mine_prefix", {"band": band_name})
 		else:
 			activity_zone_label.text = ""
 		return
 	if sid == "axe" and ChoppingSystem and ChoppingSystem.can_chop_here(player.global_position):
-		activity_zone_label.text = "伐木 · 森林"
+		activity_zone_label.text = UITextCatalog.get_activity_text("chop_forest")
 		return
 	if farm_manager and FarmTierCatalog:
 		var fr: Rect2 = FarmTierCatalog.get_farm_upgrade_rect()

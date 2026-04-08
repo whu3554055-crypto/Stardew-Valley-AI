@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "activity_zone": {
+    "fish_river": "钓鱼 · 河流",
+    "fish_ocean": "钓鱼 · 海洋",
+    "mine_prefix": "矿区 · {band}",
+    "mine_band_0": "表层",
+    "mine_band_1": "铁矿带",
+    "mine_band_2": "深脉",
+    "chop_forest": "伐木 · 森林"
+  }
+}
