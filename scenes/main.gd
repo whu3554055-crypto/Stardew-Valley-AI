@@ -227,6 +227,16 @@ func _style_world_zone_presentation() -> void:
 		house_overlay.color = Color(0.66, 0.52, 0.34, 0.24)
 
 
+func _panel_set_season_border(panel: Panel, accent: Color) -> void:
+	if not panel:
+		return
+	var sb: StyleBoxFlat = panel.get_theme_stylebox("panel") as StyleBoxFlat
+	if not sb:
+		return
+	sb.border_color = accent
+	panel.add_theme_stylebox_override("panel", sb)
+
+
 func _season_hud_colors(season_name: String) -> Dictionary:
 	match season_name:
 		"spring":
@@ -273,6 +283,14 @@ func _apply_seasonal_hud_tint() -> void:
 		if wsb2:
 			wsb2.border_color = accent
 			wef_season.add_theme_stylebox_override("panel", wsb2)
+	_panel_set_season_border(dialogue_box, accent)
+	var inv_panel: Panel = ui_layer.get_node_or_null("InventoryUI") as Panel
+	_panel_set_season_border(inv_panel, accent)
+	_panel_set_season_border(almanac_panel, accent)
+	_panel_set_season_border(recipe_picker, accent)
+	if shop_ui:
+		var shop_frame: Panel = shop_ui.get_node_or_null("SeasonBorder") as Panel
+		_panel_set_season_border(shop_frame, accent)
 	if season_label:
 		season_label.add_theme_color_override("font_color", text_col)
 

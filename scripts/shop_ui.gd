@@ -8,6 +8,7 @@ class_name ShopUI
 @onready var title_label = $TitleLabel
 @onready var season_label = $SeasonLabel
 @onready var close_button = $CloseButton
+@onready var season_border: Panel = $SeasonBorder
 
 var current_total = 0
 var cart = {}
@@ -18,6 +19,13 @@ signal purchase_confirmed(item_id, quantity)
 
 func _ready():
 	visible = false
+	if season_border:
+		var sbb := StyleBoxFlat.new()
+		sbb.bg_color = Color(0, 0, 0, 0)
+		sbb.set_border_width_all(2)
+		sbb.border_color = Color(0.35, 0.32, 0.22)
+		season_border.add_theme_stylebox_override("panel", sbb)
+		season_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_shop_chrome()
 	update_gold_display()
 
