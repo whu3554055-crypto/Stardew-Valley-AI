@@ -131,3 +131,15 @@ func get_farm_upgrade_hint() -> String:
 
 func next_tier_def(current_tier: int) -> Dictionary:
 	return tier_def(current_tier + 1)
+
+
+func get_message(key: String) -> String:
+	var msgs: Dictionary = _interaction.get("messages", {})
+	var fallback: Dictionary = {
+		"unavailable": "Farm tiers unavailable.",
+		"max_tier": "Farm is already at max tier.",
+		"not_enough_gold": "Not enough gold ({gold}g needed).",
+		"missing_materials": "Missing materials for upgrade.",
+		"upgraded": "Farm upgraded: {tier_name} — crops grow a bit faster."
+	}
+	return str(msgs.get(key, fallback.get(key, "")))

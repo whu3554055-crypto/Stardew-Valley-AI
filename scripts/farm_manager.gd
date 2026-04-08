@@ -233,16 +233,18 @@ func try_upgrade_next_tier() -> Dictionary:
 		return {"ok": false, "message": "Farm tiers unavailable."}
 	var next_def: Dictionary = FarmTierCatalog.next_tier_def(farm_tier)
 	if next_def.is_empty():
-		return {"ok": false, "message": "Farm is already at max tier."}
+		return {"ok": false, "message": FarmTierCatalog.get_message("max_tier")}
 	var cost_g: int = int(next_def.get("upgrade_cost_gold", 0))
 	var items_cost: Dictionary = next_def.get("upgrade_cost_items", {})
 	if GameManager:
 		if int(GameManager.player_data.get("gold", 0)) < cost_g:
-			return {"ok": false, "message": "Not enough gold (%dg needed)." % cost_g}
+			var gold_msg: String = FarmTierCatalog.get_message("not_enough_gold")
+			gold_msg = gold_msg.replace("{gold}", str(cost_g))
+			return {"ok": false, "message": gold_msg}
 	for k in items_cost.keys():
 		var need: int = int(items_cost[k])
 		if InventoryManager.count_item(str(k)) < need:
-			return {"ok": false, "message": "Missing materials for upgrade."}
+			return {"ok": false, "message": FarmTierCatalog.get_message("missing_materials")}
 	if GameManager:
 		GameManager.player_data.gold = int(GameManager.player_data.get("gold", 0)) - cost_g
 	for k in items_cost.keys():
@@ -250,7 +252,9 @@ func try_upgrade_next_tier() -> Dictionary:
 		InventoryManager.consume_item_by_id(str(k), need)
 	farm_tier += 1
 	var nm: String = str(FarmTierCatalog.tier_def(farm_tier).get("display_name", str(farm_tier)))
-	return {"ok": true, "message": "Farm upgraded: %s — crops grow a bit faster." % nm}
+	var ok_msg: String = FarmTierCatalog.get_message("upgraded")
+	ok_msg = ok_msg.replace("{tier_name}", nm)
+	return {"ok": true, "message": ok_msg}
 
 
 func is_tile_tilled(position: Vector2i) -> bool:
