@@ -118,6 +118,7 @@
 
 - `TODO.md`：阶段目标与勾选。  
 - `docs/MANAGED_ITERATION_CHECKLIST.md`：每轮 A1/A2/A3 节奏；**若连续多轮无 B/Agentic 相关进展**，应回到本文第 7 节自查。  
+- [`05-AI客户端入口盘点与收敛.md`](05-AI客户端入口盘点与收敛.md)：Godot 侧 **AIAgentManager / AdvancedAIAgentManager / 叙事 HTTP** 等调用关系与**收敛表**；执行「划界」时优先与此同步。  
 - `docs/00-执行摘要.md`：商业与愿景级摘要；本文偏**工程与范式契约**。  
 - `CONTRIBUTING.md`：提交规范；不替代本文的架构原则。
 
