@@ -162,6 +162,38 @@ func _apply_a3_ui_polish() -> void:
 		hud_bg.add_theme_stylebox_override("panel", hsb)
 		ui_layer.add_child(hud_bg)
 		ui_layer.move_child(hud_bg, 0)
+	if ui_layer and ui_layer.get_node_or_null("QuestLogBackdrop") == null:
+		var q_bg := Panel.new()
+		q_bg.name = "QuestLogBackdrop"
+		q_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		q_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		q_bg.offset_left = 924.0
+		q_bg.offset_top = 262.0
+		q_bg.offset_right = 1266.0
+		q_bg.offset_bottom = 436.0
+		var qsb := StyleBoxFlat.new()
+		qsb.bg_color = Color(0.04, 0.06, 0.08, 0.56)
+		qsb.set_border_width_all(1)
+		qsb.border_color = Color(0.26, 0.34, 0.32, 0.92)
+		q_bg.add_theme_stylebox_override("panel", qsb)
+		ui_layer.add_child(q_bg)
+		ui_layer.move_child(q_bg, 0)
+	if ui_layer and ui_layer.get_node_or_null("ActivityZoneBackdrop") == null:
+		var a_bg := Panel.new()
+		a_bg.name = "ActivityZoneBackdrop"
+		a_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		a_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		a_bg.offset_left = 8.0
+		a_bg.offset_top = 194.0
+		a_bg.offset_right = 270.0
+		a_bg.offset_bottom = 224.0
+		var asb := StyleBoxFlat.new()
+		asb.bg_color = Color(0.03, 0.05, 0.075, 0.54)
+		asb.set_border_width_all(1)
+		asb.border_color = Color(0.22, 0.28, 0.36, 0.88)
+		a_bg.add_theme_stylebox_override("panel", asb)
+		ui_layer.add_child(a_bg)
+		ui_layer.move_child(a_bg, 0)
 	_style_world_zone_presentation()
 
 
