@@ -14,6 +14,7 @@ const TITLE_BY_MODE := {
 
 var mode: String = ""
 var recipes: Array = []
+var _season_accent: Color = Color(0.4, 0.36, 0.26)
 
 signal recipe_chosen(recipe: Dictionary, mode: String)
 
@@ -21,7 +22,7 @@ func _recipe_btn_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.13, 0.12, 0.11, 0.96)
 	sb.set_border_width_all(1)
-	sb.border_color = Color(0.4, 0.36, 0.26)
+	sb.border_color = _season_accent
 	return sb
 
 func _ready() -> void:
@@ -29,7 +30,7 @@ func _ready() -> void:
 	var psb := StyleBoxFlat.new()
 	psb.bg_color = Color(0.06, 0.07, 0.1, 0.96)
 	psb.set_border_width_all(1)
-	psb.border_color = Color(0.4, 0.36, 0.26)
+	psb.border_color = _season_accent
 	psb.content_margin_left = 10
 	psb.content_margin_top = 10
 	psb.content_margin_right = 10
@@ -48,6 +49,32 @@ func _ready() -> void:
 		_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
 		_title.add_theme_constant_override("shadow_offset_x", 1)
 		_title.add_theme_constant_override("shadow_offset_y", 1)
+	_apply_recipe_button_styles()
+	btn_confirm.pressed.connect(_on_confirm_pressed)
+	btn_close.pressed.connect(close_picker)
+	item_list.item_selected.connect(_on_item_selected)
+	item_list.item_activated.connect(_on_item_activated)
+
+func set_seasonal_accent(accent: Color, title_text: Color = Color(0.92, 0.93, 0.94)) -> void:
+	_season_accent = accent
+	var psb: StyleBoxFlat = get_theme_stylebox("panel") as StyleBoxFlat
+	if psb:
+		psb.border_color = accent
+		add_theme_stylebox_override("panel", psb)
+	if _title:
+		_title.add_theme_color_override("font_color", title_text)
+	if item_list:
+		item_list.add_theme_color_override("font_selected_color", accent.lightened(0.22))
+		item_list.add_theme_color_override("font_hovered_color", Color(
+			lerpf(0.92, accent.r, 0.35),
+			lerpf(0.92, accent.g, 0.35),
+			lerpf(0.94, accent.b, 0.35),
+			1.0
+		))
+	_apply_recipe_button_styles()
+
+
+func _apply_recipe_button_styles() -> void:
 	var rbtn := _recipe_btn_style()
 	if btn_confirm:
 		btn_confirm.flat = true
@@ -59,10 +86,6 @@ func _ready() -> void:
 		btn_close.add_theme_stylebox_override("normal", _recipe_btn_style())
 		btn_close.add_theme_stylebox_override("hover", _recipe_btn_style())
 		btn_close.add_theme_stylebox_override("pressed", _recipe_btn_style())
-	btn_confirm.pressed.connect(_on_confirm_pressed)
-	btn_close.pressed.connect(close_picker)
-	item_list.item_selected.connect(_on_item_selected)
-	item_list.item_activated.connect(_on_item_activated)
 
 func open_picker(p_mode: String, p_recipes: Array) -> void:
 	mode = p_mode

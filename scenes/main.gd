@@ -314,10 +314,12 @@ func _apply_seasonal_hud_tint() -> void:
 	var inv_panel: Panel = ui_layer.get_node_or_null("InventoryUI") as Panel
 	_panel_set_season_border(inv_panel, accent)
 	_panel_set_season_border(almanac_panel, accent)
-	_panel_set_season_border(recipe_picker, accent)
+	if recipe_picker:
+		recipe_picker.set_seasonal_accent(accent, text_col)
 	if shop_ui:
 		var shop_frame: Panel = shop_ui.get_node_or_null("SeasonBorder") as Panel
 		_panel_set_season_border(shop_frame, accent)
+		shop_ui.apply_seasonal_accent(accent)
 	_button_set_season_border(ai_config_button, accent)
 	var quick_tip_bg: Panel = ui_layer.get_node_or_null("QuickTipBackdrop") as Panel
 	if quick_tip_bg:

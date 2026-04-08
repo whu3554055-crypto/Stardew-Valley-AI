@@ -13,6 +13,7 @@ class_name ShopUI
 var current_total = 0
 var cart = {}
 var show_unavailable_seasonal_items := true
+var _season_accent: Color = Color(0.38, 0.34, 0.24)
 
 signal shop_closed
 signal purchase_confirmed(item_id, quantity)
@@ -48,20 +49,33 @@ func _apply_shop_chrome() -> void:
 		season_label.add_theme_constant_override("shadow_offset_x", 1)
 		season_label.add_theme_constant_override("shadow_offset_y", 1)
 	if close_button:
-		var csb := StyleBoxFlat.new()
-		csb.bg_color = Color(0.14, 0.13, 0.12, 0.95)
-		csb.set_border_width_all(1)
-		csb.border_color = Color(0.4, 0.36, 0.26)
-		close_button.add_theme_stylebox_override("normal", csb)
-		close_button.add_theme_stylebox_override("hover", csb)
-		close_button.add_theme_stylebox_override("pressed", csb)
-		close_button.flat = true
+		_apply_close_button_style()
+
+func _apply_close_button_style() -> void:
+	if not close_button:
+		return
+	var csb := StyleBoxFlat.new()
+	csb.bg_color = Color(0.14, 0.13, 0.12, 0.95)
+	csb.set_border_width_all(1)
+	csb.border_color = _season_accent
+	close_button.add_theme_stylebox_override("normal", csb)
+	close_button.add_theme_stylebox_override("hover", csb)
+	close_button.add_theme_stylebox_override("pressed", csb)
+	close_button.flat = true
+
+
+func apply_seasonal_accent(accent: Color) -> void:
+	_season_accent = accent
+	_apply_close_button_style()
+	if visible:
+		populate_shop_items()
+
 
 func _shop_item_button_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.16, 0.14, 0.12, 0.96)
 	sb.set_border_width_all(1)
-	sb.border_color = Color(0.38, 0.34, 0.24)
+	sb.border_color = _season_accent
 	return sb
 
 func open_shop():
