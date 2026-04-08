@@ -5,6 +5,25 @@ extends Panel
 @onready var smelt_list: ItemList = $Margin/VBox/SmeltItemList
 @onready var meal_list: ItemList = $Margin/VBox/MealItemList
 
+func set_seasonal_accent(accent: Color, title_text: Color = Color(0.92, 0.93, 0.94)) -> void:
+	var psb: StyleBoxFlat = get_theme_stylebox("panel") as StyleBoxFlat
+	if psb:
+		psb.border_color = accent
+		add_theme_stylebox_override("panel", psb)
+	var title_lb: Label = get_node_or_null("Margin/VBox/Title") as Label
+	if title_lb:
+		title_lb.add_theme_color_override("font_color", title_text)
+	for lst in [fish_list, mineral_list, smelt_list, meal_list]:
+		if lst:
+			lst.add_theme_color_override("font_selected_color", accent.lightened(0.22))
+			lst.add_theme_color_override("font_hovered_color", Color(
+				lerpf(0.92, accent.r, 0.35),
+				lerpf(0.92, accent.g, 0.35),
+				lerpf(0.94, accent.b, 0.35),
+				1.0
+			))
+
+
 func _ready() -> void:
 	var psb := StyleBoxFlat.new()
 	psb.bg_color = Color(0.06, 0.07, 0.09, 0.96)

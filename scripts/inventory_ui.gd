@@ -10,13 +10,25 @@ const SLOTS_PER_ROW = 9
 
 var slot_buttons = []
 
+## Blended into unselected slot borders (selected keeps gold ring).
+var _season_accent: Color = Color(0.28, 0.3, 0.34, 1.0)
+
 signal item_selected(slot_index)
+
+func _slot_border_unselected() -> Color:
+	return Color(
+		lerpf(0.28, _season_accent.r, 0.42),
+		lerpf(0.3, _season_accent.g, 0.42),
+		lerpf(0.34, _season_accent.b, 0.42),
+		1.0
+	)
+
 
 func _slot_stylebox(has_item: bool, selected: bool) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.13, 0.14, 0.17, 0.96) if has_item else Color(0.09, 0.09, 0.11, 0.92)
 	sb.set_border_width_all(1)
-	sb.border_color = Color(0.28, 0.3, 0.34)
+	sb.border_color = _slot_border_unselected()
 	if selected:
 		sb.set_border_width_all(2)
 		sb.border_color = Color(0.82, 0.68, 0.22)
@@ -45,13 +57,14 @@ func _ready():
 
 
 func set_seasonal_accent(accent: Color) -> void:
-	if not stamina_bar:
-		return
-	var sb_fill: StyleBoxFlat = stamina_bar.get_theme_stylebox("fill") as StyleBoxFlat
-	if not sb_fill:
-		return
-	sb_fill.bg_color = Color(accent.r, accent.g, accent.b, 0.9)
-	stamina_bar.add_theme_stylebox_override("fill", sb_fill)
+	_season_accent = accent
+	if stamina_bar:
+		var sb_fill: StyleBoxFlat = stamina_bar.get_theme_stylebox("fill") as StyleBoxFlat
+		if sb_fill:
+			sb_fill.bg_color = Color(accent.r, accent.g, accent.b, 0.9)
+			stamina_bar.add_theme_stylebox_override("fill", sb_fill)
+	if slot_buttons.size() > 0:
+		_on_inventory_updated()
 
 
 func _process(_delta: float) -> void:
