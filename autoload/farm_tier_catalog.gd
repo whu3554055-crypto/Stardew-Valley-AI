@@ -140,6 +140,17 @@ func get_message(key: String) -> String:
 		"max_tier": "Farm is already at max tier.",
 		"not_enough_gold": "Not enough gold ({gold}g needed).",
 		"missing_materials": "Missing materials for upgrade.",
-		"upgraded": "Farm upgraded: {tier_name} — crops grow a bit faster."
+		"upgraded": "Farm upgraded: {tier_name} — crops grow a bit faster.",
+		"hud_speed": "grow {speed_pct}%",
+		"hud_bonus": "yield +{bonus_pct}% up to +{bonus_max}",
+		"hud_line_upgradable": "farm · T{tier} {tier_name} · {speed_text} · {bonus_text} · U upgrade",
+		"hud_line_max": "farm · T{tier} {tier_name} · {speed_text} · {bonus_text} · max"
 	}
 	return str(msgs.get(key, fallback.get(key, "")))
+
+
+func format_message(key: String, vars: Dictionary = {}) -> String:
+	var msg: String = get_message(key)
+	for k in vars.keys():
+		msg = msg.replace("{%s}" % str(k), str(vars[k]))
+	return msg
