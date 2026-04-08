@@ -43,6 +43,17 @@ func _ready():
 	InventoryManager.selected_slot_changed.connect(_on_selected_slot_changed)
 	_on_inventory_updated()
 
+
+func set_seasonal_accent(accent: Color) -> void:
+	if not stamina_bar:
+		return
+	var sb_fill: StyleBoxFlat = stamina_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if not sb_fill:
+		return
+	sb_fill.bg_color = Color(accent.r, accent.g, accent.b, 0.9)
+	stamina_bar.add_theme_stylebox_override("fill", sb_fill)
+
+
 func _process(_delta: float) -> void:
 	if not visible or not stamina_bar or not GameManager:
 		return

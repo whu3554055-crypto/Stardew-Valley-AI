@@ -194,6 +194,23 @@ func _apply_a3_ui_polish() -> void:
 		a_bg.add_theme_stylebox_override("panel", asb)
 		ui_layer.add_child(a_bg)
 		ui_layer.move_child(a_bg, 0)
+	if ui_layer and quick_tip_label and ui_layer.get_node_or_null("QuickTipBackdrop") == null:
+		var qtb := Panel.new()
+		qtb.name = "QuickTipBackdrop"
+		qtb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		qtb.visible = false
+		qtb.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		qtb.offset_left = quick_tip_label.offset_left
+		qtb.offset_top = quick_tip_label.offset_top
+		qtb.offset_right = quick_tip_label.offset_right
+		qtb.offset_bottom = quick_tip_label.offset_bottom
+		var qtsb := StyleBoxFlat.new()
+		qtsb.bg_color = Color(0.04, 0.05, 0.08, 0.62)
+		qtsb.set_border_width_all(1)
+		qtsb.border_color = Color(0.22, 0.24, 0.3)
+		qtb.add_theme_stylebox_override("panel", qtsb)
+		ui_layer.add_child(qtb)
+		ui_layer.move_child(qtb, quick_tip_label.get_index())
 	_style_world_zone_presentation()
 	_apply_seasonal_hud_tint()
 
@@ -235,6 +252,16 @@ func _panel_set_season_border(panel: Panel, accent: Color) -> void:
 		return
 	sb.border_color = accent
 	panel.add_theme_stylebox_override("panel", sb)
+
+
+func _button_set_season_border(btn: Button, accent: Color) -> void:
+	if not btn:
+		return
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var sb: StyleBoxFlat = btn.get_theme_stylebox(state) as StyleBoxFlat
+		if sb:
+			sb.border_color = accent
+			btn.add_theme_stylebox_override(state, sb)
 
 
 func _season_hud_colors(season_name: String) -> Dictionary:
@@ -291,6 +318,21 @@ func _apply_seasonal_hud_tint() -> void:
 	if shop_ui:
 		var shop_frame: Panel = shop_ui.get_node_or_null("SeasonBorder") as Panel
 		_panel_set_season_border(shop_frame, accent)
+	_button_set_season_border(ai_config_button, accent)
+	var quick_tip_bg: Panel = ui_layer.get_node_or_null("QuickTipBackdrop") as Panel
+	if quick_tip_bg:
+		var qtp: StyleBoxFlat = quick_tip_bg.get_theme_stylebox("panel") as StyleBoxFlat
+		if qtp:
+			qtp.border_color = accent
+			quick_tip_bg.add_theme_stylebox_override("panel", qtp)
+	if quest_log_label:
+		quest_log_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.92))
+	var wef_title_season: Label = ui_layer.get_node_or_null("WorldEventFeed/Title") as Label
+	if wef_title_season:
+		wef_title_season.add_theme_color_override("font_color", text_col)
+	var inv_ui_accent: InventoryUI = ui_layer.get_node_or_null("InventoryUI") as InventoryUI
+	if inv_ui_accent:
+		inv_ui_accent.set_seasonal_accent(accent)
 	if season_label:
 		season_label.add_theme_color_override("font_color", text_col)
 
@@ -1036,6 +1078,9 @@ func show_quick_tip(text: String, duration: float = 1.35) -> void:
 		return
 	quick_tip_label.text = text
 	quick_tip_label.visible = true
+	var qtb: Panel = ui_layer.get_node_or_null("QuickTipBackdrop") as Panel if ui_layer else null
+	if qtb:
+		qtb.visible = true
 	quick_tip_timer.stop()
 	quick_tip_timer.wait_time = duration
 	quick_tip_timer.start()
@@ -1043,6 +1088,9 @@ func show_quick_tip(text: String, duration: float = 1.35) -> void:
 func _on_quick_tip_timeout() -> void:
 	if quick_tip_label:
 		quick_tip_label.visible = false
+	var qtb: Panel = ui_layer.get_node_or_null("QuickTipBackdrop") as Panel if ui_layer else null
+	if qtb:
+		qtb.visible = false
 
 func _play_fx_fish() -> void:
 	if fx_fish:
