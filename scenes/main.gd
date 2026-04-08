@@ -195,6 +195,7 @@ func _apply_a3_ui_polish() -> void:
 		ui_layer.add_child(a_bg)
 		ui_layer.move_child(a_bg, 0)
 	_style_world_zone_presentation()
+	_apply_seasonal_hud_tint()
 
 
 func _style_world_zone_presentation() -> void:
@@ -224,6 +225,50 @@ func _style_world_zone_presentation() -> void:
 	var house_overlay: Polygon2D = get_node_or_null("HouseUpgradeArea/Overlay") as Polygon2D
 	if house_overlay:
 		house_overlay.color = Color(0.66, 0.52, 0.34, 0.24)
+
+
+func _season_hud_colors(season_name: String) -> Dictionary:
+	match season_name:
+		"spring":
+			return {"accent": Color(0.54, 0.84, 0.62, 0.95), "text": Color(0.86, 0.95, 0.88, 1.0)}
+		"summer":
+			return {"accent": Color(0.56, 0.82, 0.9, 0.95), "text": Color(0.86, 0.94, 0.98, 1.0)}
+		"fall":
+			return {"accent": Color(0.9, 0.72, 0.48, 0.95), "text": Color(0.98, 0.92, 0.84, 1.0)}
+		"winter":
+			return {"accent": Color(0.7, 0.8, 0.96, 0.95), "text": Color(0.9, 0.94, 1.0, 1.0)}
+		_:
+			return {"accent": Color(0.72, 0.8, 0.88, 0.95), "text": Color(0.9, 0.92, 0.96, 1.0)}
+
+
+func _apply_seasonal_hud_tint() -> void:
+	if not ui_layer or not GameManager:
+		return
+	var season_name: String = str(GameManager.player_data.get("season", "spring"))
+	var palette: Dictionary = _season_hud_colors(season_name)
+	var accent: Color = palette.get("accent", Color(0.72, 0.8, 0.88, 0.95))
+	var text_col: Color = palette.get("text", Color(0.9, 0.92, 0.96, 1.0))
+
+	var hud_bg: Panel = ui_layer.get_node_or_null("HUDBackdrop") as Panel
+	if hud_bg:
+		var sb: StyleBoxFlat = hud_bg.get_theme_stylebox("panel") as StyleBoxFlat
+		if sb:
+			sb.border_color = accent
+			hud_bg.add_theme_stylebox_override("panel", sb)
+	var q_bg: Panel = ui_layer.get_node_or_null("QuestLogBackdrop") as Panel
+	if q_bg:
+		var qsb: StyleBoxFlat = q_bg.get_theme_stylebox("panel") as StyleBoxFlat
+		if qsb:
+			qsb.border_color = accent
+			q_bg.add_theme_stylebox_override("panel", qsb)
+	var a_bg: Panel = ui_layer.get_node_or_null("ActivityZoneBackdrop") as Panel
+	if a_bg:
+		var asb: StyleBoxFlat = a_bg.get_theme_stylebox("panel") as StyleBoxFlat
+		if asb:
+			asb.border_color = accent
+			a_bg.add_theme_stylebox_override("panel", asb)
+	if season_label:
+		season_label.add_theme_color_override("font_color", text_col)
 
 func _update_activity_zone_label() -> void:
 	if not activity_zone_label or not player:
@@ -930,6 +975,7 @@ func _apply_narrative_daily_quest(narrative: Dictionary):
 		QuestSystem.add_story_daily_quest(events[0])
 
 func _on_season_changed(new_season):
+	_apply_seasonal_hud_tint()
 	update_ui()
 
 func auto_water_crops():
