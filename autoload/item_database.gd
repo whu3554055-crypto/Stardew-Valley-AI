@@ -58,6 +58,18 @@ func initialize_items():
 		"sell_price": 75
 	}
 
+	items["pumpkin_seeds"] = {
+		"id": "pumpkin_seeds",
+		"name": "Pumpkin Seeds",
+		"description": "Fall crop with sturdy growth and good market value.",
+		"type": "seed",
+		"crop_id": "pumpkin",
+		"stack": 1,
+		"max_stack": 99,
+		"buy_price": 120,
+		"sell_price": 60
+	}
+
 	items["basic_fertilizer"] = {
 		"id": "basic_fertilizer",
 		"name": "Basic Fertilizer",
@@ -112,6 +124,17 @@ func initialize_items():
 		"max_stack": 99,
 		"sell_price": 55,
 		"stamina_restore": 20.0
+	}
+
+	items["pumpkin"] = {
+		"id": "pumpkin",
+		"name": "Pumpkin",
+		"description": "A heavy fall crop with dense flesh and strong flavor.",
+		"type": "crop",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 140,
+		"stamina_restore": 26.0
 	}
 
 	items["bread"] = {
@@ -212,6 +235,17 @@ func initialize_items():
 		"max_stack": 99,
 		"sell_price": 220,
 		"stamina_restore": 42.0
+	}
+
+	items["roasted_pumpkin"] = {
+		"id": "roasted_pumpkin",
+		"name": "Roasted Pumpkin",
+		"description": "Cooked at the kitchen counter.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 112,
+		"stamina_restore": 36.0
 	}
 
 	items["grilled_tuna"] = {
@@ -772,6 +806,12 @@ func resolve_icon_path(item_id: String) -> String:
 		"sap_glazed_catfish":
 			if ResourceLoader.exists("res://assets/sprites/environment/water/fish_small.png"):
 				return "res://assets/sprites/environment/water/fish_small.png"
+		"pumpkin":
+			if ResourceLoader.exists("res://assets/sprites/crops/cauliflower_stage_5.png"):
+				return "res://assets/sprites/crops/cauliflower_stage_5.png"
+		"roasted_pumpkin":
+			if ResourceLoader.exists("res://assets/sprites/items/consumables/bread.png"):
+				return "res://assets/sprites/items/consumables/bread.png"
 		"amethyst_shard":
 			if ResourceLoader.exists("res://assets/sprites/items/resources/silver_ore.png"):
 				return "res://assets/sprites/items/resources/silver_ore.png"

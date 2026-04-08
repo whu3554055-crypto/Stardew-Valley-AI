@@ -19,6 +19,7 @@ func initialize_shop():
 		"cauliflower_seeds": {"price": 80, "stock": 99},
 		"potato_seeds": {"price": 50, "stock": 99},
 		"corn_seeds": {"price": 150, "stock": 99},
+		"pumpkin_seeds": {"price": 120, "stock": 99},
 		"basic_fertilizer": {"price": 35, "stock": 99},
 		"bread": {"price": 50, "stock": 99},
 		"fishing_rod": {"price": 120, "stock": 10},

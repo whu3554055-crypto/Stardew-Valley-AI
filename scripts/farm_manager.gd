@@ -57,48 +57,36 @@ func _tilemap() -> TileMap:
 	return null
 
 func load_crop_database():
-	# Example crop definitions
-	crops_db["parsnip"] = {
-		"id": "parsnip",
-		"name": "Parsnip",
-		"growth_days": 4,
-		"harvest_product": "parsnip",
-		"harvest_count": 1,
-		"regrows": false,
-		"seasons": ["spring"]
-	}
+	crops_db.clear()
+	var path := "res://data/farm/crops.json"
+	var f: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		push_warning("FarmManager: missing %s, using embedded defaults." % path)
+		_load_default_crops()
+		return
+	var txt: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(txt) != OK or not (json.data is Array):
+		push_warning("FarmManager: failed to parse %s, using embedded defaults." % path)
+		_load_default_crops()
+		return
+	for row in json.data:
+		if row is Dictionary:
+			var d: Dictionary = row.duplicate(true)
+			var cid: String = str(d.get("id", ""))
+			if not cid.is_empty():
+				crops_db[cid] = d
+	if crops_db.is_empty():
+		_load_default_crops()
 
-	crops_db["cauliflower"] = {
-		"id": "cauliflower",
-		"name": "Cauliflower",
-		"growth_days": 12,
-		"harvest_product": "cauliflower",
-		"harvest_count": 1,
-		"regrows": false,
-		"seasons": ["spring"]
-	}
 
-	crops_db["potato"] = {
-		"id": "potato",
-		"name": "Potato",
-		"growth_days": 6,
-		"harvest_product": "potato",
-		"harvest_count": 1,
-		"regrows": false,
-		"seasons": ["spring"]
-	}
-
-	# Summer — multi-harvest (first full grow, then shorter regrow)
-	crops_db["corn"] = {
-		"id": "corn",
-		"name": "Corn",
-		"growth_days": 14,
-		"regrow_days": 4,
-		"harvest_product": "corn",
-		"harvest_count": 1,
-		"regrows": true,
-		"seasons": ["summer"]
-	}
+func _load_default_crops() -> void:
+	crops_db["parsnip"] = {"id": "parsnip", "name": "Parsnip", "growth_days": 4, "harvest_product": "parsnip", "harvest_count": 1, "regrows": false, "seasons": ["spring"]}
+	crops_db["cauliflower"] = {"id": "cauliflower", "name": "Cauliflower", "growth_days": 12, "harvest_product": "cauliflower", "harvest_count": 1, "regrows": false, "seasons": ["spring"]}
+	crops_db["potato"] = {"id": "potato", "name": "Potato", "growth_days": 6, "harvest_product": "potato", "harvest_count": 1, "regrows": false, "seasons": ["spring"]}
+	crops_db["corn"] = {"id": "corn", "name": "Corn", "growth_days": 14, "regrow_days": 4, "harvest_product": "corn", "harvest_count": 1, "regrows": true, "seasons": ["summer"]}
+	crops_db["pumpkin"] = {"id": "pumpkin", "name": "Pumpkin", "growth_days": 11, "harvest_product": "pumpkin", "harvest_count": 1, "regrows": false, "seasons": ["fall"]}
 
 func till_soil(position: Vector2i):
 	if sprinkler_tiles.has(position):
@@ -359,6 +347,10 @@ func _crop_stage_texture_path(crop_id: String, growth_stage: int) -> String:
 		"corn":
 			var cidx: int = clampi(int(round(float(g) * 6.0 / 4.0)), 0, 6)
 			return "res://assets/sprites/crops/corn_stage_%d.png" % cidx
+		"pumpkin":
+			# Temporary art mapping: reuse cauliflower stages until dedicated pumpkin sprites land.
+			var pidx: int = clampi(int(round(float(g) * 5.0 / 4.0)), 0, 5)
+			return "res://assets/sprites/crops/cauliflower_stage_%d.png" % pidx
 		_:
 			return ""
 

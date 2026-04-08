@@ -1,0 +1,48 @@
+[
+  {
+    "id": "parsnip",
+    "name": "Parsnip",
+    "growth_days": 4,
+    "harvest_product": "parsnip",
+    "harvest_count": 1,
+    "regrows": false,
+    "seasons": ["spring"]
+  },
+  {
+    "id": "cauliflower",
+    "name": "Cauliflower",
+    "growth_days": 12,
+    "harvest_product": "cauliflower",
+    "harvest_count": 1,
+    "regrows": false,
+    "seasons": ["spring"]
+  },
+  {
+    "id": "potato",
+    "name": "Potato",
+    "growth_days": 6,
+    "harvest_product": "potato",
+    "harvest_count": 1,
+    "regrows": false,
+    "seasons": ["spring"]
+  },
+  {
+    "id": "corn",
+    "name": "Corn",
+    "growth_days": 14,
+    "regrow_days": 4,
+    "harvest_product": "corn",
+    "harvest_count": 1,
+    "regrows": true,
+    "seasons": ["summer"]
+  },
+  {
+    "id": "pumpkin",
+    "name": "Pumpkin",
+    "growth_days": 11,
+    "harvest_product": "pumpkin",
+    "harvest_count": 1,
+    "regrows": false,
+    "seasons": ["fall"]
+  }
+]

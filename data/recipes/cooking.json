@@ -145,5 +145,12 @@
     "output_qty": 1,
     "inputs": { "fish_catfish": 1, "tree_sap": 1 },
     "stamina": 2
+  },
+  {
+    "id": "roasted_pumpkin",
+    "output_id": "roasted_pumpkin",
+    "output_qty": 1,
+    "inputs": { "pumpkin": 1 },
+    "stamina": 2
   }
 ]
