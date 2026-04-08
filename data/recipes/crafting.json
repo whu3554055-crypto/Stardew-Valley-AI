@@ -12,5 +12,12 @@
     "output_qty": 1,
     "inputs": { "wood_log": 3, "copper_bar": 1 },
     "stamina": 3
+  },
+  {
+    "id": "premium_bait_bundle",
+    "output_id": "premium_bait",
+    "output_qty": 3,
+    "inputs": { "worm_bait": 3, "silver_ore": 1 },
+    "stamina": 3
   }
 ]

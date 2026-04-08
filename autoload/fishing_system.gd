@@ -4,12 +4,15 @@ const GT := preload("res://scripts/gathering_tables.gd")
 
 const CAST_COOLDOWN_SEC := 1.45
 const HOOK_WINDOW_SEC := 1.78
-const BAIT_FISH_WEIGHT_MULT := 1.25
+const BAIT_WEIGHT_MULT_BY_TIER := {
+	1: 1.25,  # worm bait
+	2: 1.55   # premium bait
+}
 
 var _last_catch_time: float = -100.0
 var _fish_phase: String = "idle"  # idle | hook
 var _hook_deadline: float = 0.0
-var _bait_flag: bool = false
+var _bait_tier: int = 0
 
 func get_fish_zone(player_pos: Vector2) -> String:
 	if player_pos.x >= 1000.0 and player_pos.y >= 220.0 and player_pos.y <= 520.0:
@@ -48,7 +51,7 @@ func handle_fish_input(player_pos: Vector2) -> Dictionary:
 	if GameManager and not GameManager.try_consume_stamina(4.0):
 		return {"ok": false, "message": "Too tired to fish."}
 
-	_bait_flag = InventoryManager.count_item("worm_bait") > 0
+	_bait_tier = _resolve_best_bait_tier()
 	_fish_phase = "hook"
 	_hook_deadline = now + HOOK_WINDOW_SEC
 	if GatheringSfx:
@@ -75,10 +78,11 @@ func _resolve_catch(player_pos: Vector2) -> Dictionary:
 		wx = str(WeatherSystem.get_weather_name()).to_lower()
 
 	var weights: Dictionary = GT.get_fish_table(zone, season, hour, raining, wx)
-	if _bait_flag:
+	if _bait_tier > 0:
+		var mult: float = float(BAIT_WEIGHT_MULT_BY_TIER.get(_bait_tier, 1.0))
 		for k in weights.keys():
 			if str(k).begins_with("fish_"):
-				weights[k] = float(weights[k]) * BAIT_FISH_WEIGHT_MULT
+				weights[k] = float(weights[k]) * mult
 
 	var item_id: String = _weighted_pick(weights)
 	if item_id.is_empty():
@@ -108,8 +112,8 @@ func _grant_catch(item_id: String, junk_message: String) -> Dictionary:
 		return {"ok": false, "message": "Inventory full."}
 	if GatheringSfx:
 		GatheringSfx.play_fish_catch()
-	if _bait_flag:
-		InventoryManager.consume_item_by_id("worm_bait", 1)
+	if _bait_tier > 0:
+		_consume_bait_for_tier(_bait_tier)
 	if GatheringAlmanac:
 		GatheringAlmanac.record_fish(item_id)
 	# Quests: count real fish only (junk_* does not advance "catch fish" tutorials).
@@ -132,3 +136,19 @@ func _catch_message(item_id: String, template: Dictionary) -> String:
 			return "A flat halibut from the deep — heavy pull on the line."
 		_:
 			return "You caught a %s!" % str(template.get("name", item_id))
+
+
+func _resolve_best_bait_tier() -> int:
+	if InventoryManager.count_item("premium_bait") > 0:
+		return 2
+	if InventoryManager.count_item("worm_bait") > 0:
+		return 1
+	return 0
+
+
+func _consume_bait_for_tier(tier: int) -> void:
+	match tier:
+		2:
+			InventoryManager.consume_item_by_id("premium_bait", 1)
+		1:
+			InventoryManager.consume_item_by_id("worm_bait", 1)

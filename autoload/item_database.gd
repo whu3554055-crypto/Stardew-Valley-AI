@@ -466,6 +466,17 @@ func initialize_items():
 		"sell_price": 2
 	}
 
+	items["premium_bait"] = {
+		"id": "premium_bait",
+		"name": "Premium Bait",
+		"description": "High-grade bait that significantly improves fish odds.",
+		"type": "bait",
+		"stack": 1,
+		"max_stack": 99,
+		"buy_price": 26,
+		"sell_price": 6
+	}
+
 	# Fishing (MVP)
 	items["fish_sardine"] = {
 		"id": "fish_sardine",
@@ -789,6 +800,9 @@ func resolve_icon_path(item_id: String) -> String:
 			if ResourceLoader.exists("res://assets/sprites/items/resources/stone.png"):
 				return "res://assets/sprites/items/resources/stone.png"
 		"worm_bait":
+			if ResourceLoader.exists("res://assets/sprites/environment/greenery/grass_clump.png"):
+				return "res://assets/sprites/environment/greenery/grass_clump.png"
+		"premium_bait":
 			if ResourceLoader.exists("res://assets/sprites/environment/greenery/grass_clump.png"):
 				return "res://assets/sprites/environment/greenery/grass_clump.png"
 		"sprinkler_basic":

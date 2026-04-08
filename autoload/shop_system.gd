@@ -175,6 +175,7 @@ func _fallback_stock() -> Dictionary:
 		"bread": {"price": 50, "stock": 99},
 		"fishing_rod": {"price": 120, "stock": 10},
 		"worm_bait": {"price": 8, "stock": 99},
+		"premium_bait": {"price": 26, "stock": 40},
 		"pickaxe_iron": {"price": 800, "stock": 3}
 	}
 

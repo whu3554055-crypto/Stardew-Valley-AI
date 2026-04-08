@@ -10,6 +10,7 @@
     { "id": "bread", "price": 50, "stock": 99 },
     { "id": "fishing_rod", "price": 120, "stock": 10 },
     { "id": "worm_bait", "price": 8, "stock": 99 },
+    { "id": "premium_bait", "price": 26, "stock": 40 },
     { "id": "pickaxe_iron", "price": 800, "stock": 3 }
   ]
 }
