@@ -195,10 +195,16 @@ func _update_activity_zone_label() -> void:
 			var ft: int = farm_manager.farm_tier
 			var td: Dictionary = FarmTierCatalog.tier_def(ft)
 			var nm: String = str(td.get("display_name", "?"))
+			var gmult: float = FarmTierCatalog.growth_speed_multiplier(ft)
+			var hch: float = FarmTierCatalog.harvest_bonus_chance(ft)
+			var hmax: int = FarmTierCatalog.harvest_bonus_max(ft)
+			var speed_pct: int = int(round((gmult - 1.0) * 100.0))
+			var bonus_text: String = "yield +%d%% up to +%d" % [int(round(hch * 100.0)), hmax]
+			var speed_text: String = "grow %+d%%" % speed_pct
 			if FarmTierCatalog.next_tier_def(ft).is_empty():
-				activity_zone_label.text = "农场 · T%d %s（已满级）" % [ft, nm]
+				activity_zone_label.text = "农场 · T%d %s · %s · %s · 已满级" % [ft, nm, speed_text, bonus_text]
 			else:
-				activity_zone_label.text = "农场 · T%d %s · U 升级" % [ft, nm]
+				activity_zone_label.text = "农场 · T%d %s · %s · %s · U 升级" % [ft, nm, speed_text, bonus_text]
 			return
 	activity_zone_label.text = ""
 
