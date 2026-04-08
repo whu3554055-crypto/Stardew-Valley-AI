@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "interaction": {
+    "house_upgrade_rect": [560, 240, 300, 220],
+    "hud_line_upgradable": "house · L{level} {name} · +{stamina_bonus} max stamina · H upgrade",
+    "hud_line_max": "house · L{level} {name} · +{stamina_bonus} max stamina · max",
+    "tip_outside": "Stand near the farmhouse to upgrade.",
+    "tip_not_enough_gold": "Not enough gold ({gold}g needed).",
+    "tip_missing_materials": "Missing materials for house upgrade.",
+    "tip_upgraded": "House upgraded to {name}! Max stamina +{stamina_bonus}.",
+    "tip_max": "House is already at max level."
+  },
+  "levels": [
+    {
+      "level": 1,
+      "name": "Cabin",
+      "stamina_max_bonus": 0,
+      "upgrade_cost_gold": 0,
+      "upgrade_cost_items": {}
+    },
+    {
+      "level": 2,
+      "name": "Cozy House",
+      "stamina_max_bonus": 20,
+      "upgrade_cost_gold": 700,
+      "upgrade_cost_items": { "wood_log": 40, "copper_bar": 2 }
+    }
+  ]
+}

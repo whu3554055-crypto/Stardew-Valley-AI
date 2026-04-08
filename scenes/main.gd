@@ -32,6 +32,7 @@ const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
 const SAVE_BUNDLE_VERSION := 2
 const PIERRE_SHOP_RADIUS_PX := 140.0
+const BASE_STAMINA_MAX := 100.0
 
 func _ready():
 	# Connect signals
@@ -49,6 +50,7 @@ func _ready():
 	_refresh_world_event_feed_ui()
 	if not had_savegame:
 		give_starter_items()
+		_ensure_house_level_default()
 	if QuestSystem:
 		QuestSystem.quest_started.connect(_on_quest_log_changed)
 		QuestSystem.quest_updated.connect(_on_quest_log_changed)
@@ -70,7 +72,7 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop near Pierre | U = farm tier (on field, see data/farm/tiers.json)")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop near Pierre | U = farm tier | H = house upgrade")
 	print("======================================")
 
 func _process(_delta: float) -> void:
@@ -222,6 +224,19 @@ func _update_activity_zone_label() -> void:
 					"bonus_text": bonus_text
 				})
 			return
+	if player and BuildingUpgradeCatalog:
+		var hr: Rect2 = BuildingUpgradeCatalog.get_house_rect()
+		if hr.has_point(player.global_position):
+			var lv: int = int(GameManager.player_data.get("house_level", 1))
+			var cur: Dictionary = BuildingUpgradeCatalog.level_def(lv)
+			var nm: String = str(cur.get("name", "Cabin"))
+			var bonus: int = int(cur.get("stamina_max_bonus", 0))
+			var next: Dictionary = BuildingUpgradeCatalog.next_level_def(lv)
+			if next.is_empty():
+				activity_zone_label.text = BuildingUpgradeCatalog.format_message("hud_line_max", {"level": lv, "name": nm, "stamina_bonus": bonus})
+			else:
+				activity_zone_label.text = BuildingUpgradeCatalog.format_message("hud_line_upgradable", {"level": lv, "name": nm, "stamina_bonus": bonus})
+			return
 	activity_zone_label.text = ""
 
 func _try_load_save_bundle() -> bool:
@@ -241,10 +256,12 @@ func _try_load_save_bundle() -> bool:
 func _apply_save_bundle(bundle: Dictionary) -> void:
 	if bundle.get("player") is Dictionary:
 		GameManager.player_data = bundle["player"].duplicate(true)
+		_ensure_house_level_default()
 		if not GameManager.player_data.has("stamina"):
 			GameManager.player_data["stamina"] = 100.0
 		if not GameManager.player_data.has("stamina_max"):
 			GameManager.player_data["stamina_max"] = 100.0
+		_apply_house_stamina_bonus()
 	if bundle.get("farm") is Dictionary and farm_manager:
 		farm_manager.load_farm_data(bundle["farm"])
 	if bundle.get("inventory") is Dictionary and InventoryManager:
@@ -652,6 +669,62 @@ func _try_farm_tier_upgrade() -> void:
 		show_quick_tip(m)
 
 
+func _ensure_house_level_default() -> void:
+	if not GameManager:
+		return
+	if not GameManager.player_data.has("house_level"):
+		GameManager.player_data["house_level"] = 1
+	_apply_house_stamina_bonus()
+
+
+func _apply_house_stamina_bonus() -> void:
+	if not GameManager:
+		return
+	var lv: int = int(GameManager.player_data.get("house_level", 1))
+	var d: Dictionary = BuildingUpgradeCatalog.level_def(lv) if BuildingUpgradeCatalog else {}
+	var bonus: float = float(d.get("stamina_max_bonus", 0.0))
+	var smax: float = BASE_STAMINA_MAX + bonus
+	GameManager.player_data["stamina_max"] = smax
+	var scur: float = float(GameManager.player_data.get("stamina", smax))
+	GameManager.player_data["stamina"] = minf(scur, smax)
+
+
+func _try_house_upgrade() -> void:
+	if not BuildingUpgradeCatalog or not GameManager or not player:
+		return
+	var hr: Rect2 = BuildingUpgradeCatalog.get_house_rect()
+	if not hr.has_point(player.global_position):
+		show_quick_tip(BuildingUpgradeCatalog.format_message("tip_outside"))
+		return
+	var lv: int = int(GameManager.player_data.get("house_level", 1))
+	var next: Dictionary = BuildingUpgradeCatalog.next_level_def(lv)
+	if next.is_empty():
+		show_quick_tip(BuildingUpgradeCatalog.format_message("tip_max"))
+		return
+	var cost_gold: int = int(next.get("upgrade_cost_gold", 0))
+	var costs: Dictionary = next.get("upgrade_cost_items", {})
+	if int(GameManager.player_data.get("gold", 0)) < cost_gold:
+		show_quick_tip(BuildingUpgradeCatalog.format_message("tip_not_enough_gold", {"gold": cost_gold}))
+		return
+	for k in costs.keys():
+		var need: int = int(costs[k])
+		if InventoryManager.count_item(str(k)) < need:
+			show_quick_tip(BuildingUpgradeCatalog.format_message("tip_missing_materials"))
+			return
+	GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) - cost_gold
+	for k in costs.keys():
+		InventoryManager.consume_item_by_id(str(k), int(costs[k]))
+	GameManager.player_data["house_level"] = lv + 1
+	_apply_house_stamina_bonus()
+	var now_def: Dictionary = BuildingUpgradeCatalog.level_def(lv + 1)
+	var nm: String = str(now_def.get("name", "House"))
+	var bonus: int = int(now_def.get("stamina_max_bonus", 0))
+	var msg: String = BuildingUpgradeCatalog.format_message("tip_upgraded", {"name": nm, "stamina_bonus": bonus})
+	show_dialogue(msg)
+	record_world_event(msg)
+	update_ui()
+
+
 func _try_open_shop_near_pierre() -> void:
 	if not shop_ui:
 		return
@@ -859,6 +932,9 @@ func _unhandled_input(event):
 		return
 	if event.is_action_pressed("farm_upgrade"):
 		_try_farm_tier_upgrade()
+		return
+	if event.is_action_pressed("house_upgrade"):
+		_try_house_upgrade()
 		return
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()
