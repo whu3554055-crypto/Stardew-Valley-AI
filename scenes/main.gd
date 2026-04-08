@@ -340,7 +340,10 @@ func _try_eat_selected_food() -> bool:
 	if GameManager:
 		GameManager.restore_stamina(amt)
 	InventoryManager.remove_item(slot, 1)
-	show_quick_tip("Ate %s (+%d energy)" % [nm, int(ceil(amt))])
+	show_quick_tip(UITextCatalog.format_text("quick_tip", "eat_food_energy", {
+		"item": nm,
+		"energy": int(ceil(amt))
+	}))
 	update_ui()
 	if QuestSystem:
 		QuestSystem.track_event("consume_food", {"item_id": item_id, "count": 1})
@@ -367,7 +370,9 @@ func _try_harvest_facing_tile(tile_coords: Vector2i) -> bool:
 	var pnm: String = str(template.get("name", product_id))
 	show_dialogue("Harvested: %s ×%d" % [pnm, count])
 	if int(h.get("tier_bonus", 0)) > 0:
-		show_quick_tip("Farm tier bonus: +%d yield" % int(h.get("tier_bonus", 0)))
+		show_quick_tip(UITextCatalog.format_text("quick_tip", "farm_tier_bonus_yield", {
+			"yield": int(h.get("tier_bonus", 0))
+		}))
 	record_world_event("Harvested %s ×%d" % [product_id, count])
 	update_ui()
 	return true
@@ -452,10 +457,10 @@ func _on_player_interact(tile_position: Vector2):
 					InventoryManager.add_item(tpl_pick.duplicate(true))
 					if GatheringSfx:
 						GatheringSfx.play_mine_swing()
-					show_quick_tip("已收回洒水器。")
+					show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_pickup_success"))
 					update_ui()
 					return
-			show_quick_tip("背包已满，无法收回洒水器。")
+			show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_pickup_inventory_full"))
 			return
 
 	# Mining: pickaxe (basic or iron), Y band = depth; iron pick for deep gold
@@ -500,7 +505,7 @@ func _on_player_interact(tile_position: Vector2):
 		if GameManager:
 			var sc: float = float(GameManager.player_data.get("stamina", 0.0))
 			if sc < 5.0:
-				show_quick_tip("体力不足，无法放置洒水器。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_place_no_stamina"))
 				return
 		var sp_res: Dictionary = farm_manager.try_place_sprinkler(tile_coords)
 		if sp_res.get("ok", false):
@@ -509,18 +514,18 @@ func _on_player_interact(tile_position: Vector2):
 			InventoryManager.remove_item(InventoryManager.selected_slot, 1)
 			if GatheringSfx:
 				GatheringSfx.play_water()
-			show_quick_tip("洒水器已放置：已浇灌邻格；之后每天清晨再浇一次。")
+			show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_place_success"))
 			update_ui()
 			return
 		match str(sp_res.get("reason", "")):
 			"not_tilled":
-				show_quick_tip("需要先犁地，且该地块不能种作物。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_place_not_tilled"))
 			"has_crop":
-				show_quick_tip("该地块已有作物，请换一块空地。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_place_has_crop"))
 			"has_sprinkler":
-				show_quick_tip("这里已有洒水器。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_place_has_sprinkler"))
 			_:
-				show_quick_tip("无法在此放置洒水器。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "sprinkler_place_failed"))
 		return
 
 	# Fertilizer — empty tilled tile only; next successful plant gets −1 growth day (see FarmManager).
@@ -529,16 +534,16 @@ func _on_player_interact(tile_position: Vector2):
 			var fert_res: Dictionary = farm_manager.try_apply_fertilizer(tile_coords)
 			if fert_res.get("ok", false):
 				InventoryManager.remove_item(InventoryManager.selected_slot, 1)
-				show_quick_tip("已施肥：本格下次播种少需 1 天成熟（最短仍 2 天）。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "fertilizer_apply_success"))
 				update_ui()
 				return
 			if str(fert_res.get("reason", "")) == "already_fertilized":
-				show_quick_tip("这块地已经施过肥了。")
+				show_quick_tip(UITextCatalog.get_text("quick_tip", "fertilizer_apply_already"))
 				return
 		elif farm_manager.is_tile_tilled(tile_coords):
-			show_quick_tip("请在没有作物、没有洒水器的空地上施肥。")
+			show_quick_tip(UITextCatalog.get_text("quick_tip", "fertilizer_apply_needs_empty_tilled"))
 		else:
-			show_quick_tip("只能给已犁好的空地施肥。")
+			show_quick_tip(UITextCatalog.get_text("quick_tip", "fertilizer_apply_needs_tilled"))
 		return
 
 	# Eat food / crops / fish with stamina_restore (select item, press E)
@@ -560,7 +565,7 @@ func _on_player_interact(tile_position: Vector2):
 				else:
 					match str(plant_res.get("reason", "")):
 						"wrong_season":
-							show_quick_tip("当前季节不适合种这种作物。")
+							show_quick_tip(UITextCatalog.get_text("quick_tip", "plant_wrong_season"))
 						_:
 							pass
 		elif selected_item.id == "hoe":

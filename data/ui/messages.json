@@ -10,12 +10,27 @@
     "chop_forest": "伐木 · 森林"
   },
   "quick_tip": {
+    "eat_food_energy": "Ate {item} (+{energy} energy)",
+    "farm_tier_bonus_yield": "Farm tier bonus: +{yield} yield",
     "farm_upgrade_stand_on_field": "Stand on the farm field to upgrade.",
     "shop_open_near_pierre": "Open the shop near Pierre.",
     "sell_nothing_selected": "Nothing selected to sell.",
     "sell_item_cannot": "This item can't be sold.",
     "sell_success_gold": "Sold for {gold}g.",
     "shop_bought_item": "Bought {item}",
-    "shop_purchase_failed": "Can't afford or out of stock."
+    "shop_purchase_failed": "Can't afford or out of stock.",
+    "sprinkler_pickup_success": "Sprinkler recovered.",
+    "sprinkler_pickup_inventory_full": "Inventory full, cannot recover sprinkler.",
+    "sprinkler_place_no_stamina": "Not enough stamina to place a sprinkler.",
+    "sprinkler_place_success": "Sprinkler placed: watered neighbors now and every morning.",
+    "sprinkler_place_not_tilled": "Tile must be tilled and empty (no crop) before placing sprinkler.",
+    "sprinkler_place_has_crop": "Tile already has a crop. Choose an empty plot.",
+    "sprinkler_place_has_sprinkler": "A sprinkler already exists here.",
+    "sprinkler_place_failed": "Can't place a sprinkler here.",
+    "fertilizer_apply_success": "Fertilized: next crop on this tile matures 1 day faster (min 2 days).",
+    "fertilizer_apply_already": "This tile is already fertilized.",
+    "fertilizer_apply_needs_empty_tilled": "Fertilize only empty tilled tiles (no crop, no sprinkler).",
+    "fertilizer_apply_needs_tilled": "Fertilizer requires tilled soil.",
+    "plant_wrong_season": "This crop cannot be planted in the current season."
   }
 }
