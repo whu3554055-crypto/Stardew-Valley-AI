@@ -634,7 +634,7 @@ func _try_farm_tier_upgrade() -> void:
 		return
 	var fr: Rect2 = FarmTierCatalog.get_farm_upgrade_rect()
 	if not fr.has_point(player.global_position):
-		show_quick_tip("Stand on the farm field to upgrade.")
+		show_quick_tip(UITextCatalog.get_text("quick_tip", "farm_upgrade_stand_on_field"))
 		return
 	var res: Dictionary = farm_manager.try_upgrade_next_tier()
 	if res.get("ok", false):
@@ -654,7 +654,7 @@ func _try_open_shop_near_pierre() -> void:
 		shop_ui.close_shop()
 		return
 	if not _is_near_pierre():
-		show_quick_tip("Open the shop near Pierre.")
+		show_quick_tip(UITextCatalog.get_text("quick_tip", "shop_open_near_pierre"))
 		return
 	shop_ui.open_shop()
 
@@ -665,20 +665,20 @@ func _try_sell_selected_inventory() -> bool:
 	var slot: int = InventoryManager.selected_slot
 	var item = InventoryManager.get_item(slot)
 	if item == null:
-		show_quick_tip("Nothing selected to sell.")
+		show_quick_tip(UITextCatalog.get_text("quick_tip", "sell_nothing_selected"))
 		return false
 	var item_id: String = str(item.get("id", ""))
 	if item_id.is_empty():
 		return false
 	if ShopSystem.get_sell_price_per_unit(item_id) <= 0:
-		show_quick_tip("This item can't be sold.")
+		show_quick_tip(UITextCatalog.get_text("quick_tip", "sell_item_cannot"))
 		return false
 	if ShopSystem.sell_from_slot(slot, 1):
 		update_ui()
 		if shop_ui and shop_ui.visible:
 			shop_ui.update_gold_display()
 		var unit: int = ShopSystem.get_sell_price_per_unit(item_id)
-		show_quick_tip("Sold for %dg." % unit)
+		show_quick_tip(UITextCatalog.format_text("quick_tip", "sell_success_gold", {"gold": unit}))
 		return true
 	return false
 
@@ -689,13 +689,13 @@ func _on_shop_purchase(item_id: String, quantity: int) -> void:
 	if ShopSystem.purchase_item(item_id, quantity):
 		var tpl: Dictionary = ItemDatabase.get_item(item_id)
 		var nm: String = str(tpl.get("name", item_id)) if not tpl.is_empty() else item_id
-		show_quick_tip("Bought %s" % nm)
+		show_quick_tip(UITextCatalog.format_text("quick_tip", "shop_bought_item", {"item": nm}))
 		update_ui()
 		if shop_ui:
 			shop_ui.populate_shop_items()
 			shop_ui.update_gold_display()
 	else:
-		show_quick_tip("Can't afford or out of stock.")
+		show_quick_tip(UITextCatalog.get_text("quick_tip", "shop_purchase_failed"))
 
 
 func _on_quest_completed(quest_id: String):

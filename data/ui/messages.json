@@ -8,5 +8,14 @@
     "mine_band_1": "铁矿带",
     "mine_band_2": "深脉",
     "chop_forest": "伐木 · 森林"
+  },
+  "quick_tip": {
+    "farm_upgrade_stand_on_field": "Stand on the farm field to upgrade.",
+    "shop_open_near_pierre": "Open the shop near Pierre.",
+    "sell_nothing_selected": "Nothing selected to sell.",
+    "sell_item_cannot": "This item can't be sold.",
+    "sell_success_gold": "Sold for {gold}g.",
+    "shop_bought_item": "Bought {item}",
+    "shop_purchase_failed": "Can't afford or out of stock."
   }
 }
