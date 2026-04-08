@@ -4,6 +4,7 @@ class_name ShopSystem
 
 # Shop inventory
 var shop_stock = {}
+const STOCK_CONFIG_PATH := "res://data/shop/stock.json"
 
 signal shop_opened
 signal item_purchased(item_id, quantity)
@@ -11,25 +12,19 @@ signal item_sold(item_id, quantity)
 
 func _ready():
 	initialize_shop()
+	if GameManager:
+		GameManager.season_changed.connect(_on_season_changed)
 
 func initialize_shop():
-	# Pierre's General Store stock
-	shop_stock = {
-		"parsnip_seeds": {"price": 20, "stock": 99},
-		"cauliflower_seeds": {"price": 80, "stock": 99},
-		"potato_seeds": {"price": 50, "stock": 99},
-		"corn_seeds": {"price": 150, "stock": 99},
-		"pumpkin_seeds": {"price": 120, "stock": 99},
-		"basic_fertilizer": {"price": 35, "stock": 99},
-		"bread": {"price": 50, "stock": 99},
-		"fishing_rod": {"price": 120, "stock": 10},
-		"worm_bait": {"price": 8, "stock": 99},
-		"pickaxe_iron": {"price": 800, "stock": 3}
-	}
+	shop_stock = _load_stock_from_json()
 
 func open_shop():
 	shop_opened.emit()
-	return shop_stock
+	var visible: Dictionary = {}
+	for item_id in shop_stock.keys():
+		if _is_item_available_now(item_id):
+			visible[item_id] = shop_stock[item_id]
+	return visible
 
 func get_buy_price(item_id: String) -> int:
 	if not shop_stock.has(item_id):
@@ -41,6 +36,8 @@ func get_buy_price(item_id: String) -> int:
 
 func purchase_item(item_id: String, quantity: int = 1) -> bool:
 	if not shop_stock.has(item_id):
+		return false
+	if not _is_item_available_now(item_id):
 		return false
 
 	var item_data = shop_stock[item_id]
@@ -127,3 +124,63 @@ func sell_from_slot(slot: int, quantity: int = 1) -> bool:
 
 func get_sell_value(item_id: String) -> int:
 	return get_sell_price_per_unit(item_id)
+
+
+func _load_stock_from_json() -> Dictionary:
+	var out: Dictionary = {}
+	var f: FileAccess = FileAccess.open(STOCK_CONFIG_PATH, FileAccess.READ)
+	if f == null:
+		push_warning("ShopSystem: missing %s, using fallback stock." % STOCK_CONFIG_PATH)
+		return _fallback_stock()
+	var txt: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(txt) != OK or not (json.data is Dictionary):
+		push_warning("ShopSystem: failed to parse %s, using fallback stock." % STOCK_CONFIG_PATH)
+		return _fallback_stock()
+	var d: Dictionary = json.data
+	var arr: Array = d.get("items", [])
+	for row in arr:
+		if not (row is Dictionary):
+			continue
+		var item_id: String = str(row.get("id", ""))
+		if item_id.is_empty():
+			continue
+		out[item_id] = {
+			"price": int(row.get("price", 0)),
+			"stock": int(row.get("stock", 0)),
+			"seasons": row.get("seasons", [])
+		}
+	if out.is_empty():
+		return _fallback_stock()
+	return out
+
+
+func _fallback_stock() -> Dictionary:
+	return {
+		"parsnip_seeds": {"price": 20, "stock": 99, "seasons": ["spring"]},
+		"cauliflower_seeds": {"price": 80, "stock": 99, "seasons": ["spring"]},
+		"potato_seeds": {"price": 50, "stock": 99, "seasons": ["spring"]},
+		"corn_seeds": {"price": 150, "stock": 99, "seasons": ["summer"]},
+		"pumpkin_seeds": {"price": 120, "stock": 99, "seasons": ["fall"]},
+		"basic_fertilizer": {"price": 35, "stock": 99},
+		"bread": {"price": 50, "stock": 99},
+		"fishing_rod": {"price": 120, "stock": 10},
+		"worm_bait": {"price": 8, "stock": 99},
+		"pickaxe_iron": {"price": 800, "stock": 3}
+	}
+
+
+func _is_item_available_now(item_id: String) -> bool:
+	if not shop_stock.has(item_id):
+		return false
+	var row: Dictionary = shop_stock[item_id]
+	var seasons: Variant = row.get("seasons", [])
+	if seasons is Array and seasons.size() > 0 and GameManager:
+		var cur: String = str(GameManager.player_data.get("season", "spring"))
+		return cur in seasons
+	return true
+
+
+func _on_season_changed(_new_season) -> void:
+	pass

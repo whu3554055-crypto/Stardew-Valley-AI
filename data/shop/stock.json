@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "items": [
+    { "id": "parsnip_seeds", "price": 20, "stock": 99, "seasons": ["spring"] },
+    { "id": "cauliflower_seeds", "price": 80, "stock": 99, "seasons": ["spring"] },
+    { "id": "potato_seeds", "price": 50, "stock": 99, "seasons": ["spring"] },
+    { "id": "corn_seeds", "price": 150, "stock": 99, "seasons": ["summer"] },
+    { "id": "pumpkin_seeds", "price": 120, "stock": 99, "seasons": ["fall"] },
+    { "id": "basic_fertilizer", "price": 35, "stock": 99 },
+    { "id": "bread", "price": 50, "stock": 99 },
+    { "id": "fishing_rod", "price": 120, "stock": 10 },
+    { "id": "worm_bait", "price": 8, "stock": 99 },
+    { "id": "pickaxe_iron", "price": 800, "stock": 3 }
+  ]
+}
