@@ -6,10 +6,12 @@ class_name ShopUI
 @onready var player_gold_label = $PlayerGoldLabel
 @onready var total_label = $TotalLabel
 @onready var title_label = $TitleLabel
+@onready var season_label = $SeasonLabel
 @onready var close_button = $CloseButton
 
 var current_total = 0
 var cart = {}
+var show_unavailable_seasonal_items := true
 
 signal shop_closed
 signal purchase_confirmed(item_id, quantity)
@@ -33,6 +35,10 @@ func _apply_shop_chrome() -> void:
 		total_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
 		total_label.add_theme_constant_override("shadow_offset_x", 1)
 		total_label.add_theme_constant_override("shadow_offset_y", 1)
+	if season_label:
+		season_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
+		season_label.add_theme_constant_override("shadow_offset_x", 1)
+		season_label.add_theme_constant_override("shadow_offset_y", 1)
 	if close_button:
 		var csb := StyleBoxFlat.new()
 		csb.bg_color = Color(0.14, 0.13, 0.12, 0.95)
@@ -52,6 +58,7 @@ func _shop_item_button_style() -> StyleBoxFlat:
 
 func open_shop():
 	visible = true
+	_update_season_header()
 	populate_shop_items()
 	update_gold_display()
 
@@ -64,7 +71,7 @@ func populate_shop_items():
 	for child in shop_items_container.get_children():
 		child.queue_free()
 
-	var shop_stock = ShopSystem.open_shop()
+	var shop_stock: Dictionary = ShopSystem.get_display_stock(show_unavailable_seasonal_items) if ShopSystem else {}
 
 	for item_id in shop_stock:
 		var item_data = shop_stock[item_id]
@@ -72,12 +79,22 @@ func populate_shop_items():
 		if item_template.is_empty():
 			continue
 		var live_price: int = ShopSystem.get_buy_price(item_id)
+		var available: bool = bool(item_data.get("available", true))
 
 		var item_button = Button.new()
-		item_button.text = "%s - %dg (Stock: %d)" % [item_template.name, live_price, item_data.stock]
+		item_button.text = "%s - %dg (Stock: %d)%s" % [
+			item_template.name,
+			live_price,
+			item_data.stock,
+			"" if available else " [Out of season]"
+		]
 		item_button.custom_minimum_size = Vector2(200, 40)
 		item_button.flat = true
+		item_button.disabled = not available
 		var row := _shop_item_button_style()
+		if not available:
+			row.bg_color = Color(0.11, 0.11, 0.11, 0.86)
+			row.border_color = Color(0.26, 0.26, 0.26, 0.85)
 		item_button.add_theme_stylebox_override("normal", row)
 		item_button.add_theme_stylebox_override("hover", _shop_item_button_style())
 		item_button.add_theme_stylebox_override("pressed", _shop_item_button_style())
@@ -91,6 +108,13 @@ func _on_item_selected(item_id: String, price: int):
 
 func update_gold_display():
 	player_gold_label.text = "Your Gold: %dg" % GameManager.player_data.gold
+
+
+func _update_season_header() -> void:
+	if not season_label or not GameManager:
+		return
+	var season: String = str(GameManager.player_data.get("season", "spring")).capitalize()
+	season_label.text = "Season: %s" % season
 
 func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel") and visible:

@@ -20,10 +20,18 @@ func initialize_shop():
 
 func open_shop():
 	shop_opened.emit()
+	return get_display_stock(false)
+
+
+func get_display_stock(include_unavailable: bool = false) -> Dictionary:
 	var visible: Dictionary = {}
 	for item_id in shop_stock.keys():
-		if _is_item_available_now(item_id):
-			visible[item_id] = shop_stock[item_id]
+		var row: Dictionary = shop_stock[item_id]
+		var available: bool = _is_item_available_now(item_id)
+		if available or include_unavailable:
+			var out_row: Dictionary = row.duplicate(true)
+			out_row["available"] = available
+			visible[item_id] = out_row
 	return visible
 
 func get_buy_price(item_id: String) -> int:
