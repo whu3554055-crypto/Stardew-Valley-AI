@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" load_steps=3 format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://brfmoomtneksd"]
 
 [sub_resource type="AudioEffectLowPassFilter" id="lp_amb"]
 resource_name = "ImmersionAmbienceLP"
@@ -6,12 +6,12 @@ cutoff_hz = 20500.0
 
 [sub_resource type="AudioEffectReverb" id="rev_mine"]
 resource_name = "MineDeepReverb"
+predelay_msec = 28.0
 room_size = 0.82
-wet = 0.14
-dry = 0.96
 damping = 0.55
 spread = 0.95
-predelay_msec = 28.0
+dry = 0.96
+wet = 0.14
 
 [resource]
 bus/1/name = &"Music"
