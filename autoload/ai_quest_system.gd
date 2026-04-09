@@ -880,6 +880,7 @@ func complete_quest(quest_id: String, success: bool = true, extra_data: Dictiona
 		# Grant rewards
 		grant_quest_rewards(quest)
 		quest_completed.emit(quest_id, "success", quest.rewards)
+		_emit_structured_completion_feedback(quest_id, quest)
 	else:
 		quest_failed.emit(quest_id, extra_data.get("reason", "Unknown"))
 	
@@ -907,6 +908,19 @@ func grant_quest_rewards(quest: Dictionary):
 		var tpl: Dictionary = ItemDatabase.get_item(item_id) if ItemDatabase else {}
 		if not tpl.is_empty() and InventoryManager:
 			InventoryManager.add_item(tpl.duplicate(true))
+
+func _emit_structured_completion_feedback(quest_id: String, quest: Dictionary) -> void:
+	var title: String = str(quest.get("name", quest_id))
+	var gold: int = int(quest.get("rewards", {}).get("gold", 0))
+	var target_item: String = str(quest.get("target_item", ""))
+	var market_note: String = ""
+	if AIEconomySystem and not target_item.is_empty():
+		market_note = str(AIEconomySystem.get_market_brief(target_item))
+	var line: String = "AI Quest done: %s | gold +%d" % [title, gold]
+	if not market_note.is_empty():
+		line += " | market %s" % market_note
+	if get_tree() and get_tree().current_scene and get_tree().current_scene.has_method("record_world_event"):
+		get_tree().current_scene.call("record_world_event", line)
 
 func update_narrative_from_quest(quest: Dictionary, success: bool):
 	"""Update narrative threads based on quest outcome"""
