@@ -135,7 +135,13 @@
     "cooking_title": "Cooking — pick a recipe (E again to close)",
     "smelting_title": "Smelting — pick a recipe (E again to close)",
     "crafting_title": "Workbench — pick a recipe (E again to close)",
-    "empty_detail": "(No recipe data — check data/recipes/*.json)"
+    "empty_detail": "(No recipe data — check data/recipes/*.json)",
+    "tag_ok": "[OK]",
+    "tag_need": "[Need mats]",
+    "materials_ok": "(all materials ready)",
+    "detail_block": "Output: {name} ×{qty}\nStamina: {stamina}\nMaterials: {mat_line}",
+    "btn_confirm": "Confirm",
+    "btn_close": "Close"
   },
   "player_creation": {
     "title": "Create your farmer",

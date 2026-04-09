@@ -54,6 +54,7 @@ func _ready() -> void:
 	btn_close.pressed.connect(close_picker)
 	item_list.item_selected.connect(_on_item_selected)
 	item_list.item_activated.connect(_on_item_activated)
+	_apply_recipe_button_labels()
 
 func set_seasonal_accent(accent: Color, title_text: Color = Color(0.92, 0.93, 0.94)) -> void:
 	_season_accent = accent
@@ -87,7 +88,22 @@ func _apply_recipe_button_styles() -> void:
 		btn_close.add_theme_stylebox_override("hover", _recipe_btn_style())
 		btn_close.add_theme_stylebox_override("pressed", _recipe_btn_style())
 
+func _apply_recipe_button_labels() -> void:
+	if not UITextCatalog:
+		return
+	if btn_confirm:
+		var c: String = UITextCatalog.get_text("recipe_picker", "btn_confirm")
+		if not c.is_empty():
+			btn_confirm.text = c
+	if btn_close:
+		var cl: String = UITextCatalog.get_text("recipe_picker", "btn_close")
+		if not cl.is_empty():
+			btn_close.text = cl
+
+
 func refresh_locale() -> void:
+	if UITextCatalog:
+		_apply_recipe_button_labels()
 	if not UITextCatalog or mode == "":
 		return
 	if _title:
@@ -110,6 +126,7 @@ func refresh_locale() -> void:
 func open_picker(p_mode: String, p_recipes: Array) -> void:
 	mode = p_mode
 	recipes = p_recipes
+	_apply_recipe_button_labels()
 	if UITextCatalog:
 		var tt: String = UITextCatalog.get_recipe_picker_title(p_mode)
 		_title.text = tt if not tt.is_empty() else str(TITLE_BY_MODE.get(p_mode, "Recipe"))
@@ -138,7 +155,14 @@ func _format_row(recipe: Dictionary) -> String:
 	var nm: String = UITextCatalog.get_item_display_name(out_id) if UITextCatalog else str(ItemDatabase.get_item(out_id).get("name", out_id))
 	var cost: Dictionary = RecipeHelpers.recipe_cost(recipe)
 	var ok: bool = _can_afford(cost)
-	var tag: String = "[可]" if ok else "[缺]"
+	var tag: String = "[OK]" if ok else "[Need]"
+	if UITextCatalog:
+		var tk: String = "tag_ok" if ok else "tag_need"
+		var t2: String = UITextCatalog.get_text("recipe_picker", tk)
+		if not t2.is_empty():
+			tag = t2
+	else:
+		tag = "[可]" if ok else "[缺]"
 	var gap: String = RecipeHelpers.format_material_gap(cost)
 	var line: String = "%s %s ×%d" % [tag, nm, qty]
 	if not gap.is_empty():
@@ -167,8 +191,21 @@ func _on_item_selected(idx: int) -> void:
 	var nm: String = UITextCatalog.get_item_display_name(out_id) if UITextCatalog else str(ItemDatabase.get_item(out_id).get("name", out_id))
 	var cost: Dictionary = RecipeHelpers.recipe_cost(r)
 	var gap: String = RecipeHelpers.format_material_gap(cost)
-	var gap_line: String = gap if not gap.is_empty() else "（材料足够）"
-	detail.text = "产出：%s ×%d\n体力：%.0f\n材料：%s" % [nm, qty, st, gap_line]
+	var gap_line: String = gap
+	if gap_line.is_empty() and UITextCatalog:
+		var okm: String = UITextCatalog.get_text("recipe_picker", "materials_ok")
+		gap_line = okm if not okm.is_empty() else "(ready)"
+	elif gap_line.is_empty():
+		gap_line = "（材料足够）"
+	if UITextCatalog:
+		detail.text = UITextCatalog.format_text("recipe_picker", "detail_block", {
+			"name": nm,
+			"qty": qty,
+			"stamina": "%.0f" % st,
+			"mat_line": gap_line
+		})
+	else:
+		detail.text = "产出：%s ×%d\n体力：%.0f\n材料：%s" % [nm, qty, st, gap_line]
 	btn_confirm.disabled = not _recipe_ok(idx)
 
 func _on_item_activated(idx: int) -> void:

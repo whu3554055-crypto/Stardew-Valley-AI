@@ -135,7 +135,13 @@
     "cooking_title": "烹饪 — 选择配方（再按 E 关闭）",
     "smelting_title": "熔炼 — 选择配方（再按 E 关闭）",
     "crafting_title": "工作台 — 选择配方（再按 E 关闭）",
-    "empty_detail": "（无配方数据：检查 data/recipes/*.json）"
+    "empty_detail": "（无配方数据：检查 data/recipes/*.json）",
+    "tag_ok": "[可]",
+    "tag_need": "[缺]",
+    "materials_ok": "（材料足够）",
+    "detail_block": "产出：{name} ×{qty}\n体力：{stamina}\n材料：{mat_line}",
+    "btn_confirm": "确认",
+    "btn_close": "关闭"
   },
   "player_creation": {
     "title": "创建你的农夫",
