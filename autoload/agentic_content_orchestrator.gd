@@ -469,6 +469,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var temporal: Dictionary = _check_temporal_stability_constraints(steps)
 	if not bool(temporal.get("ok", false)):
 		return temporal
+	var action_semantic: Dictionary = _check_objective_action_semantics(steps)
+	if not bool(action_semantic.get("ok", false)):
+		return action_semantic
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -1408,6 +1411,41 @@ func _count_objective_type(steps: Array, objective_type: String) -> int:
 		if ot == objective_type:
 			n += 1
 	return n
+
+func _check_objective_action_semantics(steps: Array) -> Dictionary:
+	# Catch subtle "semantic drift": objective type says one action, text implies another.
+	var hint_words: Dictionary = {
+		"talk": ["talk", "speak", "ask", "meet", "report"],
+		"harvest": ["harvest", "pick", "gather", "collect crops"],
+		"fish_caught": ["fish", "catch", "reel", "hook"],
+		"mine_ore": ["mine", "ore", "dig", "pickaxe"],
+		"earn_gold": ["sell", "gold", "trade", "market", "cargo"]
+	}
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var objective: Dictionary = sd.get("objective", {})
+		var ot: String = str(objective.get("type", "")).strip_edges()
+		if ot.is_empty() or not hint_words.has(ot):
+			continue
+		var blob: String = ("%s %s" % [str(sd.get("title", "")), str(sd.get("description", ""))]).to_lower()
+		var target_hints: Array = hint_words[ot]
+		var matched_target: bool = false
+		for w in target_hints:
+			if blob.find(str(w)) >= 0:
+				matched_target = true
+				break
+		if not matched_target:
+			return {"ok": false, "error": "semantic_drift_missing_target_action_hint"}
+		# If text strongly hints another action family, reject as ambiguous.
+		for other_type in hint_words.keys():
+			if str(other_type) == ot:
+				continue
+			for ow in (hint_words[other_type] as Array):
+				if blob.find(str(ow)) >= 0:
+					return {"ok": false, "error": "semantic_drift_cross_action_hint"}
+	return {"ok": true}
 
 func _record_daily_reject(_reason: String) -> void:
 	var key: String = _day_key()
