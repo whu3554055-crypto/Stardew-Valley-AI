@@ -1,7 +1,5 @@
 extends Node
 
-class_name DailyNarrativeSystem
-
 # ============================================
 # Daily Narrative Event System
 # Generates themed daily narrative scripts with NPC casting
@@ -336,7 +334,7 @@ func _on_new_day(_new_day: int):
 		return
 	
 	if config.auto_generate_daily:
-		generate_daily_narrative()
+		await generate_daily_narrative()
 
 func generate_daily_narrative(force_theme: String = "") -> Dictionary:
 	"""Generate a complete daily narrative script"""
@@ -365,7 +363,7 @@ func generate_daily_narrative(force_theme: String = "") -> Dictionary:
 		return {}
 	
 	# Step 4: Generate script using AI
-	var script = generate_narrative_script(scenario, cast, theme)
+	var script = await generate_narrative_script(scenario, cast, theme)
 	if script.is_empty():
 		push_error("[DailyNarrativeSystem] Failed to generate script")
 		return {}
@@ -400,7 +398,7 @@ func generate_daily_narrative_playable(force_theme: String = "") -> Dictionary:
 		narrative_generated.emit(ai_narrative.id, ai_narrative)
 		return ai_narrative
 	backend_generation_fallback.emit("backend_unavailable_or_invalid")
-	return generate_daily_narrative(force_theme)
+	return await generate_daily_narrative(force_theme)
 
 func _generate_daily_narrative_from_backend() -> Dictionary:
 	if not AIAgentManager or not AIAgentManager._backend_available or not AIAgentManager.has_method("request_text_generation"):
@@ -1231,7 +1229,7 @@ func apply_mood_modifiers(modifiers: Dictionary):
 		# Apply primary mood modifier
 		for mood_name in modifiers.keys():
 			var intensity = modifiers[mood_name]
-			NPCTraitSystem.set_mood(npc_id, mood_name, intensity, duration=3600.0)
+			NPCTraitSystem.set_mood(npc_id, mood_name, intensity, 3600.0)
 
 func end_narrative_presentation():
 	"""End narrative presentation and restore normal state"""
@@ -1241,9 +1239,9 @@ func end_narrative_presentation():
 	# Clear visual filters
 	remove_visual_filters()
 	
-	# Fade out theme audio
+	# Restore default town ambience after narrative theme
 	if NPCAudioManager:
-		NPCAudioManager.play_ambient_sound("narrative", "", 0.0)
+		NPCAudioManager.play_ambient_sound("town")
 	
 	# Update status
 	current_narrative.status = "completed"

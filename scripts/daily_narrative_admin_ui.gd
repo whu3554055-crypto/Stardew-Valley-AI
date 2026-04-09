@@ -232,7 +232,7 @@ func _on_generate_now_pressed():
 		return
 	
 	print("[DailyNarrativeAdminUI] Generating narrative now...")
-	var narrative = DailyNarrativeSystem.generate_daily_narrative()
+	var narrative = await DailyNarrativeSystem.generate_daily_narrative()
 	
 	if narrative:
 		print("[DailyNarrativeAdminUI] Generated: ", narrative.title)
