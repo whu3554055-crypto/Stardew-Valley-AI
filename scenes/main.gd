@@ -1904,17 +1904,20 @@ func toggle_inventory():
 	var inventory_ui = $UILayer/InventoryUI
 	inventory_ui.visible = not inventory_ui.visible
 
-func save_game():
+func save_game() -> bool:
 	var bundle: Dictionary = _build_save_bundle()
 	var bf: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.WRITE)
-	if bf:
-		bf.store_var(bundle)
-		bf.close()
+	if bf == null:
+		push_warning("Main: failed to open save path for writing: %s" % GAME_SAVE_BUNDLE_PATH)
+		return false
+	bf.store_var(bundle)
+	bf.close()
 	if NPCMemorySystem:
 		NPCMemorySystem.save_memories()
 	if NPCEmotionSystem:
 		NPCEmotionSystem.save_emotion_state()
 	print("Game saved!")
+	return true
 
 
 func _notification(what: int) -> void:
