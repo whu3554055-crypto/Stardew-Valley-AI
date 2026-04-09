@@ -8,12 +8,17 @@ const PATH_SMELT := "res://assets/audio/ui/confirm.wav"
 const PATH_COOK := "res://assets/audio/activities/farming_plant.wav"
 const PATH_CRAFT := "res://assets/audio/ui/notification.wav"
 const PATH_WATER := "res://assets/audio/activities/farming_water.wav"
+const PATH_WALK_GRASS := "res://assets/audio/activities/walking_grass.wav"
 
 var _player: AudioStreamPlayer
+var _foot_player: AudioStreamPlayer
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
 	add_child(_player)
+	_foot_player = AudioStreamPlayer.new()
+	_foot_player.volume_db = -18.0
+	add_child(_foot_player)
 
 func play_fish_cast() -> void:
 	_play_path(PATH_FISH_CAST)
@@ -38,6 +43,15 @@ func play_craft() -> void:
 
 func play_water() -> void:
 	_play_path(PATH_WATER)
+
+func play_footstep_grass(pitch_scale: float = 1.0) -> void:
+	if _foot_player == null:
+		return
+	var st: Resource = load(PATH_WALK_GRASS)
+	if st is AudioStream:
+		_foot_player.stream = st as AudioStream
+		_foot_player.pitch_scale = clampf(pitch_scale, 0.85, 1.15)
+		_foot_player.play()
 
 func _play_path(path: String) -> void:
 	var st: Resource = load(path)

@@ -405,6 +405,33 @@ func play_emotion_sound(npc_id: String, emotion: String) -> bool:
 	var pitch = get_npc_voice_pitch(npc_id)
 	return play_npc_sound(npc_id, "emotion_%s" % emotion, sound_path, 0.0, pitch, 5)
 
+func play_basic_emotion_sting(npc_id: String, emotion: int, intensity: float) -> bool:
+	"""Short SFX for NPCEmotionSystem.BasicEmotion (used with HUD mood feed)."""
+	if intensity < 0.38:
+		return false
+	if not audio_config.enable_emotion_sounds:
+		return false
+	var file_key: String = _map_basic_emotion_to_wav(emotion)
+	var path: String = "res://assets/audio/emotions/%s.wav" % file_key
+	if not ResourceLoader.exists(path):
+		path = "res://assets/audio/emotions/neutral.wav"
+	return play_npc_sound(npc_id, "emotion_ambient_sting", path, -10.0, randf_range(0.92, 1.08), 2)
+
+func _map_basic_emotion_to_wav(emotion: int) -> String:
+	match emotion:
+		NPCEmotionSystem.BasicEmotion.HAPPY, NPCEmotionSystem.BasicEmotion.GRATEFUL, NPCEmotionSystem.BasicEmotion.CONFIDENT, NPCEmotionSystem.BasicEmotion.ROMANTIC:
+			return "happy"
+		NPCEmotionSystem.BasicEmotion.SAD, NPCEmotionSystem.BasicEmotion.LONELY, NPCEmotionSystem.BasicEmotion.NOSTALGIC:
+			return "sad"
+		NPCEmotionSystem.BasicEmotion.ANGRY:
+			return "angry"
+		NPCEmotionSystem.BasicEmotion.EXCITED, NPCEmotionSystem.BasicEmotion.PLAYFUL:
+			return "excited"
+		NPCEmotionSystem.BasicEmotion.CALM, NPCEmotionSystem.BasicEmotion.SHY, NPCEmotionSystem.BasicEmotion.SERIOUS, NPCEmotionSystem.BasicEmotion.NEUTRAL:
+			return "neutral"
+		_:
+			return "neutral"
+
 func play_activity_sound(npc_id: String, activity: String) -> bool:
 	"""Play activity-related sound"""
 	if not audio_config.enable_activity_sounds:
@@ -533,16 +560,16 @@ func get_emotion_sound_path(npc_id: String, emotion: String) -> String:
 	if EnhancedPersonalitySystem:
 		return EnhancedPersonalitySystem.get_audio_file(npc_id, "emotion", emotion)
 	
-	# Fallback to generic sounds
 	var emotion_sounds = {
-		"happy": "res://assets/audio/sfx/laugh_light.wav",
-		"excited": "res://assets/audio/sfx/excited_vocal.wav",
-		"sad": "res://assets/audio/sfx/sigh_disappointed.wav",
-		"angry": "res://assets/audio/sfx/frustrated.wav",
-		"surprised": "res://assets/audio/sfx/gasp.wav",
-		"thinking": "res://assets/audio/sfx/hmm.wav"
+		"happy": "res://assets/audio/emotions/happy.wav",
+		"excited": "res://assets/audio/emotions/excited.wav",
+		"sad": "res://assets/audio/emotions/sad.wav",
+		"angry": "res://assets/audio/emotions/angry.wav",
+		"surprised": "res://assets/audio/emotions/surprised.wav",
+		"neutral": "res://assets/audio/emotions/neutral.wav",
+		"thinking": "res://assets/audio/emotions/neutral.wav"
 	}
-	return emotion_sounds.get(emotion, "")
+	return emotion_sounds.get(emotion, emotion_sounds["neutral"])
 
 func get_activity_sound_path(npc_id: String, activity: String) -> String:
 	"""Get path to activity sound file"""

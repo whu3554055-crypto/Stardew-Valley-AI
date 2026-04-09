@@ -1230,6 +1230,8 @@ func _on_visible_emotion_changed(npc_id: String, new_emotion: int, intensity: fl
 	var em_line: String = "Mood · %s feels %s (%d%%)." % [who2, label, pct]
 	record_world_event(em_line)
 	show_quick_tip(em_line, 1.75)
+	if NPCAudioManager:
+		NPCAudioManager.play_basic_emotion_sting(npc_id, new_emotion, intensity)
 
 func _resolve_npc_display_name(npc_id: String) -> String:
 	var nid: String = str(npc_id).strip_edges()

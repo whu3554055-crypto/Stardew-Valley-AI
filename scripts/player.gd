@@ -8,6 +8,8 @@ var _animation_player: AnimationPlayer
 
 var facing_direction = Vector2.DOWN
 var is_moving = false
+var _footstep_cooldown: float = 0.0
+const FOOTSTEP_INTERVAL := 0.38
 
 signal interacted(tile_position)
 
@@ -35,6 +37,15 @@ func _physics_process(delta):
 
 	velocity = velocity_input.normalized() * SPEED
 	is_moving = velocity_input.length() > 0
+
+	if is_moving:
+		_footstep_cooldown -= delta
+		if _footstep_cooldown <= 0.0:
+			_footstep_cooldown = FOOTSTEP_INTERVAL
+			if GatheringSfx:
+				GatheringSfx.play_footstep_grass(randf_range(0.94, 1.08))
+	else:
+		_footstep_cooldown = 0.0
 
 	# Flip sprite; optional AnimationPlayer if present in scene
 	if is_moving:
