@@ -34,6 +34,7 @@ var _manual_queue: Array = []
 var _performance: Dictionary = {}
 var _crop_seasons_by_id: Dictionary = {}
 var _recent_signatures: Array = []
+var _failure_pressure: Dictionary = {"streak": 0, "last_day": -1}
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -430,6 +431,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var state_guard: Dictionary = _check_current_player_state_fit(steps)
 	if not bool(state_guard.get("ok", false)):
 		return state_guard
+	var spiral: Dictionary = _check_failure_spiral_protection(steps)
+	if not bool(spiral.get("ok", false)):
+		return spiral
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -547,8 +551,12 @@ func _on_managed_chain_resolved(outcome: Dictionary) -> void:
 	var row: Dictionary = _ensure_perf_row(chain_id)
 	if result == "failed":
 		row["failed"] = int(row.get("failed", 0)) + 1
+		_failure_pressure["streak"] = int(_failure_pressure.get("streak", 0)) + 1
+		_failure_pressure["last_day"] = _current_day_index()
 	else:
 		row["success"] = int(row.get("success", 0)) + 1
+		_failure_pressure["streak"] = 0
+		_failure_pressure["last_day"] = _current_day_index()
 	row["samples"] = int(row.get("samples", 0)) + 1
 	row["last_result"] = result
 	_performance[chain_id] = row
@@ -613,6 +621,9 @@ func _load_runtime_store() -> void:
 	var stats: Dictionary = root.get("stats", {})
 	if stats is Dictionary:
 		_stats = stats.duplicate(true)
+	var fp: Dictionary = root.get("failure_pressure", {})
+	if fp is Dictionary:
+		_failure_pressure = fp.duplicate(true)
 
 func _save_runtime_store() -> void:
 	var rows: Array = []
@@ -625,6 +636,7 @@ func _save_runtime_store() -> void:
 		"chains": rows,
 		"performance": _performance.duplicate(true),
 		"recent_signatures": _recent_signatures.duplicate(),
+		"failure_pressure": _failure_pressure.duplicate(),
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1135,6 +1147,43 @@ func _check_current_player_state_fit(steps: Array) -> Dictionary:
 			if ot2 in ["harvest", "fish_caught", "mine_ore"]:
 				return {"ok": false, "error": "player_state_low_inventory_for_gather_chain"}
 	return {"ok": true}
+
+func _check_failure_spiral_protection(steps: Array) -> Dictionary:
+	var streak: int = int(_failure_pressure.get("streak", 0))
+	if streak < 2:
+		return {"ok": true}
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var objective: Dictionary = (s as Dictionary).get("objective", {})
+		if str(objective.get("type", "")) != "earn_gold":
+			continue
+		var need: int = int(objective.get("count", 0))
+		if need > 110:
+			return {"ok": false, "error": "failure_spiral_earn_gold_too_high"}
+	if not _has_recovery_supply_reward(steps):
+		return {"ok": false, "error": "failure_spiral_missing_supply_reward"}
+	return {"ok": true}
+
+func _has_recovery_supply_reward(steps: Array) -> bool:
+	var recovery_items: Dictionary = {
+		"bread": true,
+		"worm_bait": true,
+		"basic_fertilizer": true,
+		"parsnip_seeds": true,
+		"potato_seeds": true,
+		"corn_seeds": true,
+		"pumpkin_seeds": true
+	}
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var reward: Dictionary = (s as Dictionary).get("reward", {})
+		for item_spec in reward.get("items", []):
+			var item_id: String = str(item_spec).split(":")[0]
+			if recovery_items.has(item_id):
+				return true
+	return false
 
 func _estimate_free_inventory_slots() -> int:
 	if InventoryManager == null:
