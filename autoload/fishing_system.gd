@@ -17,11 +17,7 @@ var _hook_start_time: float = 0.0
 var _bait_tier: int = 0
 
 func get_fish_zone(player_pos: Vector2) -> String:
-	if player_pos.x >= 1000.0 and player_pos.y >= 220.0 and player_pos.y <= 520.0:
-		return "river"
-	if player_pos.y >= 480.0:
-		return "ocean"
-	return ""
+	return GameZones.get_fish_zone_id(player_pos)
 
 func can_fish_here(player_pos: Vector2) -> bool:
 	return get_fish_zone(player_pos) != ""
