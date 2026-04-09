@@ -527,7 +527,6 @@ func _update_activity_zone_label() -> void:
 		var fr: Rect2 = GameZones.rect_farm_upgrade()
 		if fr.has_point(player.global_position):
 			var ft: int = farm_manager.farm_tier
-			var td: Dictionary = FarmTierCatalog.tier_def(ft)
 			var nm: String = FarmTierCatalog.localized_display_name(ft)
 			var gmult: float = FarmTierCatalog.growth_speed_multiplier(ft)
 			var hch: float = FarmTierCatalog.harvest_bonus_chance(ft)
