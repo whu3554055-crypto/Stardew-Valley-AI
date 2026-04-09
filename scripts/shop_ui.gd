@@ -102,13 +102,17 @@ func populate_shop_items():
 			continue
 		var live_price: int = ShopSystem.get_buy_price(item_id)
 		var available: bool = bool(item_data.get("available", true))
+		var market_note: String = ""
+		if AIEconomySystem:
+			market_note = str(AIEconomySystem.get_market_brief(item_id))
 
 		var item_button = Button.new()
-		item_button.text = "%s - %dg (Stock: %d)%s" % [
+		item_button.text = "%s - %dg (Stock: %d)%s%s" % [
 			item_template.name,
 			live_price,
 			item_data.stock,
-			"" if available else " [Out of season]"
+			"" if available else " [Out of season]",
+			("  [%s]" % market_note) if not market_note.is_empty() else ""
 		]
 		item_button.custom_minimum_size = Vector2(200, 40)
 		item_button.flat = true

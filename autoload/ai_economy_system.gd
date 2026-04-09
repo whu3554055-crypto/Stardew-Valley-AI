@@ -655,6 +655,21 @@ func get_shop_sell_price(item_id: String, base_sell_price: int) -> int:
 	"""Apply the same market ratio to sell values as to buy prices (base = item sell_price)."""
 	return get_shop_buy_price(item_id, base_sell_price)
 
+func get_market_brief(item_id: String) -> String:
+	"""Player-visible short market hint, e.g. ↑+12% / ↓-8% / ~0%."""
+	if not market_state.items.has(item_id):
+		return ""
+	var m: Dictionary = market_state.items[item_id]
+	var base_p: float = float(m.get("base_price", 1.0))
+	var cur_p: float = float(m.get("current_price", base_p))
+	var pct: int = int(round((cur_p / maxf(1.0, base_p) - 1.0) * 100.0))
+	var trend: String = str(m.get("trend", "stable"))
+	if trend == "rising":
+		return "↑%+d%%" % pct
+	if trend == "falling":
+		return "↓%+d%%" % pct
+	return "~%+d%%" % pct
+
 func on_shop_trade(item_id: String, quantity: int, is_purchase_from_shop: bool) -> void:
 	"""
 	Player-facing minimum economy loop:
