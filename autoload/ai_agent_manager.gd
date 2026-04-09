@@ -222,6 +222,10 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 	- temperature (float, optional)
 	- max_tokens (int, optional)
 	- extra_options (Dictionary, optional)
+	- use_backend (bool, optional; default false)
+	- backend_path (String, optional; requires use_backend)
+	- backend_body (Dictionary, optional)
+	- backend_text_key (String, optional; default "response")
 	"""
 	var prompt: String = str(request.get("prompt", ""))
 	if prompt.is_empty():
@@ -230,25 +234,36 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 	var http := HTTPRequest.new()
 	add_child(http)
 
-	var url: String = "%s/api/generate" % str(api_config.get("base_url", "http://localhost:11434"))
 	var headers := ["Content-Type: application/json"]
+	var use_backend: bool = bool(request.get("use_backend", false))
+	var backend_path: String = str(request.get("backend_path", ""))
+	var backend_body: Dictionary = request.get("backend_body", {})
+	var backend_text_key: String = str(request.get("backend_text_key", "response"))
+	var body_payload: Dictionary = {}
+	var url: String = ""
 
-	var options: Dictionary = {
-		"temperature": float(request.get("temperature", api_config.get("temperature", 0.7))),
-		"num_predict": int(request.get("max_tokens", api_config.get("max_tokens", 256))),
-	}
-	var extra_options: Dictionary = request.get("extra_options", {})
-	if extra_options is Dictionary:
-		options.merge(extra_options, true)
+	if use_backend and _backend_available and not backend_path.is_empty():
+		url = "%s%s" % [str(api_config.get("backend_url", "http://localhost:8080")), backend_path]
+		body_payload = backend_body if backend_body is Dictionary else {}
+		if body_payload.is_empty():
+			body_payload = {"prompt": prompt}
+	else:
+		url = "%s/api/generate" % str(api_config.get("base_url", "http://localhost:11434"))
+		var options: Dictionary = {
+			"temperature": float(request.get("temperature", api_config.get("temperature", 0.7))),
+			"num_predict": int(request.get("max_tokens", api_config.get("max_tokens", 256))),
+		}
+		var extra_options: Dictionary = request.get("extra_options", {})
+		if extra_options is Dictionary:
+			options.merge(extra_options, true)
+		body_payload = {
+			"model": str(request.get("model", api_config.get("model", "qwen3.5:9b"))),
+			"prompt": prompt,
+			"stream": false,
+			"options": options
+		}
 
-	var body := {
-		"model": str(request.get("model", api_config.get("model", "qwen3.5:9b"))),
-		"prompt": prompt,
-		"stream": false,
-		"options": options
-	}
-
-	var error := http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body))
+	var error := http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body_payload))
 	if error != OK:
 		http.queue_free()
 		return {"ok": false, "error": "Request failed: %s" % str(error)}
@@ -266,9 +281,19 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 
 	var data: Dictionary = json.data if json.data is Dictionary else {}
 	http.queue_free()
+	var text_out: String = ""
+	if use_backend and not backend_path.is_empty():
+		if data.has(backend_text_key):
+			text_out = str(data.get(backend_text_key, ""))
+		elif data.has("summary"):
+			text_out = str(data.get("summary", ""))
+		else:
+			text_out = str(data.get("response", "..."))
+	else:
+		text_out = str(data.get("response", "..."))
 	return {
 		"ok": true,
-		"text": str(data.get("response", "...")),
+		"text": text_out,
 		"raw": data
 	}
 
