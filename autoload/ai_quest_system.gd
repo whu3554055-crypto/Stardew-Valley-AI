@@ -36,6 +36,7 @@ var generation_state = {
 var narrative_threads = []
 var daily_narrative_cache = {}
 var _verify_tick_accum: float = 0.0
+var _recent_events: Array = []
 
 func _ready():
 	initialize_quest_system()
@@ -47,6 +48,15 @@ func _process(delta: float) -> void:
 		return
 	_verify_tick_accum = 0.0
 	verify_active_objectives()
+
+func track_event(event_type: String, data: Dictionary = {}) -> void:
+	_recent_events.append({
+		"type": event_type,
+		"data": data.duplicate(true),
+		"ts": Time.get_unix_time_from_system()
+	})
+	while _recent_events.size() > 24:
+		_recent_events.pop_front()
 
 func initialize_quest_system():
 	"""Initialize the quest generation system"""
@@ -633,6 +643,7 @@ func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: D
 		
 		"problem_solving":
 			quest.problem = generate_problem(npc_id)
+			quest.quest_giver = npc_id
 			quest.description = quest.description.replace("{problem}", quest.problem)
 	
 	return quest
@@ -720,6 +731,17 @@ func verify_active_objectives() -> void:
 				continue
 			if InventoryManager.consume_item_by_id(item_id2, need2):
 				complete_quest(str(qid), true, {"verified_by": "inventory_delivery", "item_id": item_id2, "count": need2})
+		elif qtype == "problem_solving":
+			var giver: String = str(quest.get("quest_giver", ""))
+			if giver.is_empty():
+				continue
+			for ev in _recent_events:
+				if str(ev.get("type", "")) != "talk":
+					continue
+				var ed: Dictionary = ev.get("data", {})
+				if str(ed.get("npc_id", "")) == giver:
+					complete_quest(str(qid), true, {"verified_by": "talk_problem_solving", "npc_id": giver})
+					break
 
 func assign_quest_to_player(quest: Dictionary):
 	"""Assign generated quest to player"""

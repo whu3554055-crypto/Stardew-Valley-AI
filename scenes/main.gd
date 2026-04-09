@@ -599,6 +599,8 @@ func _on_player_interact(tile_position: Vector2):
 		show_dialogue(dialogue)
 		if QuestSystem:
 			QuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
+		if AIQuestSystem:
+			AIQuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
 		return
 
 	if recipe_picker and recipe_picker.visible:
