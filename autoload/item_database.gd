@@ -1,8 +1,6 @@
 extends Node
 
-class_name ItemDatabase
-
-# Item database singleton
+# Item database singleton (autoload: ItemDatabase — no class_name; avoids hiding singleton in Godot 4.6+)
 var items = {}
 
 func _ready():
@@ -334,6 +332,17 @@ func initialize_items():
 		"max_stack": 99,
 		"sell_price": 130,
 		"stamina_restore": 44.0
+	}
+
+	items["corn_potato_hash"] = {
+		"id": "corn_potato_hash",
+		"name": "Corn & Potato Hash",
+		"description": "Summer skillet — sweet corn and hearty potato.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 142,
+		"stamina_restore": 46.0
 	}
 
 	items["hearty_braise"] = {
@@ -840,6 +849,9 @@ func resolve_icon_path(item_id: String) -> String:
 		"hearty_pumpkin_bowl":
 			if ResourceLoader.exists("res://assets/sprites/items/consumables/bread.png"):
 				return "res://assets/sprites/items/consumables/bread.png"
+		"corn_potato_hash":
+			if ResourceLoader.exists("res://assets/sprites/items/crops/corn.png"):
+				return "res://assets/sprites/items/crops/corn.png"
 		"amethyst_shard":
 			if ResourceLoader.exists("res://assets/sprites/items/resources/silver_ore.png"):
 				return "res://assets/sprites/items/resources/silver_ore.png"

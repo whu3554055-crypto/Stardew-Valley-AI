@@ -159,5 +159,12 @@
     "output_qty": 1,
     "inputs": { "pumpkin": 1, "potato": 1, "bread": 1 },
     "stamina": 5
+  },
+  {
+    "id": "corn_potato_hash",
+    "output_id": "corn_potato_hash",
+    "output_qty": 1,
+    "inputs": { "corn": 1, "potato": 1 },
+    "stamina": 3
   }
 ]
