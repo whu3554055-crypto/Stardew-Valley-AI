@@ -42,6 +42,7 @@
 | 日期 | A1 | A2 | A3 | Commit |
 |------|----|----|-----|--------|
 | 2026-04-08 | 烹饪 `hearty_pumpkin_bowl`（南瓜+土豆+面包） | 钓鱼咬钩：过早 / 超时提示区分 | `WorldEventFeed` 边框季节色 | 见 `git log -1 --oneline` |
+| 2026-04-09 | 烹饪 **`corn_potato_hash`**（玉米+土豆） | 雨天 **海洋** 比目鱼权重 +8%（`GatheringTables`） | `TODO.md` A1 进度一句 | 见 `git log` |
 
 ## 轻测试闭环记录
 

@@ -36,10 +36,11 @@
 - [x] **工具动作短暂压低环境**：挖矿成功 / 砍树成功 / 咬钩提示 / 钓鱼成功时 `WorldAmbientController.request_activity_duck(…)`。  
 - [x] **雨雪粒子风向**：暴雨更斜、更强侧风；雪略调 `gravity`/`direction`。  
 - [x] **工具失败进简报**：矿/林/鱼失败时 `record_world_event` 一行（与对话一致）。  
-- [ ] **音频与天气常量外置**：`PATH_*`、色调、`dB` 偏移收到单份 JSON / Resource，便于策划调参。  
-- [ ] **区域检测统一入口**：钓鱼/砍树/农场/商店等矩形逐步收敛到 `GameZones` + 少量专用 API，避免改一处漏一处。  
-- [ ] **UI 与天气**：面板/边框在现有季节 accent 下，可按天气只做轻量 `modulate` 或透明度（不动布局）。  
-- [ ] **Ambience 总线效果（可选）**：雨天为 Ambience 加轻量低通或音量曲线（需 `AudioEffect` 与资源）。  
+- [x] **音频与天气常量外置**：`data/presentation/immersion_config.json` + `ImmersionConfig` autoload；`WorldAmbientController` / `WorldWeatherVisuals` / `weather_overlay` / `GatheringSfx.shop_bell` 读配置。  
+- [x] **区域检测统一入口（钓鱼区）**：`GameZones.get_fish_zone_id()` 与 JSON `zones.fish_*` 对齐；`FishingSystem.get_fish_zone()` 委托 `GameZones`（避免坐标双写）。  
+- [x] **区域检测收口（工作站 / 矿区 / 升级区）**：`zones.stations` 与 `zones.mine` 在 `immersion_config.json`；`GameZones` 提供 `rect_*` / `can_mine_here` / `mine_depth_from_global_y` / `rect_farm_upgrade`（委托 `FarmTierCatalog`）/ `rect_house_upgrade`（委托 `BuildingUpgradeCatalog`）；`main`/`MiningSystem`/`WorldAmbientController` 经 `GameZones` 取矩形。  
+- [x] **UI 与天气**：`_apply_seasonal_hud_tint` 在季节 accent 上乘 `visual.ui_weather_accent_mult`（按 `WeatherSystem` 映射）。  
+- [x] **Ambience 总线效果（可选）**：`default_bus_layout.tres` 在 Ambience bus 槽 0 挂 `AudioEffectLowPassFilter`（默认关）；降水时 `ImmersionConfig.apply_ambience_lowpass_for_precipitation(true)`。  
 
 ---
 
@@ -53,7 +54,7 @@
 
 - [ ] **A1 — 单系统加深（第一轮）**  
   在钓鱼 / 挖矿 / 烹饪 / 农场扩展中**选定一条**已有入口的系统，做一轮闭环：**更多内容或规则 + 数值 + 失败/成功提示与反馈**（比开新系统优先）。  
-  *进度：已加深钓鱼 / 挖矿 / 烹饪各一轮；农场：夏季玉米、季节播种、`crop_id`、基础肥料；新增 **Farm Tier 配置**（`data/farm/tiers.json`）与升级（U），并支持可配置收获加成（`harvest_bonus_chance` / `harvest_bonus_max`）；作物库迁移到 `data/farm/crops.json`，新增秋季作物 **pumpkin** 与 `roasted_pumpkin`；商店库存迁移到 `data/shop/stock.json`，种子按季节上架。钓鱼：**狗鱼（河，夜/冬/暴雨偏重）**、**比目鱼（海，秋冬与清晨偏重）**、暴风雨微调；新烤制 `grilled_pike` / `grilled_halibut`。伐木：**树液**随机掉落（约 12%）、装备斧头时活动区 HUD「伐木 · 森林」。烹饪：**树液闭环** — `sap_glazed_toast`（面包+树液）、`sap_glazed_catfish`（鲶鱼+树液）；托管迭代本轮 **`hearty_pumpkin_bowl`**（南瓜+土豆+面包）。挖矿：**深脉** 稀有掉落 `amethyst_shard`（铁镐权重略加成）；煤/铜/铁/石 成功文案区分；熔炉新增 `amethyst_glass`（2 碎块 + 1 煤）。*
+  *进度：已加深钓鱼 / 挖矿 / 烹饪各一轮；农场：夏季玉米、季节播种、`crop_id`、基础肥料；新增 **Farm Tier 配置**（`data/farm/tiers.json`）与升级（U），并支持可配置收获加成（`harvest_bonus_chance` / `harvest_bonus_max`）；作物库迁移到 `data/farm/crops.json`，新增秋季作物 **pumpkin** 与 `roasted_pumpkin`；商店库存迁移到 `data/shop/stock.json`，种子按季节上架。钓鱼：**狗鱼（河，夜/冬/暴雨偏重）**、**比目鱼（海，秋冬与清晨偏重）**、暴风雨微调；新烤制 `grilled_pike` / `grilled_halibut`。伐木：**树液**随机掉落（约 12%）、装备斧头时活动区 HUD「伐木 · 森林」。烹饪：**树液闭环** — `sap_glazed_toast`（面包+树液）、`sap_glazed_catfish`（鲶鱼+树液）；托管迭代本轮 **`hearty_pumpkin_bowl`**（南瓜+土豆+面包）。挖矿：**深脉** 稀有掉落 `amethyst_shard`（铁镐权重略加成）；煤/铜/铁/石 成功文案区分；熔炉新增 `amethyst_glass`（2 碎块 + 1 煤）。**最新**：新增厨房配方 **`corn_potato_hash`**（玉米+土豆，`data/recipes/cooking.json`）。*
 
 - [ ] **A2 — 单系统加深（第二轮）**  
   换另一条系统重复 A1 的标准，避免长期只堆一条线。  
