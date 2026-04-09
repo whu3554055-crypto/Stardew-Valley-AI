@@ -54,18 +54,35 @@ func _ready():
 	initialize_social_network()
 	start_context_updater()
 
+func _sync_from_primary_ai_config() -> void:
+	# Convergence rule: AIAgentManager owns transport/model defaults.
+	if not AIAgentManager:
+		return
+	var src: Dictionary = AIAgentManager.api_config
+	api_config.base_url = str(src.get("base_url", api_config.base_url))
+	api_config.model = str(src.get("model", api_config.model))
+	api_config.temperature = float(src.get("temperature", api_config.temperature))
+	api_config.max_tokens = int(src.get("max_tokens", api_config.max_tokens))
+	api_config.timeout = int(src.get("timeout", api_config.timeout))
+
 func load_config():
+	_sync_from_primary_ai_config()
 	var config_path = "user://advanced_ai_config.json"
 	if FileAccess.file_exists(config_path):
 		var file = FileAccess.open(config_path, FileAccess.READ)
 		var data = JSON.parse_string(file.get_as_text())
-		if data:
-			api_config.merge(data)
+		if data is Dictionary:
+			# Keep only Advanced-local tuning; shared transport/model config comes from AIAgentManager.
+			if data.has("max_concurrent_requests"):
+				api_config.max_concurrent_requests = int(data.get("max_concurrent_requests", api_config.max_concurrent_requests))
 		file.close()
 
 func save_config():
+	# Persist only Advanced-local setting to avoid dual-source drift.
 	var file = FileAccess.open("user://advanced_ai_config.json", FileAccess.WRITE)
-	file.store_string(JSON.stringify(api_config))
+	file.store_string(JSON.stringify({
+		"max_concurrent_requests": int(api_config.get("max_concurrent_requests", 3))
+	}))
 	file.close()
 
 # ============================================
@@ -151,6 +168,7 @@ func process_request(request: Dictionary):
 
 func make_llm_request(agent_id: String, prompt: String, callback: Callable):
 	"""发送 HTTP 请求到 LLM"""
+	_sync_from_primary_ai_config()
 	var gen: Dictionary = {}
 	if AIAgentManager and AIAgentManager.has_method("request_text_generation"):
 		gen = await AIAgentManager.request_text_generation({
