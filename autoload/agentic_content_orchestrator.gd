@@ -22,6 +22,8 @@ var config: Dictionary = {
 	"max_consecutive_failures": 3,
 	"breaker_reopen_days": 2,
 	"default_cooldown_days": 1,
+	"max_chain_expected_value": 760,
+	"max_runtime_value_budget": 2200,
 	"use_ai_first": true,
 	"allow_procedural_fallback": true
 }
@@ -389,6 +391,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var timing: Dictionary = _check_duration_feasibility(steps)
 	if not bool(timing.get("ok", false)):
 		return timing
+	var inflation: Dictionary = _check_reward_inflation(chain_data, steps)
+	if not bool(inflation.get("ok", false)):
+		return inflation
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -869,3 +874,85 @@ func _check_duration_feasibility(steps: Array) -> Dictionary:
 			"budget_minutes": budget_minutes
 		}
 	return {"ok": true}
+
+func _check_reward_inflation(chain_data: Dictionary, steps: Array) -> Dictionary:
+	var expected_value: int = _estimate_chain_expected_value(steps)
+	var chain_cap: int = int(config.get("max_chain_expected_value", 760))
+	if expected_value > chain_cap:
+		return {
+			"ok": false,
+			"error": "chain_expected_value_too_high",
+			"expected_value": expected_value,
+			"cap": chain_cap
+		}
+	var runtime_budget: int = int(config.get("max_runtime_value_budget", 2200))
+	var projected_total: int = expected_value
+	if QuestSystem:
+		for chain_id in _runtime_chain_ids:
+			if not QuestSystem.chain_templates.has(chain_id):
+				continue
+			var cd: Dictionary = QuestSystem.chain_templates[chain_id]
+			projected_total += _estimate_chain_expected_value(cd.get("steps", []))
+	if projected_total > runtime_budget:
+		return {
+			"ok": false,
+			"error": "runtime_value_budget_exceeded",
+			"projected_total": projected_total,
+			"budget": runtime_budget
+		}
+	# Optional dynamic baseline vs built-in template average value.
+	var baseline_avg: float = _estimate_existing_chain_value_baseline()
+	if baseline_avg > 0.0 and float(expected_value) > baseline_avg * 1.45:
+		return {
+			"ok": false,
+			"error": "expected_value_far_above_baseline",
+			"expected_value": expected_value,
+			"baseline_avg": baseline_avg
+		}
+	return {"ok": true}
+
+func _estimate_chain_expected_value(steps: Array) -> int:
+	var total: int = 0
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var reward: Dictionary = sd.get("reward", {})
+		total += int(reward.get("gold", 0))
+		var items: Array = reward.get("items", [])
+		for item_spec in items:
+			total += _estimate_item_spec_sell_value(str(item_spec))
+		var pool: Dictionary = reward.get("pool", {})
+		var entries: Array = pool.get("entries", [])
+		var draws: int = maxi(0, int(pool.get("count", 1)))
+		total += int(round(_estimate_pool_expected_value(entries) * float(draws)))
+	return total
+
+func _estimate_pool_expected_value(entries: Array) -> float:
+	var total_w: float = 0.0
+	var weighted_v: float = 0.0
+	for e in entries:
+		if not (e is Dictionary):
+			continue
+		var ed: Dictionary = e
+		var w: float = maxf(0.0, float(ed.get("weight", 0.0)))
+		if w <= 0.0:
+			continue
+		total_w += w
+		weighted_v += float(_estimate_item_spec_sell_value(str(ed.get("item", "")))) * w
+	if total_w <= 0.0:
+		return 0.0
+	return weighted_v / total_w
+
+func _estimate_existing_chain_value_baseline() -> float:
+	if QuestSystem == null:
+		return 0.0
+	var total: float = 0.0
+	var n: int = 0
+	for chain_id in QuestSystem.chain_templates.keys():
+		var cd: Dictionary = QuestSystem.chain_templates[chain_id]
+		total += float(_estimate_chain_expected_value(cd.get("steps", [])))
+		n += 1
+	if n <= 0:
+		return 0.0
+	return total / float(n)
