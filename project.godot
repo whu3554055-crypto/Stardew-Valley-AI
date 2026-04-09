@@ -136,6 +136,10 @@ CookingSystem="*res://autoload/cooking_system.gd"
 ChoppingSystem="*res://autoload/chopping_system.gd"
 CraftingSystem="*res://autoload/crafting_system.gd"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
 [audio]
 
 buses/default_bus_layout="res://default_bus_layout.tres"

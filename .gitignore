@@ -54,6 +54,11 @@ dist/
 # Logs
 *.log
 logs/
+tools/last_smoke_log.txt
+tools/last_gut_log.txt
+_gut_extract/
+_gut.zip
+_gut_vendor/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
