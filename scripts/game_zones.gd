@@ -16,6 +16,10 @@ static func rect_smelter() -> Rect2:
 static func rect_forest() -> Rect2:
 	return Rect2(40, 95, 280, 180)
 
+## Pierre default ~ (700, 400); used for town crowd / shop-adjacent ambience.
+static func rect_near_pierre() -> Rect2:
+	return Rect2(560, 260, 280, 280)
+
 static func contains_kitchen(pos: Vector2) -> bool:
 	return rect_kitchen().has_point(pos)
 

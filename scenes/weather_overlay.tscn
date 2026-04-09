@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://weather_overlay_layer"]
+
+[ext_resource type="Script" path="res://scripts/weather_overlay.gd" id="1_script"]
+
+[node name="WeatherOverlay" type="CanvasLayer"]
+layer = 85
+script = ExtResource("1_script")

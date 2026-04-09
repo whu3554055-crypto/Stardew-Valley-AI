@@ -30,6 +30,7 @@ var ai_config_instance = null
 var world_event_feed: Array[String] = []
 var managed_chain_status_banner: String = ""
 var active_story_hotspot: Dictionary = {}
+const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
 var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
@@ -103,6 +104,7 @@ func _ready():
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
+	add_child(WEATHER_OVERLAY_SCENE.instantiate())
 	_apply_a3_ui_polish()
 	
 	print("======================================")

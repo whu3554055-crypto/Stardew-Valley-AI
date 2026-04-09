@@ -15,8 +15,10 @@ var _foot_player: AudioStreamPlayer
 
 func _ready() -> void:
 	_player = AudioStreamPlayer.new()
+	_player.bus = "SFX"
 	add_child(_player)
 	_foot_player = AudioStreamPlayer.new()
+	_foot_player.bus = "SFX"
 	_foot_player.volume_db = -18.0
 	add_child(_foot_player)
 

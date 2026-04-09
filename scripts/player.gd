@@ -14,6 +14,7 @@ const FOOTSTEP_INTERVAL := 0.38
 signal interacted(tile_position)
 
 func _ready():
+	add_to_group("player")
 	_animation_player = get_node_or_null("AnimationPlayer") as AnimationPlayer
 	if sprite:
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
