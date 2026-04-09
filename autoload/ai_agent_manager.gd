@@ -40,6 +40,28 @@ func get_generation_trace(limit: int = 20) -> Array:
 		return []
 	return generation_trace_log.slice(generation_trace_log.size() - n, generation_trace_log.size())
 
+func print_generation_trace(limit: int = 20) -> void:
+	var rows: Array = get_generation_trace(limit)
+	print("[AIAgentManager] Generation trace (latest ", rows.size(), "):")
+	for r in rows:
+		var src: String = str(r.get("source", "unknown"))
+		var ok: bool = bool(r.get("ok", false))
+		var elapsed: int = int(r.get("elapsed_ms", -1))
+		var mark: String = "OK" if ok else "ERR"
+		print(" - ", mark, " ", src, " ", elapsed, "ms ", str(r))
+
+func dump_generation_trace_to_file(path: String = "user://ai_generation_trace.log", limit: int = 50) -> bool:
+	var rows: Array = get_generation_trace(limit)
+	var f: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		print("[AIAgentManager] Failed to open trace file: ", path)
+		return false
+	for r in rows:
+		f.store_line(JSON.stringify(r))
+	f.close()
+	print("[AIAgentManager] Wrote ", rows.size(), " trace rows to ", path)
+	return true
+
 func _ready():
 	load_config()
 	# Check backend availability on startup
