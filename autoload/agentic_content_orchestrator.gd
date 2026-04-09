@@ -33,6 +33,7 @@ var _consecutive_failures: int = 0
 var _manual_queue: Array = []
 var _performance: Dictionary = {}
 var _crop_seasons_by_id: Dictionary = {}
+var _recent_signatures: Array = []
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -89,6 +90,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 				_stats["published"] = int(_stats.get("published", 0)) + 1
 				_breaker_state = "open"
 				_record_today_objective_signature(manual_take)
+				_record_recent_signature(manual_take)
 				_emit_runtime_status()
 				return
 		_on_generation_failure("manual_chain_invalid")
@@ -108,6 +110,9 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 		return
 	if _is_near_duplicate_chain(chain_data):
 		_on_generation_failure("near_duplicate_chain")
+		return
+	if _is_short_window_repetition(chain_data):
+		_on_generation_failure("short_window_repetition")
 		return
 	var v: Dictionary = _validate_chain_template(chain_data)
 	if not bool(v.get("ok", false)):
@@ -136,6 +141,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	_stats["published"] = int(_stats.get("published", 0)) + 1
 	_breaker_state = "open"
 	_record_today_objective_signature(chain_data)
+	_record_recent_signature(chain_data)
 	_check_rollout_promotions_and_offline()
 	_emit_runtime_status()
 
@@ -596,6 +602,9 @@ func _load_runtime_store() -> void:
 	var perf: Dictionary = root.get("performance", {})
 	if perf is Dictionary:
 		_performance = perf.duplicate(true)
+	var signatures: Array = root.get("recent_signatures", [])
+	if signatures is Array:
+		_recent_signatures = signatures.duplicate()
 	_breaker_state = str(root.get("breaker_state", _breaker_state))
 	_breaker_last_closed_day = int(root.get("breaker_last_closed_day", _breaker_last_closed_day))
 	var stats: Dictionary = root.get("stats", {})
@@ -612,6 +621,7 @@ func _save_runtime_store() -> void:
 		"version": 1,
 		"chains": rows,
 		"performance": _performance.duplicate(true),
+		"recent_signatures": _recent_signatures.duplicate(),
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1052,3 +1062,36 @@ func _record_today_objective_signature(chain_data: Dictionary) -> void:
 		mix = {}
 	mix[primary] = int(mix.get(primary, 0)) + 1
 	GameManager.player_data[key] = mix
+
+func _chain_signature(chain_data: Dictionary) -> String:
+	var theme: String = ""
+	var preferred: Array = chain_data.get("preferred_themes", [])
+	if not preferred.is_empty():
+		theme = str(preferred[0]).to_lower()
+	var seq: PackedStringArray = []
+	var steps: Array = chain_data.get("steps", [])
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var ot: String = str(sd.get("objective", {}).get("type", "")).to_lower()
+		var cnt: int = int(sd.get("objective", {}).get("count", 1))
+		seq.append("%s:%d" % [ot, cnt])
+	return "%s|%s" % [theme, ",".join(seq)]
+
+func _is_short_window_repetition(chain_data: Dictionary) -> bool:
+	var sig: String = _chain_signature(chain_data)
+	if sig.is_empty():
+		return false
+	for row in _recent_signatures:
+		if str(row) == sig:
+			return true
+	return false
+
+func _record_recent_signature(chain_data: Dictionary) -> void:
+	var sig: String = _chain_signature(chain_data)
+	if sig.is_empty():
+		return
+	_recent_signatures.append(sig)
+	while _recent_signatures.size() > 8:
+		_recent_signatures.pop_front()
