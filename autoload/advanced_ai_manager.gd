@@ -14,6 +14,7 @@ var api_config = {
 	"temperature": 0.85,
 	"max_tokens": 300,
 	"timeout": 30,
+	"llm_provider": "ollama",
 	"max_concurrent_requests": 3  # 最大并发请求数
 }
 
@@ -64,6 +65,7 @@ func _sync_from_primary_ai_config() -> void:
 	api_config.temperature = float(src.get("temperature", api_config.temperature))
 	api_config.max_tokens = int(src.get("max_tokens", api_config.max_tokens))
 	api_config.timeout = int(src.get("timeout", api_config.timeout))
+	api_config.llm_provider = str(src.get("llm_provider", api_config.llm_provider))
 
 func load_config():
 	_sync_from_primary_ai_config()
