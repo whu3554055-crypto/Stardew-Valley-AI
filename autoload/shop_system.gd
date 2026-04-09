@@ -71,6 +71,8 @@ func purchase_item(item_id: String, quantity: int = 1) -> bool:
 		InventoryManager.add_item(item_template.duplicate(true))
 
 	item_purchased.emit(item_id, quantity)
+	if AIEconomySystem:
+		AIEconomySystem.on_shop_trade(item_id, quantity, true)
 	return true
 
 func get_sell_price_per_unit(item_id: String) -> int:
@@ -101,6 +103,8 @@ func sell_item(item_id: String, quantity: int = 1) -> bool:
 
 	GameManager.player_data.gold += sell_price
 	item_sold.emit(item_id, quantity)
+	if AIEconomySystem:
+		AIEconomySystem.on_shop_trade(item_id, quantity, false)
 	if QuestSystem:
 		QuestSystem.track_event("earn_gold", {"gold": sell_price})
 	return true
@@ -126,6 +130,8 @@ func sell_from_slot(slot: int, quantity: int = 1) -> bool:
 		return false
 	GameManager.player_data.gold += sell_price
 	item_sold.emit(item_id, q)
+	if AIEconomySystem:
+		AIEconomySystem.on_shop_trade(item_id, q, false)
 	if QuestSystem:
 		QuestSystem.track_event("earn_gold", {"gold": sell_price})
 	return true

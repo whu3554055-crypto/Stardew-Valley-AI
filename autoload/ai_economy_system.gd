@@ -655,6 +655,30 @@ func get_shop_sell_price(item_id: String, base_sell_price: int) -> int:
 	"""Apply the same market ratio to sell values as to buy prices (base = item sell_price)."""
 	return get_shop_buy_price(item_id, base_sell_price)
 
+func on_shop_trade(item_id: String, quantity: int, is_purchase_from_shop: bool) -> void:
+	"""
+	Player-facing minimum economy loop:
+	- Buying from shop decreases supply pressure and nudges price up.
+	- Selling to shop increases supply and nudges price down.
+	"""
+	if item_id.is_empty() or quantity <= 0:
+		return
+	if not market_state.items.has(item_id):
+		initialize_item_market(item_id)
+	if not market_state.items.has(item_id):
+		return
+	var item: Dictionary = market_state.items[item_id]
+	var q: float = float(quantity)
+	if is_purchase_from_shop:
+		item.supply = clamp(item.supply - q * 1.2, 5.0, 250.0)
+		item.demand = clamp(item.demand + q * 0.9, 10.0, 240.0)
+		record_ai_decision("player_bought", {"item": item_id, "qty": quantity})
+	else:
+		item.supply = clamp(item.supply + q * 1.3, 5.0, 250.0)
+		item.demand = clamp(item.demand - q * 0.6, 10.0, 240.0)
+		record_ai_decision("player_sold", {"item": item_id, "qty": quantity})
+	item.last_updated = Time.get_unix_time_from_system()
+
 # ============================================
 # QUEST ↔ ECONOMY (playable-first feedback loop)
 # ============================================
