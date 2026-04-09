@@ -44,7 +44,8 @@ func _physics_process(delta):
 		if _footstep_cooldown <= 0.0:
 			_footstep_cooldown = FOOTSTEP_INTERVAL
 			if GatheringSfx:
-				GatheringSfx.play_footstep_grass(randf_range(0.94, 1.08))
+				var surf: String = _footstep_surface_kind()
+				GatheringSfx.play_footstep_surface(surf, _footstep_pitch_for_surface(surf))
 	else:
 		_footstep_cooldown = 0.0
 
@@ -61,6 +62,22 @@ func _physics_process(delta):
 			_animation_player.play("idle")
 
 	move_and_slide()
+
+func _footstep_surface_kind() -> String:
+	if GameZones.can_mine_here(global_position):
+		return "mine"
+	if GameZones.is_indoor_station(global_position):
+		return "wood"
+	return "grass"
+
+func _footstep_pitch_for_surface(surf: String) -> float:
+	match surf:
+		"mine":
+			return randf_range(0.72, 0.9)
+		"wood":
+			return randf_range(0.88, 1.02)
+		_:
+			return randf_range(0.94, 1.08)
 
 func _unhandled_input(event):
 	if event.is_action_pressed("interact"):
