@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCPluginManager
-
 # ============================================
 # NPC Plugin Manager - Hybrid Modular Architecture
 # Manages pluggable trait components for NPCs

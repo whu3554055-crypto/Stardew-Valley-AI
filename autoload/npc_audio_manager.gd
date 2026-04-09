@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCAudioManager
-
 # ============================================
 # NPC Audio Management System
 # Handles all NPC-related sound effects and audio feedback

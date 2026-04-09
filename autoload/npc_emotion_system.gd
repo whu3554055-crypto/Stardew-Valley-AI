@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCEmotionSystem
-
 # Emotion model based on OCC (Ortony, Clore, and Collins)
 enum EmotionType {
 	JOY,

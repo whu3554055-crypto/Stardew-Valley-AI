@@ -1,7 +1,5 @@
 extends Node
 
-class_name ShopSystem
-
 # Shop inventory
 var shop_stock = {}
 const STOCK_CONFIG_PATH := "res://data/shop/stock.json"

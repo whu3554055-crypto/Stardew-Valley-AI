@@ -1,7 +1,5 @@
 extends Node
 
-class_name WeatherSystem
-
 enum WeatherType {
 	SUNNY,
 	RAIN,

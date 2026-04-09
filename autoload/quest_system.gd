@@ -1,7 +1,5 @@
 extends Node
 
-class_name QuestSystem
-
 enum QuestStatus {
 	NOT_STARTED,
 	IN_PROGRESS,

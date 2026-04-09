@@ -1,7 +1,5 @@
 extends Node
 
-class_name AchievementSystem
-
 var achievements = {}
 var unlocked_achievements = []
 

@@ -1,7 +1,5 @@
 extends Node
 
-class_name AIQuestSystem
-
 # ============================================
 # AI Quest Generation System
 # Autonomous quest creation based on NPC needs, world state, and narratives

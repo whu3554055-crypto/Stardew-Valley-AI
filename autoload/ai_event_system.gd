@@ -1,7 +1,5 @@
 extends Node
 
-class_name AIEventSystem
-
 # ============================================
 # AI Event Generation System
 # Autonomous event creation: weather, festivals, emergencies, social events

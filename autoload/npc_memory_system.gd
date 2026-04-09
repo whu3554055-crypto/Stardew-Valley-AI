@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCMemorySystem
-
 # Memory types
 enum MemoryType {
 	CONVERSATION,

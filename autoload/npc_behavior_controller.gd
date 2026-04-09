@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCBehaviorController
-
 # ============================================
 # NPC 自主行为控制器
 # 管理 NPC 的日常活动、决策和自动化互动

@@ -1,7 +1,5 @@
 extends Node
 
-class_name AIAgentManager
-
 # AI Agent configuration - Updated for multi-LLM backend
 var api_config = {
 	"backend_url": "http://localhost:8080",  # FastAPI backend endpoint
