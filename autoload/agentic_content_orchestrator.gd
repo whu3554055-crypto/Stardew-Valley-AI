@@ -386,6 +386,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var prog: Dictionary = _check_new_player_reachability(steps)
 	if not bool(prog.get("ok", false)):
 		return prog
+	var timing: Dictionary = _check_duration_feasibility(steps)
+	if not bool(timing.get("ok", false)):
+		return timing
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -831,3 +834,38 @@ func _has_item_anywhere(item_id: String) -> bool:
 		if str(it.get("id", "")) == item_id:
 			return true
 	return false
+
+func _check_duration_feasibility(steps: Array) -> Dictionary:
+	var timeout_days: int = 1
+	if QuestSystem and QuestSystem.managed_chain_failure is Dictionary:
+		timeout_days = maxi(1, int(QuestSystem.managed_chain_failure.get("timeout_days", 1)))
+	var budget_minutes: float = float(timeout_days) * 35.0
+	var estimated_minutes: float = 0.0
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var objective: Dictionary = sd.get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		var cnt: int = maxi(1, int(objective.get("count", 1)))
+		match ot:
+			"talk":
+				estimated_minutes += 3.0
+			"harvest":
+				estimated_minutes += 4.0 + float(cnt) * 2.0
+			"fish_caught":
+				estimated_minutes += 5.0 + float(cnt) * 3.0
+			"mine_ore":
+				estimated_minutes += 6.0 + float(cnt) * 3.0
+			"earn_gold":
+				estimated_minutes += 8.0 + float(cnt) / 24.0
+			_:
+				estimated_minutes += 6.0
+	if estimated_minutes > budget_minutes:
+		return {
+			"ok": false,
+			"error": "duration_over_timeout_budget",
+			"estimated_minutes": estimated_minutes,
+			"budget_minutes": budget_minutes
+		}
+	return {"ok": true}
