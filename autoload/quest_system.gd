@@ -309,6 +309,39 @@ func add_story_daily_quest(event_data: Dictionary):
 	start_quest(quest_id)
 	last_story_quest_day_key = day_key
 
+func add_quest_from_ai(ai_quest: Dictionary) -> void:
+	"""
+	Bridge AIQuestSystem quest into QuestSystem tracking so UI/events stay unified.
+	This keeps QuestSystem read-model consistent without owning AI reward settlement.
+	"""
+	var quest_id: String = str(ai_quest.get("id", ""))
+	if quest_id.is_empty():
+		return
+	if quests.has(quest_id):
+		return
+	var reward_gold: int = int(ai_quest.get("rewards", {}).get("gold", 0))
+	var target_count: int = int(ai_quest.get("target_count", 1))
+	var qtype: String = str(ai_quest.get("type", "fetch"))
+	var objective_type: String = "collect_item" if qtype == "fetch" else "delivery"
+	var objective: Dictionary = {
+		"type": objective_type,
+		"item_id": str(ai_quest.get("target_item", "")),
+		"count": maxi(1, target_count),
+		"current": 0
+	}
+	quests[quest_id] = {
+		"id": quest_id,
+		"title": str(ai_quest.get("name", "AI Quest")),
+		"description": str(ai_quest.get("description", "")),
+		"objectives": [objective],
+		"status": QuestStatus.IN_PROGRESS,
+		"reward": {"gold": reward_gold, "items": []},
+		"source": "ai_quest_system",
+	}
+	if not active_quests.has(quest_id):
+		active_quests.append(quest_id)
+	quest_started.emit(quest_id)
+
 
 func save_snapshot() -> Dictionary:
 	var qd: Dictionary = {}

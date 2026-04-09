@@ -772,7 +772,7 @@ func grant_quest_rewards(quest: Dictionary):
 	
 	if rewards.has("gold") and rewards.gold > 0:
 		if GameManager and GameManager.player_data:
-			GameManager.player_data.money += rewards.gold
+			GameManager.player_data.gold = int(GameManager.player_data.get("gold", 0)) + int(rewards.gold)
 	
 	if rewards.has("friendship"):
 		# Add friendship to quest giver
@@ -781,6 +781,12 @@ func grant_quest_rewards(quest: Dictionary):
 	if rewards.has("skill_xp"):
 		# Grant skill experience
 		pass
+	
+	if rewards.has("item") and rewards.item != null:
+		var item_id: String = str(rewards.item)
+		var tpl: Dictionary = ItemDatabase.get_item(item_id) if ItemDatabase else {}
+		if not tpl.is_empty() and InventoryManager:
+			InventoryManager.add_item(tpl.duplicate(true))
 
 func update_narrative_from_quest(quest: Dictionary, success: bool):
 	"""Update narrative threads based on quest outcome"""
