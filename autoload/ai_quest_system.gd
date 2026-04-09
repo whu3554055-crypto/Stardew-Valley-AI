@@ -553,7 +553,8 @@ Output ONLY in JSON format:
 	var gen: Dictionary = await AIAgentManager.request_text_generation({
 		"prompt": prompt,
 		"temperature": 0.72,
-		"max_tokens": 280
+		"max_tokens": 280,
+		"source": "ai_quest:%s" % npc_id
 	})
 	if not bool(gen.get("ok", false)):
 		ai_quest_request_failed.emit(npc_id, str(gen.get("error", "quest generation failed")))

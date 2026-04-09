@@ -420,6 +420,7 @@ func _generate_daily_narrative_from_backend() -> Dictionary:
 	}
 	var gen: Dictionary = await AIAgentManager.request_text_generation({
 		"prompt": "daily_narrative_request",
+		"source": "daily_narrative",
 		"use_backend": true,
 		"backend_path": "/api/v1/narrative/daily",
 		"backend_body": body,

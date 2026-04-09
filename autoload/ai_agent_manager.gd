@@ -20,12 +20,25 @@ const CACHE_EXPIRY = 300  # 5 minutes
 
 # Current pending requests
 var pending_requests = {}
+var generation_trace_log: Array = []
+const MAX_GENERATION_TRACE = 50
 
 signal dialogue_generated(npc_id, dialogue)
 signal agent_error(npc_id, error_message)
 signal backend_status_changed(available: bool)
 
 var _backend_available: bool = false
+
+func _append_generation_trace(entry: Dictionary) -> void:
+	generation_trace_log.append(entry)
+	if generation_trace_log.size() > MAX_GENERATION_TRACE:
+		generation_trace_log.pop_front()
+
+func get_generation_trace(limit: int = 20) -> Array:
+	var n: int = mini(maxi(limit, 1), generation_trace_log.size())
+	if n <= 0:
+		return []
+	return generation_trace_log.slice(generation_trace_log.size() - n, generation_trace_log.size())
 
 func _ready():
 	load_config()
@@ -231,6 +244,8 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 	var prompt: String = str(request.get("prompt", ""))
 	if prompt.is_empty():
 		return {"ok": false, "error": "Missing prompt"}
+	var source: String = str(request.get("source", "unknown"))
+	var started_ms: int = Time.get_ticks_msec()
 
 	var http := HTTPRequest.new()
 	add_child(http)
@@ -267,17 +282,41 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 
 	var error := http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body_payload))
 	if error != OK:
+		_append_generation_trace({
+			"ts": Time.get_unix_time_from_system(),
+			"source": source,
+			"use_backend": use_backend and not backend_path.is_empty(),
+			"ok": false,
+			"error": "request_failed",
+			"elapsed_ms": Time.get_ticks_msec() - started_ms
+		})
 		http.queue_free()
 		return {"ok": false, "error": "Request failed: %s" % str(error)}
 
 	var result = await http.request_completed
 	if result[1] != 200:
+		_append_generation_trace({
+			"ts": Time.get_unix_time_from_system(),
+			"source": source,
+			"use_backend": use_backend and not backend_path.is_empty(),
+			"ok": false,
+			"error": "http_%d" % int(result[1]),
+			"elapsed_ms": Time.get_ticks_msec() - started_ms
+		})
 		http.queue_free()
 		return {"ok": false, "error": "HTTP %d" % int(result[1])}
 
 	var response_text: String = result[3].get_string_from_utf8()
 	var json := JSON.new()
 	if json.parse(response_text) != OK:
+		_append_generation_trace({
+			"ts": Time.get_unix_time_from_system(),
+			"source": source,
+			"use_backend": use_backend and not backend_path.is_empty(),
+			"ok": false,
+			"error": "json_parse_failed",
+			"elapsed_ms": Time.get_ticks_msec() - started_ms
+		})
 		http.queue_free()
 		return {"ok": false, "error": "JSON parse failed"}
 
@@ -293,6 +332,14 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 			text_out = str(data.get("response", "..."))
 	else:
 		text_out = str(data.get("response", "..."))
+	_append_generation_trace({
+		"ts": Time.get_unix_time_from_system(),
+		"source": source,
+		"use_backend": use_backend and not backend_path.is_empty(),
+		"ok": true,
+		"text_len": text_out.length(),
+		"elapsed_ms": Time.get_ticks_msec() - started_ms
+	})
 	return {
 		"ok": true,
 		"text": text_out,
@@ -302,7 +349,8 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 
 func make_llm_request(npc_id: String, prompt: String, cache_key: String) -> void:
 	var gen: Dictionary = await request_text_generation({
-		"prompt": prompt
+		"prompt": prompt,
+		"source": "npc_dialogue:%s" % npc_id
 	})
 	if not bool(gen.get("ok", false)):
 		agent_error.emit(npc_id, str(gen.get("error", "Generation failed")))
