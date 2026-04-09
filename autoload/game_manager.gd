@@ -51,7 +51,11 @@ func advance_day():
 
 func advance_season():
 	var seasons = ["spring", "summer", "fall", "winter"]
-	var current_index = seasons.find(player_data.season)
+	var sid: String = str(player_data.season).to_lower().strip_edges()
+	var current_index: int = seasons.find(sid)
+	if current_index < 0:
+		current_index = 0
+		player_data.season = seasons[0]
 	current_index = (current_index + 1) % 4
 	player_data.season = seasons[current_index]
 	player_data.year += 1
