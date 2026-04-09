@@ -1,0 +1,113 @@
+{
+  "batch_meta": {
+    "batch_id": "batch_yyyy_mm_dd_01",
+    "author": "agentic_generator",
+    "target_count": 6,
+    "daily_pick_policy": "theme_priority_then_rotate"
+  },
+  "theme_mix": [
+    "joyful",
+    "comedy",
+    "adventure",
+    "fairy_tale",
+    "horror",
+    "romantic"
+  ],
+  "chains": [
+    {
+      "id": "managed_template_chain_1",
+      "display_name": "Template Chain 1",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "joyful"
+      ],
+      "steps": [
+        {
+          "id": "managed_template_chain_1_step_1",
+          "title": "Template Step 1",
+          "description": "Do a low-friction starter action.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 60,
+            "items": [
+              "bread:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "bread:1",
+                  "weight": 60
+                },
+                {
+                  "item": "worm_bait:2",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_template_chain_1_step_2",
+          "title": "Template Step 2",
+          "description": "Do a social or processing action.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 80,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 55
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 45
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_template_chain_1_step_3",
+          "title": "Template Step 3",
+          "description": "Close the loop with economy action.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 120
+          },
+          "reward": {
+            "gold": 120,
+            "items": [
+              "basic_fertilizer:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "basic_fertilizer:1",
+                  "weight": 60
+                },
+                {
+                  "item": "worm_bait:3",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
