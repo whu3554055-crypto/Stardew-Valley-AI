@@ -383,6 +383,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var dep: Dictionary = _check_dependency_coherence(steps)
 	if not bool(dep.get("ok", false)):
 		return dep
+	var prog: Dictionary = _check_new_player_reachability(steps)
+	if not bool(prog.get("ok", false)):
+		return prog
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -791,3 +794,40 @@ func _estimate_item_spec_sell_value(item_spec: String) -> int:
 		var tpl: Dictionary = ItemDatabase.get_item(item_id)
 		return max(0, int(tpl.get("sell_price", 0))) * count
 	return 0
+
+func _check_new_player_reachability(steps: Array) -> Dictionary:
+	var day: int = int(GameManager.player_data.get("day", 1)) if GameManager and GameManager.player_data else 1
+	var has_rod: bool = InventoryManager != null and _has_item_anywhere("fishing_rod")
+	var has_pickaxe: bool = InventoryManager != null and (_has_item_anywhere("pickaxe") or _has_item_anywhere("pickaxe_iron"))
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var objective: Dictionary = sd.get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		var cnt: int = int(objective.get("count", 1))
+		if ot == "fish_caught":
+			if not has_rod:
+				return {"ok": false, "error": "missing_basic_tool:fishing_rod"}
+			if day <= 3 and cnt > 2:
+				return {"ok": false, "error": "early_game_fishing_too_heavy"}
+		elif ot == "mine_ore":
+			if not has_pickaxe:
+				return {"ok": false, "error": "missing_basic_tool:pickaxe"}
+			if day <= 3 and cnt > 3:
+				return {"ok": false, "error": "early_game_mining_too_heavy"}
+		elif ot == "harvest":
+			if day <= 2 and cnt > 3:
+				return {"ok": false, "error": "early_game_harvest_too_heavy"}
+	return {"ok": true}
+
+func _has_item_anywhere(item_id: String) -> bool:
+	if InventoryManager == null:
+		return false
+	for i in range(int(InventoryManager.INVENTORY_SIZE)):
+		var it = InventoryManager.get_item(i)
+		if it == null:
+			continue
+		if str(it.get("id", "")) == item_id:
+			return true
+	return false
