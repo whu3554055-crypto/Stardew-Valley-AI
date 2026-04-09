@@ -920,7 +920,11 @@ func complete_quest(quest_id: String, success: bool = true, extra_data: Dictiona
 	else:
 		quest_failed.emit(quest_id, extra_data.get("reason", "Unknown"))
 	if QuestSystem and QuestSystem.has_method("sync_ai_quest_status"):
-		QuestSystem.sync_ai_quest_status(quest_id, quest.status == "completed")
+		QuestSystem.sync_ai_quest_status(
+			quest_id,
+			quest.status == "completed",
+			str(extra_data.get("reason", "failed"))
+		)
 	
 	# Update narrative threads
 	update_narrative_from_quest(quest, success)

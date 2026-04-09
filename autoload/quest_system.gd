@@ -6,12 +6,14 @@ enum QuestStatus {
 	NOT_STARTED,
 	IN_PROGRESS,
 	COMPLETED,
-	TURNED_IN
+	TURNED_IN,
+	FAILED
 }
 
 var quests = {}
 var active_quests = []
 var completed_quests = []
+var failed_quests: Array = []
 var last_story_quest_day_key = ""
 const MANAGED_CHAIN_STEP_1 := "managed_supply_chain_1"
 const MANAGED_CHAIN_STEP_2 := "managed_supply_chain_2"
@@ -67,6 +69,7 @@ signal quest_completed(quest_id)
 signal managed_chain_resolved(outcome)
 signal managed_chain_state_changed(quest_id, state)
 signal quest_impact_applied(quest_id, impact)
+signal quest_failed(quest_id, reason)
 
 func _ready():
 	_load_managed_chain_config()
@@ -561,27 +564,32 @@ func _apply_quest_growth(quest: Dictionary, reward_data: Dictionary, success: bo
 		"xp": 0,
 		"level": 1,
 		"total_completed": 0,
+		"total_failed": 0,
 		"streak": 0,
 		"last_day_index": -1
 	})
 	var objective_count: int = 0
 	if quest.get("objectives") is Array:
 		objective_count = (quest.get("objectives") as Array).size()
-	var xp_gain: int = 4 + objective_count * 3 + int(reward_data.get("gold", 0)) / 80
-	if not success:
-		xp_gain = maxi(1, xp_gain / 3)
-	xp_gain = clampi(xp_gain, 1, 30)
+	var base_xp: int = 4 + objective_count * 3 + int(reward_data.get("gold", 0)) / 80
+	base_xp = clampi(base_xp, 2, 30)
 	var today: int = _current_day_index()
-	if success:
-		var last_day: int = int(growth.get("last_day_index", -1))
-		if last_day == today - 1:
-			growth["streak"] = int(growth.get("streak", 0)) + 1
-		elif last_day != today:
-			growth["streak"] = 1
-		growth["last_day_index"] = today
-		growth["total_completed"] = int(growth.get("total_completed", 0)) + 1
-	else:
+	if not success:
 		growth["streak"] = 0
+		growth["total_failed"] = int(growth.get("total_failed", 0)) + 1
+		var xp_before: int = int(growth.get("xp", 0))
+		var xp_penalty: int = clampi(base_xp, 2, 28)
+		growth["xp"] = maxi(0, xp_before - xp_penalty)
+		GameManager.player_data["quest_growth"] = growth
+		return -xp_penalty
+	var xp_gain: int = base_xp
+	var last_day: int = int(growth.get("last_day_index", -1))
+	if last_day == today - 1:
+		growth["streak"] = int(growth.get("streak", 0)) + 1
+	elif last_day != today:
+		growth["streak"] = 1
+	growth["last_day_index"] = today
+	growth["total_completed"] = int(growth.get("total_completed", 0)) + 1
 	growth["xp"] = int(growth.get("xp", 0)) + xp_gain
 	var level: int = int(growth.get("level", 1))
 	var threshold: int = level * 100
@@ -788,6 +796,7 @@ func _fail_managed_chain_timeout(failed_qid: String, today_idx: int) -> void:
 		var f: float = float(managed_chain_pulse_factor.get("failed", 0.94))
 		AIEconomySystem.pulse_story_completion(pace, bonus_gold, f, managed_chain_failure_items)
 	last_chain_focus_items = managed_chain_failure_items.duplicate()
+	_apply_chain_timeout_impacts(chain_id)
 	managed_chain_resolved.emit({
 		"result": "failed",
 		"reason": "timeout",
@@ -798,6 +807,32 @@ func _fail_managed_chain_timeout(failed_qid: String, today_idx: int) -> void:
 	})
 	_set_chain_cooldown(chain_id)
 	_spawn_recovery_quest(chain_id)
+
+func _apply_chain_timeout_impacts(chain_id: String) -> void:
+	var npc_id: String = "pierre"
+	var total_gold: int = 0
+	if chain_templates.has(chain_id):
+		var cd: Dictionary = chain_templates[chain_id]
+		var steps: Array = cd.get("steps", [])
+		for s in steps:
+			if not (s is Dictionary):
+				continue
+			var sd: Dictionary = s
+			total_gold += int(sd.get("reward", {}).get("gold", 0))
+			var obj: Dictionary = sd.get("objective", {})
+			if str(obj.get("type", "")) == "talk" and obj.has("npc_id"):
+				var tid: String = str(obj.get("npc_id", "")).strip_edges()
+				if not tid.is_empty():
+					npc_id = tid
+	var synthetic: Dictionary = {
+		"id": "chain_timeout_%s_%d" % [chain_id, _current_day_index()],
+		"source": "managed_chain_timeout",
+		"chain_id": chain_id,
+		"npc_id": npc_id,
+		"objectives": [{"type": "chain", "count": 3}],
+		"reward": {"gold": maxi(60, total_gold / maxi(1, 3))}
+	}
+	_apply_quest_outcome_impacts(synthetic["id"], synthetic, false)
 
 func _spawn_recovery_quest(chain_id: String) -> void:
 	var qid: String = "managed_recovery_%s_%d" % [chain_id, _current_day_index()]
@@ -1080,7 +1115,7 @@ func add_quest_from_ai(ai_quest: Dictionary) -> void:
 		active_quests.append(quest_id)
 	quest_started.emit(quest_id)
 
-func sync_ai_quest_status(quest_id: String, success: bool) -> void:
+func sync_ai_quest_status(quest_id: String, success: bool, reason: String = "") -> void:
 	if not quests.has(quest_id):
 		return
 	var q: Dictionary = quests[quest_id]
@@ -1088,6 +1123,8 @@ func sync_ai_quest_status(quest_id: String, success: bool) -> void:
 		return
 	var current_status: int = int(q.get("status", QuestStatus.NOT_STARTED))
 	if current_status == QuestStatus.COMPLETED or current_status == QuestStatus.TURNED_IN:
+		return
+	if current_status == QuestStatus.FAILED:
 		return
 	if active_quests.has(quest_id):
 		active_quests.erase(quest_id)
@@ -1098,7 +1135,12 @@ func sync_ai_quest_status(quest_id: String, success: bool) -> void:
 			completed_quests.append(quest_id)
 		quest_completed.emit(quest_id)
 	else:
-		q["status"] = QuestStatus.NOT_STARTED
+		q["status"] = QuestStatus.FAILED
+		q["failed_reason"] = reason if not reason.is_empty() else "failed"
+		_apply_quest_outcome_impacts(quest_id, q, false)
+		if not failed_quests.has(quest_id):
+			failed_quests.append(quest_id)
+		quest_failed.emit(quest_id, q["failed_reason"])
 
 
 func save_snapshot() -> Dictionary:
@@ -1109,6 +1151,7 @@ func save_snapshot() -> Dictionary:
 		"quests": qd,
 		"active_quests": active_quests.duplicate(),
 		"completed_quests": completed_quests.duplicate(),
+		"failed_quests": failed_quests.duplicate(),
 		"last_story_quest_day_key": last_story_quest_day_key
 	}
 
@@ -1129,6 +1172,10 @@ func load_snapshot(data: Variant) -> void:
 		active_quests = d["active_quests"].duplicate()
 	if d.get("completed_quests") is Array:
 		completed_quests = d["completed_quests"].duplicate()
+	if d.get("failed_quests") is Array:
+		failed_quests = d["failed_quests"].duplicate()
+	else:
+		failed_quests = []
 	if d.get("quests") is Dictionary:
 		var qsave: Dictionary = d["quests"]
 		for qid in qsave.keys():
@@ -1137,6 +1184,9 @@ func load_snapshot(data: Variant) -> void:
 				saved["status"] = int(saved["status"])
 			quests[qid] = saved
 	for qid in completed_quests:
+		if active_quests.has(qid):
+			active_quests.erase(qid)
+	for qid in failed_quests:
 		if active_quests.has(qid):
 			active_quests.erase(qid)
 	_migrate_loaded_snapshot()
