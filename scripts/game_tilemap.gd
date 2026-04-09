@@ -282,6 +282,12 @@ func get_path_between_zones(from_zone: String, to_zone: String) -> Array:
 	
 	return path
 
+func get_tile_at(position: Vector2i) -> int:
+	var atlas: Vector2i = get_cell_atlas_coords(0, position)
+	if atlas == Vector2i(-1, -1):
+		return TileType.GRASS
+	return int(atlas.x)
+
 func is_walkable(position: Vector2i) -> bool:
 	"""Check if a position is walkable"""
 	var tile = get_tile_at(position)
