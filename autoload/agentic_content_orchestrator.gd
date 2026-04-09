@@ -43,6 +43,7 @@ var _daily_rejects: Dictionary = {}
 var _safe_fallback_history: Array = []
 var _reject_reason_counts: Dictionary = {}
 var _last_block_reason: String = ""
+var _continuity_hint: String = ""
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -304,8 +305,12 @@ func _generate_chain_via_ai(theme: String) -> Dictionary:
 	return _extract_chain_json(str(gen.get("text", "")), theme)
 
 func _build_generation_prompt(theme: String) -> String:
+	var continuity_line: String = _continuity_hint
+	if continuity_line.is_empty():
+		continuity_line = "No special carry-over from previous day."
 	return """You generate ONE quest chain JSON object for a farming game.
 Theme: %s
+Continuity from previous day: %s
 
 Return ONLY JSON, no markdown fences.
 Schema:
@@ -345,7 +350,8 @@ Rules:
 3) Keep rewards conservative: total gold 180-420.
 4) Avoid special objective keys except type/count/npc_id/crop_id/ore_id/fish_id.
 5) Make text concise.
-""" % [theme, theme]
+6) Keep at least one sentence that naturally follows yesterday's continuity hint.
+""" % [theme, continuity_line, theme]
 
 func _extract_chain_json(raw_text: String, theme: String) -> Dictionary:
 	var text: String = raw_text.strip_edges()
@@ -367,10 +373,11 @@ func _extract_chain_json(raw_text: String, theme: String) -> Dictionary:
 func _build_procedural_chain(theme: String) -> Dictionary:
 	var stamp: int = int(Time.get_unix_time_from_system())
 	var cid: String = "%s%s_%d" % [CHAIN_ID_PREFIX, theme, stamp]
+	var continuity_phrase: String = _continuity_phrase()
 	var s1: Dictionary = {
 		"id": "%s_s1" % cid,
 		"title": "%s I: Gather Supplies" % theme.capitalize(),
-		"description": "Collect materials for today's %s request." % theme,
+		"description": "Collect materials for today's %s request. %s" % [theme, continuity_phrase],
 		"objective": {"type": "harvest", "count": 2},
 		"reward": {"gold": 68, "items": ["bread:1"]}
 	}
@@ -613,6 +620,18 @@ func _on_managed_chain_resolved(outcome: Dictionary) -> void:
 	if chain_id.is_empty() or not _runtime_chain_ids.has(chain_id):
 		return
 	var result: String = str(outcome.get("result", "success"))
+	if result == "failed":
+		_continuity_hint = "Yesterday's chain failed; prioritize rebuilding trust with practical tasks."
+	elif result == "recovered":
+		_continuity_hint = "Recovery succeeded yesterday; continue with stable confidence-building tasks."
+	else:
+		var pace: String = str(outcome.get("pace", "steady"))
+		if pace == "fast":
+			_continuity_hint = "Yesterday ended fast and strong; maintain momentum without overshooting risk."
+		elif pace == "slow":
+			_continuity_hint = "Yesterday was completed slowly; keep targets moderate and reliable."
+		else:
+			_continuity_hint = "Yesterday was steady; continue balanced progression."
 	var row: Dictionary = _ensure_perf_row(chain_id)
 	if result == "failed":
 		row["failed"] = int(row.get("failed", 0)) + 1
@@ -689,6 +708,7 @@ func _load_runtime_store() -> void:
 	var fp: Dictionary = root.get("failure_pressure", {})
 	if fp is Dictionary:
 		_failure_pressure = fp.duplicate(true)
+	_continuity_hint = str(root.get("continuity_hint", ""))
 	var reward_profiles: Array = root.get("recent_reward_profiles", [])
 	if reward_profiles is Array:
 		_recent_reward_profiles = reward_profiles.duplicate()
@@ -720,6 +740,7 @@ func _save_runtime_store() -> void:
 		"safe_fallback_history": _safe_fallback_history.duplicate(),
 		"reject_reason_counts": _reject_reason_counts.duplicate(true),
 		"last_block_reason": _last_block_reason,
+		"continuity_hint": _continuity_hint,
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1577,6 +1598,11 @@ func _top_block_reason() -> Dictionary:
 			best_count = c
 			best_reason = str(k)
 	return {"reason": best_reason, "count": best_count}
+
+func _continuity_phrase() -> String:
+	if _continuity_hint.is_empty():
+		return "The town expects a steady follow-up."
+	return _continuity_hint
 
 func _safe_fallback_count_today() -> int:
 	var dk: String = _day_key()
