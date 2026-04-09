@@ -446,6 +446,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var granularity: Dictionary = _check_objective_granularity_balance(steps)
 	if not bool(granularity.get("ok", false)):
 		return granularity
+	var temporal: Dictionary = _check_temporal_stability_constraints(steps)
+	if not bool(temporal.get("ok", false)):
+		return temporal
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -1338,6 +1341,48 @@ func _check_objective_granularity_balance(steps: Array) -> Dictionary:
 	if max_u > min_u * 3.2:
 		return {"ok": false, "error": "granularity_effort_imbalance"}
 	return {"ok": true}
+
+func _check_temporal_stability_constraints(steps: Array) -> Dictionary:
+	var day: int = int(GameManager.player_data.get("day", 1)) if GameManager and GameManager.player_data else 1
+	var season: String = str(GameManager.player_data.get("season", "spring")) if GameManager and GameManager.player_data else "spring"
+	var week_boundary: bool = (day % 7) == 1
+	var season_boundary: bool = day == 1
+	var weather_name: String = str(WeatherSystem.get_weather_name()).to_lower() if WeatherSystem else "sunny"
+	var volatility_score: int = 0
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var objective: Dictionary = (s as Dictionary).get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		match ot:
+			"mine_ore", "fish_caught":
+				volatility_score += 2
+			"earn_gold":
+				volatility_score += 2
+			"harvest":
+				volatility_score += 1
+			_:
+				volatility_score += 1
+	# On system-shift days (new week/season), keep runtime chains gentle.
+	if (week_boundary or season_boundary) and volatility_score >= 6:
+		return {"ok": false, "error": "temporal_stability_shift_day_overload"}
+	# During harsh weather windows, avoid high-volatility mixed objectives.
+	if (weather_name == "storm" or weather_name == "snow") and volatility_score >= 5:
+		return {"ok": false, "error": "temporal_stability_weather_overload"}
+	# First day of a new season should avoid stacked sell-pressure chains.
+	if season_boundary and _count_objective_type(steps, "earn_gold") >= 2:
+		return {"ok": false, "error": "temporal_stability_season_reset_sell_pressure"}
+	return {"ok": true}
+
+func _count_objective_type(steps: Array, objective_type: String) -> int:
+	var n: int = 0
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var ot: String = str((s as Dictionary).get("objective", {}).get("type", ""))
+		if ot == objective_type:
+			n += 1
+	return n
 
 func _estimate_free_inventory_slots() -> int:
 	if InventoryManager == null:
