@@ -1,15 +1,20 @@
 extends Node
 
 # AI Agent configuration - Updated for multi-LLM backend
+# Defaults favor 阿里云 DashScope OpenAI-compatible API so Agentic works without local Ollama.
+# API key is never committed: use user://ai_agent_config.json, env var, or res://data/local/ai_secrets.json (gitignored).
 var api_config = {
 	"backend_url": "http://localhost:8080",  # FastAPI backend endpoint
-	"base_url": "http://localhost:11434",  # Ollama (fallback)
-	"model": "qwen3.5:9b",
+	"base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+	"model": "qwen-plus",
 	"temperature": 0.7,
 	"max_tokens": 256,
-	"timeout": 30,
+	"timeout": 60,
 	"use_backend": true,  # Use Python backend with multi-LLM router
-	"task_type": "npc_dialogue"  # For smart routing
+	"task_type": "npc_dialogue",  # For smart routing
+	# Direct LLM: "ollama" = POST /api/generate; "openai_compatible" = Bearer + /chat/completions (阿里云通义等)
+	"llm_provider": "openai_compatible",
+	"api_key": ""
 }
 
 # Request cache to avoid repeated calls
@@ -65,6 +70,35 @@ func _ready():
 	# Check backend availability on startup
 	check_backend_status()
 
+func _merge_llm_secrets_if_needed() -> void:
+	# After user:// merge: fill api_key from environment or local file (not for public repos).
+	var key: String = str(api_config.get("api_key", "")).strip_edges()
+	if not key.is_empty():
+		return
+	for env_name in ["DASHSCOPE_API_KEY", "ALIYUN_API_KEY", "ALIYUN_DASHSCOPE_API_KEY"]:
+		var ev: String = OS.get_environment(env_name).strip_edges()
+		if not ev.is_empty():
+			api_config.api_key = ev
+			print("[AIAgentManager] Using API key from environment (%s)" % env_name)
+			return
+	var secret_path: String = "res://data/local/ai_secrets.json"
+	if FileAccess.file_exists(secret_path):
+		var f: FileAccess = FileAccess.open(secret_path, FileAccess.READ)
+		if f:
+			var data = JSON.parse_string(f.get_as_text())
+			f.close()
+			if data is Dictionary:
+				var k2: String = str(data.get("api_key", "")).strip_edges()
+				if not k2.is_empty():
+					api_config.api_key = k2
+					if data.has("base_url"):
+						api_config.base_url = str(data.get("base_url", api_config.base_url))
+					if data.has("model"):
+						api_config.model = str(data.get("model", api_config.model))
+					if data.has("llm_provider"):
+						api_config.llm_provider = str(data.get("llm_provider", api_config.llm_provider))
+					print("[AIAgentManager] Loaded API key from res://data/local/ai_secrets.json")
+
 func check_backend_status() -> void:
 	"""Check if Python backend is available"""
 	var http = HTTPRequest.new()
@@ -93,6 +127,7 @@ func load_config():
 		if data:
 			api_config.merge(data)
 		file.close()
+	_merge_llm_secrets_if_needed()
 
 func save_config():
 	var config_path = "user://ai_agent_config.json"
@@ -105,6 +140,84 @@ func configure_api(base_url: String, model: String, temperature: float = 0.8):
 	api_config.model = model
 	api_config.temperature = temperature
 	save_config()
+
+
+func _chat_completions_url(base_raw: String) -> String:
+	var b: String = str(base_raw).strip_edges()
+	while b.ends_with("/"):
+		b = b.substr(0, b.length() - 1)
+	if b.ends_with("/chat/completions"):
+		return b
+	return "%s/chat/completions" % b
+
+
+func _extract_openai_compatible_text(data: Dictionary) -> String:
+	if data.has("error"):
+		var err = data["error"]
+		if err is Dictionary:
+			return "__error__:" + str(err.get("message", JSON.stringify(err)))
+		return "__error__:" + str(err)
+	var choices = data.get("choices", [])
+	if choices is Array and choices.size() > 0:
+		var ch = choices[0]
+		if ch is Dictionary:
+			var msg = ch.get("message", {})
+			if msg is Dictionary:
+				return str(msg.get("content", ""))
+			return str(ch.get("text", ""))
+	return ""
+
+
+func _parse_http_error_body(body: PackedByteArray) -> String:
+	var txt: String = body.get_string_from_utf8().strip_edges()
+	if txt.is_empty():
+		return ""
+	var jp := JSON.new()
+	if jp.parse(txt) != OK or not (jp.data is Dictionary):
+		return txt.substr(0, mini(280, txt.length()))
+	var d: Dictionary = jp.data
+	if d.has("error"):
+		var e = d["error"]
+		if e is Dictionary:
+			return str(e.get("message", e.get("code", JSON.stringify(e))))
+		return str(e)
+	if d.has("message"):
+		return str(d["message"])
+	return txt.substr(0, mini(280, txt.length()))
+
+
+func _llm_http_post_with_retry(
+	url: String,
+	header_lines: Array,
+	body_str: String,
+	timeout_sec: float,
+	retry_on_throttle: bool
+) -> Dictionary:
+	var max_attempts: int = 2 if retry_on_throttle else 1
+	for attempt in range(max_attempts):
+		var http := HTTPRequest.new()
+		add_child(http)
+		http.timeout = timeout_sec
+		var err := http.request(url, header_lines, HTTPClient.METHOD_POST, body_str)
+		if err != OK:
+			http.queue_free()
+			return {"ok": false, "error": "request_failed", "detail": str(err)}
+		var rw = await http.request_completed
+		var status: int = int(rw[1])
+		var body: PackedByteArray = rw[3]
+		http.queue_free()
+		if status == 200:
+			return {"ok": true, "body": body}
+		if attempt + 1 < max_attempts and [429, 502, 503].has(status):
+			await get_tree().create_timer(1.5).timeout
+			continue
+		var err_detail: String = _parse_http_error_body(body)
+		var err_msg: String = "HTTP %d" % status
+		if not err_detail.is_empty():
+			err_msg = "%s — %s" % [err_msg, err_detail]
+		return {"ok": false, "error": err_msg}
+	return {"ok": false, "error": "HTTP request failed"}
+
 
 # Generate dialogue using AI agent
 func generate_dialogue(
@@ -267,13 +380,21 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 	var source: String = str(request.get("source", "unknown"))
 	var started_ms: int = Time.get_ticks_msec()
 
-	var http := HTTPRequest.new()
-	add_child(http)
-	http.timeout = float(request.get("timeout_sec", api_config.get("timeout", 30)))
-
-	var headers := ["Content-Type: application/json"]
 	var use_backend: bool = bool(request.get("use_backend", false))
 	var backend_path: String = str(request.get("backend_path", ""))
+	var use_direct_openai: bool = (
+		not (use_backend and _backend_available and not backend_path.is_empty())
+		and str(api_config.get("llm_provider", "ollama")) == "openai_compatible"
+	)
+	if use_direct_openai:
+		if str(api_config.get("base_url", "")).strip_edges().is_empty():
+			return {"ok": false, "error": "Missing base_url for openai_compatible"}
+		if str(api_config.get("api_key", "")).strip_edges().is_empty():
+			return {"ok": false, "error": "Missing api_key (set in user://ai_agent_config.json or AI config UI)"}
+
+	var timeout_sec: float = float(request.get("timeout_sec", api_config.get("timeout", 30)))
+
+	var headers := ["Content-Type: application/json"]
 	var backend_body: Dictionary = request.get("backend_body", {})
 	var backend_text_key: String = str(request.get("backend_text_key", "response"))
 	var body_payload: Dictionary = {}
@@ -284,6 +405,21 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 		body_payload = backend_body if backend_body is Dictionary else {}
 		if body_payload.is_empty():
 			body_payload = {"prompt": prompt}
+	elif use_direct_openai:
+		url = _chat_completions_url(str(api_config.get("base_url", "")))
+		var ak: String = str(api_config.get("api_key", "")).strip_edges()
+		headers = ["Content-Type: application/json", "Authorization: Bearer %s" % ak]
+		body_payload = {
+			"model": str(request.get("model", api_config.get("model", "qwen-plus"))),
+			"messages": [{"role": "user", "content": prompt}],
+			"temperature": float(request.get("temperature", api_config.get("temperature", 0.7))),
+			"max_tokens": int(request.get("max_tokens", api_config.get("max_tokens", 256)))
+		}
+		var extra_o: Dictionary = request.get("extra_options", {})
+		if extra_o is Dictionary:
+			for k in ["top_p", "frequency_penalty", "presence_penalty"]:
+				if extra_o.has(k):
+					body_payload[k] = extra_o[k]
 	else:
 		url = "%s/api/generate" % str(api_config.get("base_url", "http://localhost:11434"))
 		var options: Dictionary = {
@@ -300,33 +436,33 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 			"options": options
 		}
 
-	var error := http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body_payload))
-	if error != OK:
+	var post: Dictionary = await _llm_http_post_with_retry(
+		url, headers, JSON.stringify(body_payload), timeout_sec, use_direct_openai
+	)
+	if not bool(post.get("ok", false)):
+		var err_key: String = str(post.get("error", ""))
+		if err_key == "request_failed":
+			_append_generation_trace({
+				"ts": Time.get_unix_time_from_system(),
+				"source": source,
+				"use_backend": use_backend and not backend_path.is_empty(),
+				"ok": false,
+				"error": "request_failed",
+				"elapsed_ms": Time.get_ticks_msec() - started_ms
+			})
+			return {"ok": false, "error": "Request failed: %s" % str(post.get("detail", ""))}
 		_append_generation_trace({
 			"ts": Time.get_unix_time_from_system(),
 			"source": source,
 			"use_backend": use_backend and not backend_path.is_empty(),
 			"ok": false,
-			"error": "request_failed",
+			"error": "http_error",
+			"detail": err_key,
 			"elapsed_ms": Time.get_ticks_msec() - started_ms
 		})
-		http.queue_free()
-		return {"ok": false, "error": "Request failed: %s" % str(error)}
+		return {"ok": false, "error": err_key}
 
-	var result = await http.request_completed
-	if result[1] != 200:
-		_append_generation_trace({
-			"ts": Time.get_unix_time_from_system(),
-			"source": source,
-			"use_backend": use_backend and not backend_path.is_empty(),
-			"ok": false,
-			"error": "http_%d" % int(result[1]),
-			"elapsed_ms": Time.get_ticks_msec() - started_ms
-		})
-		http.queue_free()
-		return {"ok": false, "error": "HTTP %d" % int(result[1])}
-
-	var response_text: String = result[3].get_string_from_utf8()
+	var response_text: String = (post["body"] as PackedByteArray).get_string_from_utf8()
 	var json := JSON.new()
 	if json.parse(response_text) != OK:
 		_append_generation_trace({
@@ -337,11 +473,9 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 			"error": "json_parse_failed",
 			"elapsed_ms": Time.get_ticks_msec() - started_ms
 		})
-		http.queue_free()
 		return {"ok": false, "error": "JSON parse failed"}
 
 	var data: Dictionary = json.data if json.data is Dictionary else {}
-	http.queue_free()
 	var text_out: String = ""
 	if use_backend and not backend_path.is_empty():
 		if data.has(backend_text_key):
@@ -350,6 +484,19 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 			text_out = str(data.get("summary", ""))
 		else:
 			text_out = str(data.get("response", "..."))
+	elif use_direct_openai:
+		text_out = _extract_openai_compatible_text(data)
+		if text_out.begins_with("__error__:"):
+			_append_generation_trace({
+				"ts": Time.get_unix_time_from_system(),
+				"source": source,
+				"use_backend": false,
+				"ok": false,
+				"error": "openai_error",
+				"detail": text_out.trim_prefix("__error__:"),
+				"elapsed_ms": Time.get_ticks_msec() - started_ms
+			})
+			return {"ok": false, "error": text_out.trim_prefix("__error__:")}
 	else:
 		text_out = str(data.get("response", "..."))
 	_append_generation_trace({
