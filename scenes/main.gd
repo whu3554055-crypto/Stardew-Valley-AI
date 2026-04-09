@@ -987,6 +987,7 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if story_npc_id.is_empty():
 		return
 	var quest_id: String = str(quest_data.get("id", ""))
+	var narrative_id: String = str(quest_data.get("narrative_id", ""))
 
 	# Immediate "world reacts to player action" feedback.
 	if NPCEmotionSystem:
@@ -1028,6 +1029,8 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 		NPCAudioManager.speak(story_npc_id, "Thanks! Today's story moved forward because of you.", "happy")
 
 	var feedback_line := "%s now feels encouraged by your help." % story_npc_id.capitalize()
+	if not narrative_id.is_empty():
+		feedback_line += " [Narrative: %s]" % narrative_id
 	record_world_event(feedback_line)
 	show_dialogue(feedback_line)
 
@@ -1056,15 +1059,24 @@ func _apply_narrative_daily_quest(narrative: Dictionary):
 		return
 	var events = narrative.get("events", [])
 	if events is Array and events.size() > 0:
-		QuestSystem.add_story_daily_quest(events[0])
+		var evt: Dictionary = events[0].duplicate(true) if events[0] is Dictionary else {}
+		evt["narrative_id"] = str(narrative.get("id", ""))
+		evt["narrative_day_key"] = "%d-%s-%d" % [
+			int(GameManager.player_data.get("year", 1)),
+			str(GameManager.player_data.get("season", "spring")),
+			int(GameManager.player_data.get("day", 1))
+		]
+		evt["narrative_source"] = str(narrative.get("source", "local"))
+		QuestSystem.add_story_daily_quest(evt)
 
 func _on_daily_narrative_generated(_narrative_id: String, narrative_data: Dictionary) -> void:
 	if narrative_data.is_empty():
 		return
 	var title: String = str(narrative_data.get("title", "A new day begins"))
 	var source: String = str(narrative_data.get("source", "local"))
+	var nid: String = str(narrative_data.get("id", ""))
 	var summary: String = str(narrative_data.get("description", "")).strip_edges()
-	var line: String = "Daily story (%s): %s" % [source, title]
+	var line: String = "Daily story (%s/%s): %s" % [source, nid, title]
 	if not summary.is_empty():
 		line += " — " + summary
 	record_world_event(line)
