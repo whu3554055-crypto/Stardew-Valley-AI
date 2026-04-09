@@ -1,7 +1,9 @@
 {
-  "base_url": "http://localhost:11434",
-  "model": "qwen3.5:9b",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "model": "qwen-plus",
   "temperature": 0.8,
   "max_tokens": 256,
-  "timeout": 30
+  "timeout": 60,
+  "llm_provider": "openai_compatible",
+  "api_key": ""
 }

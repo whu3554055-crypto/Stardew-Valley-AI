@@ -20,6 +20,8 @@ signal purchase_confirmed(item_id, quantity)
 
 func _ready():
 	visible = false
+	if LocaleSettings and LocaleSettings.has_signal("locale_changed"):
+		LocaleSettings.locale_changed.connect(_on_locale_changed_shop)
 	if season_border:
 		var sbb := StyleBoxFlat.new()
 		sbb.bg_color = Color(0, 0, 0, 0)
@@ -28,7 +30,42 @@ func _ready():
 		season_border.add_theme_stylebox_override("panel", sbb)
 		season_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_shop_chrome()
+	_apply_shop_static_labels()
 	update_gold_display()
+
+func _shop_t(key: String, vars: Dictionary = {}) -> String:
+	if UITextCatalog:
+		return UITextCatalog.format_text("shop", key, vars)
+	return key
+
+
+func _season_local_name() -> String:
+	if not GameManager:
+		return ""
+	var sk: String = str(GameManager.player_data.get("season", "spring")).to_lower()
+	if UITextCatalog:
+		var n: String = UITextCatalog.get_text("season", sk)
+		if not n.is_empty():
+			return n
+	return sk.capitalize()
+
+
+func _on_locale_changed_shop(_code: String) -> void:
+	_apply_shop_static_labels()
+	if visible:
+		_update_season_header()
+		populate_shop_items()
+		update_gold_display()
+	if total_label and current_total > 0:
+		total_label.text = _shop_t("total", {"gold": current_total})
+
+
+func _apply_shop_static_labels() -> void:
+	if title_label:
+		title_label.text = _shop_t("title_pierre")
+	if close_button:
+		close_button.text = _shop_t("close")
+
 
 func _apply_shop_chrome() -> void:
 	if title_label:
@@ -80,6 +117,7 @@ func _shop_item_button_style() -> StyleBoxFlat:
 
 func open_shop():
 	visible = true
+	_apply_shop_static_labels()
 	_update_season_header()
 	populate_shop_items()
 	update_gold_display()
@@ -112,15 +150,19 @@ func populate_shop_items():
 			market_tag = str(AIEconomySystem.get_market_tag(item_id))
 
 		var item_button = Button.new()
-		item_button.text = "%s - %dg (Stock: %d)%s%s" % [
-			item_template.name,
-			live_price,
-			item_data.stock,
-			"" if available else " [Out of season]",
-			("  [%s%s%s]" % [market_note, " | " if not market_note.is_empty() and not market_tag.is_empty() else "", market_tag]) if (not market_note.is_empty() or not market_tag.is_empty()) else ""
-		]
+		var oos: String = "" if available else _shop_t("out_of_season")
+		var mkt: String = ""
+		if not market_note.is_empty() or not market_tag.is_empty():
+			mkt = "  [%s%s%s]" % [market_note, " | " if not market_note.is_empty() and not market_tag.is_empty() else "", market_tag]
+		item_button.text = _shop_t("item_row", {
+			"name": item_template.name,
+			"price": live_price,
+			"stock": item_data.stock,
+			"oos": oos,
+			"market": mkt
+		})
 		if chain_focus_items.has(item_id):
-			item_button.text += " [Chain Focus]"
+			item_button.text += _shop_t("chain_focus")
 		item_button.custom_minimum_size = Vector2(200, 40)
 		item_button.flat = true
 		item_button.disabled = not available
@@ -136,19 +178,20 @@ func populate_shop_items():
 
 func _on_item_selected(item_id: String, price: int):
 	current_total = price
-	total_label.text = "Total: %dg" % current_total
+	total_label.text = _shop_t("total", {"gold": current_total})
 	purchase_confirmed.emit(item_id, 1)
 
 func update_gold_display():
-	player_gold_label.text = "Your Gold: %dg" % GameManager.player_data.gold
+	if not GameManager:
+		return
+	player_gold_label.text = _shop_t("gold", {"gold": GameManager.player_data.gold})
 
 
 func _update_season_header() -> void:
 	if not season_label or not GameManager:
 		return
-	var season: String = str(GameManager.player_data.get("season", "spring")).capitalize()
 	var strategy: String = ShopSystem.get_weekly_strategy_label() if ShopSystem and ShopSystem.has_method("get_weekly_strategy_label") else "balanced"
-	season_label.text = "Season: %s | Weekly: %s" % [season, strategy]
+	season_label.text = _shop_t("season_weekly", {"season": _season_local_name(), "strategy": strategy})
 
 func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel") and visible:

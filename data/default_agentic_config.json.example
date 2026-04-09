@@ -1,0 +1,7 @@
+{
+  "max_runtime_chains": 24,
+  "max_generations_per_day": 1,
+  "max_consecutive_failures": 5,
+  "breaker_reopen_days": 2,
+  "daily_ai_slot_without_theme_gate": true
+}

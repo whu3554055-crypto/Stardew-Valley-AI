@@ -63,6 +63,16 @@ func _apply_defaults() -> void:
 			"mine_band_2": "深脉",
 			"chop_forest": "伐木 · 森林"
 		},
+		"shop": {
+			"title_pierre": "皮埃尔杂货店",
+			"gold": "持有金币：{gold}g",
+			"total": "合计：{gold}g",
+			"season_weekly": "季节：{season} | 本周策略：{strategy}",
+			"close": "关闭商店",
+			"item_row": "{name} - {price}g（库存：{stock}）{oos}{market}",
+			"out_of_season": " [非当季]",
+			"chain_focus": " [连锁焦点]"
+		},
 		"quick_tip": {
 			"stamina_low": "体力过低——进食或休息到明天。"
 		}

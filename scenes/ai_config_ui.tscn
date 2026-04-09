@@ -31,6 +31,13 @@ horizontal_alignment = 1
 [node name="HSeparator1" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
 
+[node name="LlmProviderLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "LLM provider:"
+
+[node name="LlmProviderOption" type="OptionButton" parent="VBoxContainer"]
+layout_mode = 2
+
 [node name="BaseUrlLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "API Base URL:"
@@ -38,7 +45,16 @@ text = "API Base URL:"
 [node name="BaseUrlInput" type="LineEdit" parent="VBoxContainer"]
 layout_mode = 2
 text = "http://localhost:11434"
-placeholder_text = "Enter API endpoint"
+placeholder_text = "Ollama: http://localhost:11434 | 阿里云: https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+[node name="ApiKeyLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "API Key (OpenAI-compatible only):"
+
+[node name="ApiKeyInput" type="LineEdit" parent="VBoxContainer"]
+layout_mode = 2
+placeholder_text = "sk-... (saved to user://ai_agent_config.json)"
+secret = true
 
 [node name="ModelLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
@@ -94,7 +110,7 @@ offset_left = 50.0
 offset_top = 520.0
 offset_right = 550.0
 offset_bottom = 600.0
-text = "Supported APIs: Ollama (local), OpenAI-compatible endpoints\nFor Ollama: Install from ollama.com and run 'ollama pull qwen2.5:7b'"
+text = "Ollama: base URL without path, uses /api/generate.\nOpenAI-compatible (阿里云通义): base URL 到 .../v1，请求 /chat/completions + Bearer。\n密钥仅存 user://，勿提交仓库。"
 modulate = Color(0.7, 0.7, 0.7, 1)
 
 [connection signal="pressed" from="CloseButton" to="." method="close_config"]

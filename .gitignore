@@ -27,6 +27,8 @@ dump.rdb
 *.secret
 credentials.json
 service-account.json
+# Local LLM keys for DashScope / Aliyun (copy from ai_secrets.json.example)
+data/local/ai_secrets.json
 
 # IDE and Editor files (keep shared configs)
 .vscode/*
