@@ -1,0 +1,5 @@
+{
+	"version": 1,
+	"note": "Optional curated chains. If present, AgenticContentOrchestrator consumes these before AI/runtime generation.",
+	"chains": []
+}

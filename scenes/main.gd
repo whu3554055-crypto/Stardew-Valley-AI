@@ -28,9 +28,11 @@ var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
 var ai_config_instance = null
 var world_event_feed: Array[String] = []
+var managed_chain_status_banner: String = ""
+var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
-const SAVE_BUNDLE_VERSION := 2
+const SAVE_BUNDLE_VERSION := 3
 const PIERRE_SHOP_RADIUS_PX := 140.0
 const BASE_STAMINA_MAX := 100.0
 
@@ -55,8 +57,19 @@ func _ready():
 		QuestSystem.quest_started.connect(_on_quest_log_changed)
 		QuestSystem.quest_updated.connect(_on_quest_log_changed)
 		QuestSystem.quest_completed.connect(_on_quest_completed)
+		if QuestSystem.has_signal("managed_chain_resolved"):
+			QuestSystem.managed_chain_resolved.connect(_on_managed_chain_resolved)
 	if DailyNarrativeSystem:
 		DailyNarrativeSystem.narrative_generated.connect(_on_daily_narrative_generated)
+		if DailyNarrativeSystem.has_signal("backend_generation_fallback"):
+			DailyNarrativeSystem.backend_generation_fallback.connect(_on_narrative_backend_fallback)
+	if AIQuestSystem:
+		AIQuestSystem.ai_quest_request_failed.connect(_on_ai_quest_generation_failed)
+	if AgenticContentOrchestrator:
+		AgenticContentOrchestrator.generation_started.connect(_on_agentic_chain_generation_started)
+		AgenticContentOrchestrator.generation_published.connect(_on_agentic_chain_generation_published)
+		AgenticContentOrchestrator.generation_failed.connect(_on_agentic_chain_generation_failed)
+		AgenticContentOrchestrator.generation_degraded.connect(_on_agentic_chain_generation_degraded)
 	if shop_ui:
 		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
 	update_ui()
@@ -433,8 +446,10 @@ func _try_load_save_bundle() -> bool:
 
 
 func _apply_save_bundle(bundle: Dictionary) -> void:
+	var src_version: int = int(bundle.get("version", 0))
 	if bundle.get("player") is Dictionary:
 		GameManager.player_data = bundle["player"].duplicate(true)
+		_migrate_player_data_if_needed(src_version)
 		_ensure_house_level_default()
 		if not GameManager.player_data.has("stamina"):
 			GameManager.player_data["stamina"] = 100.0
@@ -455,6 +470,17 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 				break
 	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
 		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
+
+func _migrate_player_data_if_needed(src_version: int) -> void:
+	if not GameManager:
+		return
+	if src_version < 3:
+		if not GameManager.player_data.has("chain_last_selected"):
+			GameManager.player_data["chain_last_selected"] = ""
+		if not GameManager.player_data.has("chain_last_selected_day"):
+			GameManager.player_data["chain_last_selected_day"] = -1
+		if not GameManager.player_data.has("managed_chain_streak"):
+			GameManager.player_data["managed_chain_streak"] = 0
 
 
 func _build_save_bundle() -> Dictionary:
@@ -491,6 +517,10 @@ func initialize_playable_first_loop():
 		if not narrative.is_empty():
 			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
 			_apply_narrative_daily_quest(narrative)
+			if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative"):
+				QuestSystem.activate_chain_for_narrative(narrative)
+			if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
+				await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
 
 func give_starter_items():
 	var hoe_item = ItemDatabase.get_item("hoe")
@@ -776,7 +806,10 @@ func _on_time_changed(new_time):
 	update_ui()
 
 func _on_day_changed(new_day):
+	_reset_daily_event_budget()
 	update_ui()
+	if QuestSystem and QuestSystem.has_method("on_day_passed"):
+		QuestSystem.on_day_passed()
 	# Auto-water crops if raining
 	if WeatherSystem.is_raining():
 		auto_water_crops()
@@ -786,10 +819,14 @@ func _on_day_changed(new_day):
 			record_world_event(market_line)
 	
 	# Lightweight daily refresh keeps the game feeling alive.
-	if DailyNarrativeSystem:
+	if DailyNarrativeSystem and _consume_daily_budget("narrative"):
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
 		record_world_event("New day, new story seed is ready.")
 		_apply_narrative_daily_quest(narrative)
+		if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative") and _consume_daily_budget("chain_activation"):
+			QuestSystem.activate_chain_for_narrative(narrative)
+		if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
+			await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
 	_refresh_quest_log()
@@ -807,9 +844,14 @@ func _refresh_quest_log() -> void:
 	if not quest_log_label or not QuestSystem:
 		return
 	if QuestSystem.active_quests.is_empty():
-		quest_log_label.text = "Quests\n(none active)"
+		var idle_text: String = "Quests\n(none active)"
+		if not managed_chain_status_banner.is_empty():
+			idle_text += "\n" + managed_chain_status_banner
+		quest_log_label.text = idle_text
 		return
 	var lines: PackedStringArray = []
+	var regular_lines: PackedStringArray = []
+	var chain_lines: PackedStringArray = []
 	for qid in QuestSystem.active_quests:
 		var q: Dictionary = QuestSystem.quests.get(qid, {})
 		if q.is_empty():
@@ -831,8 +873,29 @@ func _refresh_quest_log() -> void:
 				tag = " [Story %s]" % ndk
 			else:
 				tag = " [Story]"
-		lines.append("• %s%s%s" % [title, suffix, tag])
-	quest_log_label.text = "Quests\n" + "\n".join(lines)
+		elif str(q.get("source", "")) == "managed_story_chain":
+			var st: String = QuestSystem.get_managed_chain_status_tag(str(qid)) if QuestSystem and QuestSystem.has_method("get_managed_chain_status_tag") else ""
+			if st == "urgent":
+				tag = " [Chain: Urgent]"
+			elif st == "failed":
+				tag = " [Chain: Failed]"
+			else:
+				tag = " [Chain: Active]"
+		elif str(q.get("source", "")) == "managed_recovery":
+			tag = " [Recovery]"
+		var out_line: String = "• %s%s%s" % [title, suffix, tag]
+		if str(q.get("source", "")) == "managed_story_chain":
+			chain_lines.append(out_line)
+		else:
+			regular_lines.append(out_line)
+	lines.append_array(regular_lines)
+	if not chain_lines.is_empty():
+		lines.append("-- Chains --")
+		lines.append_array(chain_lines)
+	var title_text: String = "Quests\n"
+	if not managed_chain_status_banner.is_empty():
+		title_text += managed_chain_status_banner + "\n"
+	quest_log_label.text = title_text + "\n".join(lines)
 
 
 func _is_near_pierre() -> bool:
@@ -1087,6 +1150,107 @@ func _on_daily_narrative_generated(_narrative_id: String, narrative_data: Dictio
 	if not summary.is_empty():
 		line += " — " + summary
 	record_world_event(line)
+
+func _on_narrative_backend_fallback(reason: String) -> void:
+	_record_ai_fallback_event("daily_narrative", reason, "local_generator")
+
+func _on_ai_quest_generation_failed(npc_id: String, reason: String) -> void:
+	var source: String = "ai_quest:%s" % (npc_id if not npc_id.is_empty() else "unknown_npc")
+	_record_ai_fallback_event(source, reason, "procedural_quest")
+
+func _on_managed_chain_resolved(outcome: Dictionary) -> void:
+	var result: String = str(outcome.get("result", "success"))
+	var pace: String = str(outcome.get("pace", "steady"))
+	var bonus: int = int(outcome.get("bonus_gold", 0))
+	var elapsed_sec: int = int(outcome.get("elapsed_sec", 0))
+	var line: String = "Village supply chain resolved [%s] +%dg (elapsed %ds)" % [pace, bonus, elapsed_sec]
+	if result == "failed":
+		line = "Village supply chain failed (%s) %ds" % [str(outcome.get("reason", "unknown")), elapsed_sec]
+		managed_chain_status_banner = "[Chain: Failed]"
+	elif result == "recovered":
+		line = "Village supply chain recovered and restarted."
+		managed_chain_status_banner = "[Chain: Recovered]"
+	elif pace == "fast":
+		managed_chain_status_banner = "[Chain: Completed Fast]"
+	elif pace == "slow":
+		managed_chain_status_banner = "[Chain: Completed Slow]"
+	else:
+		managed_chain_status_banner = "[Chain: Completed Steady]"
+	record_world_event(line)
+	show_quick_tip(line, 2.1)
+	if result == "failed":
+		show_dialogue("Town response: The request expired, and market confidence dipped.")
+		if NPCAudioManager:
+			NPCAudioManager.speak("pierre", "The town needs steadier deliveries...", "sad")
+		if NPCMemorySystem:
+			NPCMemorySystem.record_event(
+				"pierre",
+				"The player missed the delivery chain deadline. Market confidence dropped.",
+				0.78,
+				"sad",
+				["player", "chain_failed", str(outcome.get("chain_id", ""))]
+			)
+	elif result == "recovered":
+		show_dialogue("Town response: Recovery accepted. The village trust is restored.")
+		if NPCAudioManager:
+			NPCAudioManager.speak("pierre", "Thanks, this recovery came right in time.", "happy")
+		if NPCMemorySystem:
+			NPCMemorySystem.record_event(
+				"pierre",
+				"The player completed a recovery task and restored trust.",
+				0.72,
+				"happy",
+				["player", "chain_recovered", str(outcome.get("chain_id", ""))]
+			)
+		if _consume_daily_budget("recovery_hint"):
+			record_world_event("Budget note: recovery path consumed one daily recovery slot.")
+	elif pace == "fast":
+		show_dialogue("Town response: Fast completion boosted trade confidence today.")
+		if NPCAudioManager:
+			NPCAudioManager.speak("pierre", "Excellent pace! The whole town felt that momentum.", "excited")
+	elif pace == "slow":
+		show_dialogue("Town response: Delayed completion softened market momentum.")
+		if NPCAudioManager:
+			NPCAudioManager.speak("pierre", "We made it, but the market cooled a little.", "neutral")
+	else:
+		show_dialogue("Town response: Stable completion keeps the market moving.")
+		if NPCAudioManager:
+			NPCAudioManager.speak("pierre", "Steady work keeps this town alive.", "happy")
+	_refresh_quest_log()
+
+func _record_ai_fallback_event(source: String, reason: String, degraded_to: String) -> void:
+	var line: String = "AI fallback source=%s degraded_to=%s reason=%s" % [
+		source,
+		degraded_to,
+		reason if not reason.is_empty() else "unknown"
+	]
+	record_world_event(line)
+	show_quick_tip("AI fallback: " + degraded_to, 1.6)
+
+func _on_agentic_chain_generation_started(reason: String) -> void:
+	record_world_event("Agentic runtime generation started: %s" % reason)
+
+func _on_agentic_chain_generation_published(chain_id: String, mode: String) -> void:
+	record_world_event("Agentic runtime chain published: %s (mode=%s)" % [chain_id, mode])
+	show_quick_tip("New runtime chain online", 1.6)
+
+func _on_agentic_chain_generation_failed(reason: String) -> void:
+	record_world_event("Agentic runtime generation failed: %s" % reason)
+
+func _on_agentic_chain_generation_degraded(reason: String) -> void:
+	_record_ai_fallback_event("agentic_runtime", reason, "static_chain_templates")
+
+func _reset_daily_event_budget() -> void:
+	daily_event_budget["narrative"] = 1
+	daily_event_budget["chain_activation"] = 1
+	daily_event_budget["recovery_hint"] = 1
+
+func _consume_daily_budget(key: String) -> bool:
+	var left: int = int(daily_event_budget.get(key, 0))
+	if left <= 0:
+		return false
+	daily_event_budget[key] = left - 1
+	return true
 
 func _on_season_changed(new_season):
 	_apply_seasonal_hud_tint()

@@ -13,13 +13,210 @@ var quests = {}
 var active_quests = []
 var completed_quests = []
 var last_story_quest_day_key = ""
+const MANAGED_CHAIN_STEP_1 := "managed_supply_chain_1"
+const MANAGED_CHAIN_STEP_2 := "managed_supply_chain_2"
+const MANAGED_CHAIN_STEP_3 := "managed_supply_chain_3"
+const MANAGED_MINING_CHAIN_STEP_1 := "managed_mining_chain_1"
+const MANAGED_CHAIN_FAST_SEC := 900
+const MANAGED_CHAIN_STEADY_SEC := 2400
+const MANAGED_CHAIN_CONFIG_PATH := "res://data/quests/managed_chain.json"
+const MANAGED_CHAIN_TEMPLATES_PATH := "res://data/quests/chain_templates.json"
+const MANAGED_CHAIN_DEFAULT_BONUS := {
+	"fast": 80,
+	"steady": 40,
+	"slow": 10
+}
+const MANAGED_CHAIN_DEFAULT_PULSE_FACTOR := {
+	"fast": 1.08,
+	"steady": 1.04,
+	"slow": 1.02,
+	"failed": 0.94
+}
+const MANAGED_CHAIN_DEFAULT_PULSE_ITEMS := ["parsnip", "parsnip_seeds", "bread", "basic_fertilizer", "worm_bait"]
+const MANAGED_CHAIN_DEFAULT_FAILURE_ITEMS := ["parsnip", "parsnip_seeds", "bread"]
+const MANAGED_CHAIN_DEFAULT_TIMEOUT_DAYS := 1
+var managed_chain_timing: Dictionary = {
+	"fast_sec": MANAGED_CHAIN_FAST_SEC,
+	"steady_sec": MANAGED_CHAIN_STEADY_SEC
+}
+var managed_chain_bonus_gold: Dictionary = MANAGED_CHAIN_DEFAULT_BONUS.duplicate(true)
+var managed_chain_pulse_factor: Dictionary = MANAGED_CHAIN_DEFAULT_PULSE_FACTOR.duplicate(true)
+var managed_chain_pulse_items: Array = MANAGED_CHAIN_DEFAULT_PULSE_ITEMS.duplicate()
+var managed_chain_failure_items: Array = MANAGED_CHAIN_DEFAULT_FAILURE_ITEMS.duplicate()
+var managed_chain_failure: Dictionary = {
+	"timeout_days": MANAGED_CHAIN_DEFAULT_TIMEOUT_DAYS,
+	"bonus_gold": 0
+}
+var managed_chain_streak: Dictionary = {
+	"enabled": true,
+	"bonus_per_stack": 0.1,
+	"max_stacks": 3
+}
+var chain_templates: Dictionary = {}
+var chain_first_step_by_chain: Dictionary = {}
+var chain_next_by_step_id: Dictionary = {}
+var chain_id_by_step_id: Dictionary = {}
+var last_chain_focus_items: Array = []
+var chain_cooldown_days: Dictionary = {}
+var chain_daily_pick_policy: String = "theme_priority_then_rotate"
+var chain_enabled_map: Dictionary = {}
 
 signal quest_started(quest_id)
 signal quest_updated(quest_id, objective)
 signal quest_completed(quest_id)
+signal managed_chain_resolved(outcome)
+signal managed_chain_state_changed(quest_id, state)
 
 func _ready():
+	_load_managed_chain_config()
+	_load_chain_templates()
 	initialize_quests()
+
+func _load_managed_chain_config() -> void:
+	var f: FileAccess = FileAccess.open(MANAGED_CHAIN_CONFIG_PATH, FileAccess.READ)
+	if f == null:
+		push_warning("QuestSystem: missing %s — using managed chain defaults" % MANAGED_CHAIN_CONFIG_PATH)
+		return
+	var txt: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(txt) != OK or not (json.data is Dictionary):
+		push_warning("QuestSystem: invalid %s — using managed chain defaults" % MANAGED_CHAIN_CONFIG_PATH)
+		return
+	var d: Dictionary = json.data
+	var timing: Dictionary = d.get("timing", {})
+	var bonus: Dictionary = d.get("bonus_gold", {})
+	var pulse: Dictionary = d.get("economy_pulse", {})
+	var pulse_factor: Dictionary = pulse.get("factor", {})
+	var failure: Dictionary = d.get("failure", {})
+	var fast_sec: int = int(timing.get("fast_sec", MANAGED_CHAIN_FAST_SEC))
+	var steady_sec: int = int(timing.get("steady_sec", MANAGED_CHAIN_STEADY_SEC))
+	managed_chain_timing["fast_sec"] = maxi(60, fast_sec)
+	managed_chain_timing["steady_sec"] = maxi(int(managed_chain_timing["fast_sec"]) + 1, steady_sec)
+	managed_chain_bonus_gold["fast"] = maxi(0, int(bonus.get("fast", MANAGED_CHAIN_DEFAULT_BONUS["fast"])))
+	managed_chain_bonus_gold["steady"] = maxi(0, int(bonus.get("steady", MANAGED_CHAIN_DEFAULT_BONUS["steady"])))
+	managed_chain_bonus_gold["slow"] = maxi(0, int(bonus.get("slow", MANAGED_CHAIN_DEFAULT_BONUS["slow"])))
+	managed_chain_pulse_factor["fast"] = clampf(float(pulse_factor.get("fast", MANAGED_CHAIN_DEFAULT_PULSE_FACTOR["fast"])), 1.0, 1.5)
+	managed_chain_pulse_factor["steady"] = clampf(float(pulse_factor.get("steady", MANAGED_CHAIN_DEFAULT_PULSE_FACTOR["steady"])), 1.0, 1.5)
+	managed_chain_pulse_factor["slow"] = clampf(float(pulse_factor.get("slow", MANAGED_CHAIN_DEFAULT_PULSE_FACTOR["slow"])), 1.0, 1.5)
+	managed_chain_pulse_factor["failed"] = clampf(float(pulse_factor.get("failed", MANAGED_CHAIN_DEFAULT_PULSE_FACTOR["failed"])), 0.5, 1.0)
+	managed_chain_pulse_items.clear()
+	var pulse_items_raw: Array = pulse.get("items", MANAGED_CHAIN_DEFAULT_PULSE_ITEMS)
+	for it in pulse_items_raw:
+		var item_id: String = str(it).strip_edges()
+		if item_id.is_empty():
+			continue
+		managed_chain_pulse_items.append(item_id)
+	if managed_chain_pulse_items.is_empty():
+		managed_chain_pulse_items = MANAGED_CHAIN_DEFAULT_PULSE_ITEMS.duplicate()
+	managed_chain_failure_items.clear()
+	var failure_items_raw: Array = pulse.get("failure_items", MANAGED_CHAIN_DEFAULT_FAILURE_ITEMS)
+	for it in failure_items_raw:
+		var item_id2: String = str(it).strip_edges()
+		if item_id2.is_empty():
+			continue
+		managed_chain_failure_items.append(item_id2)
+	if managed_chain_failure_items.is_empty():
+		managed_chain_failure_items = MANAGED_CHAIN_DEFAULT_FAILURE_ITEMS.duplicate()
+	managed_chain_failure["timeout_days"] = maxi(1, int(failure.get("timeout_days", MANAGED_CHAIN_DEFAULT_TIMEOUT_DAYS)))
+	managed_chain_failure["bonus_gold"] = int(failure.get("bonus_gold", 0))
+	var streak: Dictionary = d.get("streak", {})
+	managed_chain_streak["enabled"] = bool(streak.get("enabled", true))
+	managed_chain_streak["bonus_per_stack"] = clampf(float(streak.get("bonus_per_stack", 0.1)), 0.0, 0.5)
+	managed_chain_streak["max_stacks"] = maxi(1, int(streak.get("max_stacks", 3)))
+
+func _load_chain_templates() -> void:
+	chain_templates.clear()
+	chain_first_step_by_chain.clear()
+	chain_next_by_step_id.clear()
+	chain_id_by_step_id.clear()
+	chain_enabled_map.clear()
+	var f: FileAccess = FileAccess.open(MANAGED_CHAIN_TEMPLATES_PATH, FileAccess.READ)
+	if f == null:
+		push_warning("QuestSystem: missing %s — managed chain templates fallback to built-in IDs" % MANAGED_CHAIN_TEMPLATES_PATH)
+		_apply_builtin_chain_templates()
+		return
+	var txt: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(txt) != OK or not (json.data is Dictionary):
+		push_warning("QuestSystem: invalid %s — chain templates ignored" % MANAGED_CHAIN_TEMPLATES_PATH)
+		_apply_builtin_chain_templates()
+		return
+	var d: Dictionary = json.data
+	chain_daily_pick_policy = str(d.get("daily_pick_policy", "theme_priority_then_rotate"))
+	var chains: Array = d.get("chains", [])
+	for c in chains:
+		if not (c is Dictionary):
+			continue
+		var cd: Dictionary = c
+		var chain_id: String = str(cd.get("id", "")).strip_edges()
+		var steps: Array = cd.get("steps", [])
+		if chain_id.is_empty() or steps.is_empty():
+			continue
+		chain_cooldown_days[chain_id] = maxi(0, int(cd.get("cooldown_days", 0)))
+		chain_templates[chain_id] = cd.duplicate(true)
+		chain_enabled_map[chain_id] = true
+		var prev_step_id: String = ""
+		for i in range(steps.size()):
+			if not (steps[i] is Dictionary):
+				continue
+			var step_d: Dictionary = steps[i]
+			var sid: String = str(step_d.get("id", "")).strip_edges()
+			if sid.is_empty():
+				continue
+			chain_id_by_step_id[sid] = chain_id
+			if i == 0:
+				chain_first_step_by_chain[chain_id] = sid
+			if not prev_step_id.is_empty():
+				chain_next_by_step_id[prev_step_id] = sid
+			prev_step_id = sid
+	if chain_templates.is_empty():
+		_apply_builtin_chain_templates()
+
+func _apply_builtin_chain_templates() -> void:
+	chain_templates = {
+		"managed_supply_chain": {
+			"id": "managed_supply_chain",
+			"display_name": "Village Supply Chain",
+			"preferred_themes": ["joyful"],
+			"steps": [
+				{"id": MANAGED_CHAIN_STEP_1, "title": "Village Request I: Fresh Produce", "description": "Harvest 2 parsnips so the town can prepare a shared meal.", "objective": {"type": "harvest", "crop_id": "parsnip", "count": 2}, "reward": {"gold": 60, "items": ["bread:1"]}},
+				{"id": MANAGED_CHAIN_STEP_2, "title": "Village Request II: Deliver the News", "description": "Talk to Pierre and tell him the produce is ready.", "objective": {"type": "talk", "npc_id": "pierre", "count": 1}, "reward": {"gold": 80, "items": ["worm_bait:2"]}},
+				{"id": MANAGED_CHAIN_STEP_3, "title": "Village Request III: Market Momentum", "description": "Sell goods worth 120g to complete today's village supply loop.", "objective": {"type": "earn_gold", "count": 120}, "reward": {"gold": 120, "items": ["basic_fertilizer:1"]}}
+			]
+		},
+		"managed_mining_chain": {
+			"id": "managed_mining_chain",
+			"display_name": "Mining Support Chain",
+			"preferred_themes": ["adventure"],
+			"steps": [
+				{"id": MANAGED_MINING_CHAIN_STEP_1, "title": "Mine Request I: Ore Rush", "description": "Mine ore 3 times to help replenish workshop materials.", "objective": {"type": "mine_ore", "count": 3}, "reward": {"gold": 70, "items": ["coal:2"]}}
+			]
+		}
+	}
+	chain_cooldown_days = {
+		"managed_supply_chain": 1,
+		"managed_mining_chain": 1
+	}
+	chain_first_step_by_chain = {
+		"managed_supply_chain": MANAGED_CHAIN_STEP_1,
+		"managed_mining_chain": MANAGED_MINING_CHAIN_STEP_1
+	}
+	chain_next_by_step_id = {
+		MANAGED_CHAIN_STEP_1: MANAGED_CHAIN_STEP_2,
+		MANAGED_CHAIN_STEP_2: MANAGED_CHAIN_STEP_3
+	}
+	chain_id_by_step_id = {
+		MANAGED_CHAIN_STEP_1: "managed_supply_chain",
+		MANAGED_CHAIN_STEP_2: "managed_supply_chain",
+		MANAGED_CHAIN_STEP_3: "managed_supply_chain",
+		MANAGED_MINING_CHAIN_STEP_1: "managed_mining_chain"
+	}
+	chain_enabled_map = {
+		"managed_supply_chain": true,
+		"managed_mining_chain": true
+	}
 
 func initialize_quests():
 	# Tutorial quest
@@ -133,6 +330,93 @@ func initialize_quests():
 		"reward": {"gold": 40, "items": ["wood_log:3"]}
 	}
 
+	_register_chain_quests_from_templates()
+
+func _register_chain_quests_from_templates() -> void:
+	for chain_id in chain_templates.keys():
+		var cd: Dictionary = chain_templates[chain_id]
+		var steps: Array = cd.get("steps", [])
+		_register_chain_steps(str(chain_id), steps, "managed_story_chain")
+
+func _register_chain_steps(chain_id: String, steps: Array, source_tag: String) -> void:
+	for i in range(steps.size()):
+		if not (steps[i] is Dictionary):
+			continue
+		var step: Dictionary = steps[i]
+		var sid: String = str(step.get("id", "")).strip_edges()
+		if sid.is_empty():
+			continue
+		var objective_raw: Dictionary = step.get("objective", {})
+		var objective: Dictionary = objective_raw.duplicate(true)
+		objective["current"] = 0
+		var qd: Dictionary = {
+			"id": sid,
+			"title": str(step.get("title", sid)),
+			"description": str(step.get("description", "")),
+			"objectives": [objective],
+			"status": QuestStatus.NOT_STARTED,
+			"reward": step.get("reward", {"gold": 0, "items": []}),
+			"source": source_tag,
+			"chain_id": chain_id
+		}
+		var next_sid: String = ""
+		if i + 1 < steps.size() and steps[i + 1] is Dictionary:
+			next_sid = str((steps[i + 1] as Dictionary).get("id", "")).strip_edges()
+		if next_sid.is_empty():
+			next_sid = str(chain_next_by_step_id.get(sid, ""))
+		if not next_sid.is_empty():
+			qd["chain_next"] = next_sid
+		quests[sid] = qd
+
+func register_runtime_chain_template(chain_def: Dictionary, source_tag: String = "runtime_agentic") -> Dictionary:
+	var incoming: Dictionary = chain_def.duplicate(true)
+	var chain_id: String = str(incoming.get("id", "")).strip_edges()
+	if chain_id.is_empty():
+		return {"ok": false, "error": "missing_chain_id"}
+	if chain_templates.has(chain_id):
+		return {"ok": false, "error": "chain_exists"}
+	var steps: Array = incoming.get("steps", [])
+	if steps.is_empty():
+		return {"ok": false, "error": "missing_steps"}
+	var first_sid: String = ""
+	var prev_sid: String = ""
+	for i in range(steps.size()):
+		if not (steps[i] is Dictionary):
+			return {"ok": false, "error": "step_not_dict"}
+		var s: Dictionary = (steps[i] as Dictionary).duplicate(true)
+		var sid: String = str(s.get("id", "")).strip_edges()
+		if sid.is_empty():
+			return {"ok": false, "error": "missing_step_id"}
+		if quests.has(sid):
+			return {"ok": false, "error": "step_exists:%s" % sid}
+		if i == 0:
+			first_sid = sid
+		if not prev_sid.is_empty():
+			chain_next_by_step_id[prev_sid] = sid
+		chain_id_by_step_id[sid] = chain_id
+		prev_sid = sid
+		steps[i] = s
+	if first_sid.is_empty():
+		return {"ok": false, "error": "missing_first_step"}
+	incoming["steps"] = steps
+	incoming["cooldown_days"] = maxi(0, int(incoming.get("cooldown_days", 1)))
+	chain_templates[chain_id] = incoming
+	chain_cooldown_days[chain_id] = int(incoming.get("cooldown_days", 1))
+	chain_first_step_by_chain[chain_id] = first_sid
+	chain_enabled_map[chain_id] = true
+	_register_chain_steps(chain_id, steps, source_tag)
+	return {"ok": true, "chain_id": chain_id}
+
+func set_chain_runtime_enabled(chain_id: String, enabled: bool) -> void:
+	if chain_id.is_empty():
+		return
+	chain_enabled_map[chain_id] = enabled
+
+func is_chain_runtime_enabled(chain_id: String) -> bool:
+	if chain_id.is_empty():
+		return false
+	return bool(chain_enabled_map.get(chain_id, true))
+
 func _objective_goal_max(o: Dictionary) -> int:
 	if o.has("count"):
 		return int(o["count"])
@@ -147,6 +431,17 @@ func start_quest(quest_id: String):
 	var quest = quests[quest_id]
 	if quest.status == QuestStatus.NOT_STARTED:
 		quest.status = QuestStatus.IN_PROGRESS
+		quest["started_at"] = Time.get_unix_time_from_system()
+		if str(quest.get("source", "")) == "managed_story_chain" and not quest.has("chain_started_at"):
+			quest["chain_started_at"] = int(quest["started_at"])
+		if str(quest.get("source", "")) == "managed_story_chain" and not quest.has("chain_started_day_index"):
+			quest["chain_started_day_index"] = _current_day_index()
+		if str(quest.get("source", "")) == "managed_story_chain":
+			var cur_day_idx: int = _current_day_index()
+			quest["started_day_index"] = cur_day_idx
+			quest["deadline_day_index"] = cur_day_idx + int(managed_chain_failure.get("timeout_days", MANAGED_CHAIN_DEFAULT_TIMEOUT_DAYS))
+			quest["managed_state"] = "active"
+			managed_chain_state_changed.emit(quest_id, "active")
 		active_quests.append(quest_id)
 		quest_started.emit(quest_id)
 
@@ -183,24 +478,340 @@ func complete_quest(quest_id: String):
 	quest.status = QuestStatus.COMPLETED
 
 	# Give rewards
-	if quest.reward.has("gold"):
-		GameManager.player_data.gold += quest.reward.gold
+	var reward_data: Dictionary = quest.reward if quest.get("reward") is Dictionary else {}
+	if reward_data.has("gold"):
+		GameManager.player_data.gold += int(reward_data.gold)
 
-	if quest.reward.has("items"):
-		for item_str in quest.reward.items:
+	if reward_data.has("items"):
+		for item_str in reward_data.items:
 			var parts = item_str.split(":")
 			var item_id = parts[0]
 			var count = int(parts[1]) if parts.size() > 1 else 1
 			var item_template = ItemDatabase.get_item(item_id)
 			for i in range(count):
 				InventoryManager.add_item(item_template.duplicate(true))
+	_apply_reward_pool(reward_data)
 
 	# Move from active to completed
 	active_quests.erase(quest_id)
 	completed_quests.append(quest_id)
 	if AIEconomySystem:
 		AIEconomySystem.on_quest_completed(quest)
+	_try_advance_managed_chain(quest_id, quest)
+	if str(quest.get("source", "")) == "managed_recovery":
+		_on_recovery_quest_completed(quest)
 	quest_completed.emit(quest_id)
+
+func _apply_reward_pool(reward_data: Dictionary) -> void:
+	if not reward_data.has("pool"):
+		return
+	var pool: Dictionary = reward_data.get("pool", {})
+	var entries: Array = pool.get("entries", [])
+	var draw_count: int = maxi(0, int(pool.get("count", 1)))
+	for _i in range(draw_count):
+		var item_spec: String = _pick_weighted_pool_item(entries)
+		if item_spec.is_empty():
+			continue
+		_grant_item_spec(item_spec)
+
+func _pick_weighted_pool_item(entries: Array) -> String:
+	var total: float = 0.0
+	for e in entries:
+		if e is Dictionary:
+			total += maxf(0.0, float((e as Dictionary).get("weight", 0.0)))
+	if total <= 0.0:
+		return ""
+	var roll: float = randf() * total
+	var acc: float = 0.0
+	for e in entries:
+		if not (e is Dictionary):
+			continue
+		var ed: Dictionary = e
+		acc += maxf(0.0, float(ed.get("weight", 0.0)))
+		if roll <= acc:
+			return str(ed.get("item", ""))
+	return ""
+
+func _grant_item_spec(item_spec: String) -> void:
+	var spec: String = item_spec.strip_edges()
+	if spec.is_empty():
+		return
+	var parts: PackedStringArray = spec.split(":")
+	var item_id: String = str(parts[0])
+	var count: int = int(parts[1]) if parts.size() > 1 else 1
+	var item_template = ItemDatabase.get_item(item_id)
+	if item_template.is_empty():
+		return
+	for _i in range(maxi(1, count)):
+		InventoryManager.add_item(item_template.duplicate(true))
+
+func _try_advance_managed_chain(quest_id: String, quest: Dictionary) -> void:
+	if str(quest.get("source", "")) != "managed_story_chain":
+		return
+	var chain_id: String = str(quest.get("chain_id", chain_id_by_step_id.get(quest_id, "managed_supply_chain")))
+	var next_id: String = str(quest.get("chain_next", ""))
+	if next_id.is_empty():
+		_resolve_managed_chain_finale(quest, chain_id)
+		return
+	if not quests.has(next_id):
+		return
+	var next_q: Dictionary = quests[next_id]
+	if int(next_q.get("status", QuestStatus.NOT_STARTED)) != QuestStatus.NOT_STARTED:
+		return
+	if quest.has("chain_started_at"):
+		next_q["chain_started_at"] = int(quest.get("chain_started_at", Time.get_unix_time_from_system()))
+		next_q["chain_id"] = chain_id
+	start_quest(next_id)
+
+func _resolve_managed_chain_finale(final_quest: Dictionary, chain_id: String) -> void:
+	var now_ts: int = int(final_quest.get("completed_at", Time.get_unix_time_from_system()))
+	var chain_start: int = int(final_quest.get("chain_started_at", now_ts))
+	var elapsed: int = maxi(0, now_ts - chain_start)
+	var fast_sec: int = int(managed_chain_timing.get("fast_sec", MANAGED_CHAIN_FAST_SEC))
+	var steady_sec: int = int(managed_chain_timing.get("steady_sec", MANAGED_CHAIN_STEADY_SEC))
+	var pace: String = "steady"
+	var bonus_gold: int = int(managed_chain_bonus_gold.get("steady", 40))
+	if elapsed <= fast_sec:
+		pace = "fast"
+		bonus_gold = int(managed_chain_bonus_gold.get("fast", 80))
+	elif elapsed > steady_sec:
+		pace = "slow"
+		bonus_gold = int(managed_chain_bonus_gold.get("slow", 10))
+	var streak_mult: float = 1.0
+	if bool(managed_chain_streak.get("enabled", true)):
+		var st: int = _compute_chain_streak_bonus(chain_id)
+		streak_mult += float(managed_chain_streak.get("bonus_per_stack", 0.1)) * st
+	bonus_gold = int(round(float(bonus_gold) * streak_mult))
+
+	if GameManager and GameManager.player_data:
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
+
+	if AIEconomySystem and AIEconomySystem.has_method("pulse_story_completion"):
+		var factor: float = float(managed_chain_pulse_factor.get(pace, managed_chain_pulse_factor.get("steady", 1.04)))
+		AIEconomySystem.pulse_story_completion(pace, bonus_gold, factor, managed_chain_pulse_items)
+	last_chain_focus_items = managed_chain_pulse_items.duplicate()
+
+	managed_chain_resolved.emit({
+		"result": "success",
+		"pace": pace,
+		"elapsed_sec": elapsed,
+		"bonus_gold": bonus_gold,
+		"chain_id": chain_id,
+		"streak_mult": streak_mult
+	})
+	_set_chain_cooldown(chain_id)
+
+func on_day_passed() -> void:
+	var today: int = _current_day_index()
+	var should_fail := false
+	var fail_qid := ""
+	for qid in active_quests:
+		var q: Dictionary = quests.get(qid, {})
+		if str(q.get("source", "")) != "managed_story_chain":
+			continue
+		var deadline: int = int(q.get("deadline_day_index", today))
+		if today > deadline:
+			should_fail = true
+			fail_qid = str(qid)
+			break
+		if today == deadline and str(q.get("managed_state", "active")) != "urgent":
+			q["managed_state"] = "urgent"
+			managed_chain_state_changed.emit(str(qid), "urgent")
+	if should_fail:
+		_fail_managed_chain_timeout(fail_qid, today)
+
+func get_managed_chain_status_tag(quest_id: String) -> String:
+	var q: Dictionary = quests.get(quest_id, {})
+	if q.is_empty() or str(q.get("source", "")) != "managed_story_chain":
+		return ""
+	return str(q.get("managed_state", "active"))
+
+func get_chain_focus_items() -> Array:
+	return last_chain_focus_items.duplicate()
+
+func activate_chain_for_narrative(narrative: Dictionary) -> void:
+	var pick_chain: String = "managed_supply_chain"
+	var theme: String = str(narrative.get("theme", "")).to_lower()
+	var candidates: Array = []
+	for chain_id in chain_templates.keys():
+		var cd: Dictionary = chain_templates[chain_id]
+		if not is_chain_runtime_enabled(str(chain_id)):
+			continue
+		if _is_chain_on_cooldown(str(chain_id)):
+			continue
+		var rollout: Dictionary = cd.get("runtime_rollout", {})
+		var stage: String = str(rollout.get("stage", "full"))
+		if stage == "canary":
+			var ratio: float = clampf(float(rollout.get("ratio", 0.2)), 0.0, 1.0)
+			if randf() > ratio:
+				continue
+		candidates.append(str(chain_id))
+		var preferred: Array = cd.get("preferred_themes", [])
+		for t in preferred:
+			if str(t).to_lower() == theme:
+				pick_chain = str(chain_id)
+				break
+	if chain_daily_pick_policy == "rotate" and not candidates.is_empty():
+		pick_chain = _rotate_pick_chain(candidates)
+	elif chain_daily_pick_policy == "random" and not candidates.is_empty():
+		pick_chain = str(candidates[randi() % candidates.size()])
+	elif not candidates.has(pick_chain) and not candidates.is_empty():
+		pick_chain = str(candidates[0])
+	if candidates.is_empty():
+		return
+	if not _has_any_active_managed_chain():
+		var first_step: String = str(chain_first_step_by_chain.get(pick_chain, MANAGED_CHAIN_STEP_1))
+		start_quest(first_step)
+		_mark_chain_selected_today(pick_chain)
+
+func _has_any_active_managed_chain() -> bool:
+	for qid in active_quests:
+		var q: Dictionary = quests.get(qid, {})
+		if str(q.get("source", "")) == "managed_story_chain":
+			return true
+	return false
+
+func _fail_managed_chain_timeout(failed_qid: String, today_idx: int) -> void:
+	var chain_start: int = today_idx
+	var chain_id: String = str(chain_id_by_step_id.get(failed_qid, "managed_supply_chain"))
+	if quests.has(failed_qid):
+		chain_start = int(quests[failed_qid].get("chain_started_day_index", quests[failed_qid].get("started_day_index", today_idx)))
+	for qid in quests.keys():
+		if not quests.has(qid):
+			continue
+		var q: Dictionary = quests[qid]
+		if str(q.get("source", "")) != "managed_story_chain":
+			continue
+		if str(q.get("chain_id", chain_id_by_step_id.get(qid, ""))) != chain_id:
+			continue
+		q["managed_state"] = "failed"
+		q["failed_reason"] = "timeout"
+		if active_quests.has(qid):
+			active_quests.erase(qid)
+			managed_chain_state_changed.emit(qid, "failed")
+	var pace := "failed"
+	var bonus_gold: int = int(managed_chain_failure.get("bonus_gold", 0))
+	if GameManager and GameManager.player_data and bonus_gold != 0:
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
+	if AIEconomySystem and AIEconomySystem.has_method("pulse_story_completion"):
+		var f: float = float(managed_chain_pulse_factor.get("failed", 0.94))
+		AIEconomySystem.pulse_story_completion(pace, bonus_gold, f, managed_chain_failure_items)
+	last_chain_focus_items = managed_chain_failure_items.duplicate()
+	managed_chain_resolved.emit({
+		"result": "failed",
+		"reason": "timeout",
+		"pace": pace,
+		"elapsed_sec": maxi(0, today_idx - chain_start) * 86400,
+		"bonus_gold": bonus_gold,
+		"chain_id": chain_id
+	})
+	_set_chain_cooldown(chain_id)
+	_spawn_recovery_quest(chain_id)
+
+func _spawn_recovery_quest(chain_id: String) -> void:
+	var qid: String = "managed_recovery_%s_%d" % [chain_id, _current_day_index()]
+	if quests.has(qid):
+		return
+	var focus_item: String = "bread"
+	if not managed_chain_failure_items.is_empty():
+		focus_item = str(managed_chain_failure_items[0])
+	quests[qid] = {
+		"id": qid,
+		"title": "Recovery Task: Rebuild Trust",
+		"description": "Sell %s worth 60g to restore market confidence." % focus_item,
+		"objectives": [{"type": "earn_gold", "count": 60, "current": 0}],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 20, "items": ["bread:1"]},
+		"source": "managed_recovery",
+		"chain_id": chain_id
+	}
+	start_quest(qid)
+
+func _on_recovery_quest_completed(recovery_quest: Dictionary) -> void:
+	var chain_id: String = str(recovery_quest.get("chain_id", "managed_supply_chain"))
+	if GameManager and GameManager.player_data:
+		GameManager.player_data["managed_chain_failed_banner"] = ""
+	var restart_step: String = str(chain_first_step_by_chain.get(chain_id, MANAGED_CHAIN_STEP_1))
+	var q: Dictionary = quests.get(restart_step, {})
+	if not q.is_empty():
+		q["status"] = QuestStatus.NOT_STARTED
+		q["managed_state"] = "active"
+		start_quest(restart_step)
+	managed_chain_resolved.emit({
+		"result": "recovered",
+		"chain_id": chain_id,
+		"bonus_gold": int(recovery_quest.get("reward", {}).get("gold", 0)),
+		"pace": "recovery",
+		"elapsed_sec": 0
+	})
+
+func _compute_chain_streak_bonus(chain_id: String) -> int:
+	if not GameManager or not GameManager.player_data:
+		return 0
+	var today: int = _current_day_index()
+	var prev_day: int = int(GameManager.player_data.get("managed_chain_streak_day", -9999))
+	var prev_chain: String = str(GameManager.player_data.get("managed_chain_streak_chain", ""))
+	var stacks: int = int(GameManager.player_data.get("managed_chain_streak", 0))
+	if prev_day == today - 1 and prev_chain == chain_id:
+		stacks += 1
+	else:
+		stacks = 1
+	var capped: int = mini(stacks, int(managed_chain_streak.get("max_stacks", 3)))
+	GameManager.player_data["managed_chain_streak"] = capped
+	GameManager.player_data["managed_chain_streak_day"] = today
+	GameManager.player_data["managed_chain_streak_chain"] = chain_id
+	return maxi(0, capped - 1)
+
+func _set_chain_cooldown(chain_id: String) -> void:
+	if not GameManager or not GameManager.player_data:
+		return
+	var cd_days: int = int(chain_cooldown_days.get(chain_id, 0))
+	if cd_days <= 0:
+		return
+	GameManager.player_data["chain_cooldown_until_%s" % chain_id] = _current_day_index() + cd_days
+
+func _is_chain_on_cooldown(chain_id: String) -> bool:
+	if not GameManager or not GameManager.player_data:
+		return false
+	var key := "chain_cooldown_until_%s" % chain_id
+	return int(GameManager.player_data.get(key, -1)) > _current_day_index()
+
+func _mark_chain_selected_today(chain_id: String) -> void:
+	if not GameManager or not GameManager.player_data:
+		return
+	GameManager.player_data["chain_last_selected"] = chain_id
+	GameManager.player_data["chain_last_selected_day"] = _current_day_index()
+
+func _rotate_pick_chain(candidates: Array) -> String:
+	if not GameManager or not GameManager.player_data:
+		return str(candidates[0])
+	var last: String = str(GameManager.player_data.get("chain_last_selected", ""))
+	if candidates.size() <= 1:
+		return str(candidates[0])
+	var idx: int = candidates.find(last)
+	if idx < 0:
+		return str(candidates[0])
+	return str(candidates[(idx + 1) % candidates.size()])
+
+func _current_day_index() -> int:
+	if not GameManager or not GameManager.player_data:
+		return 0
+	var season: String = str(GameManager.player_data.get("season", "spring"))
+	var season_idx: int = 0
+	match season:
+		"spring":
+			season_idx = 0
+		"summer":
+			season_idx = 1
+		"fall":
+			season_idx = 2
+		"winter":
+			season_idx = 3
+		_:
+			season_idx = 0
+	var year: int = int(GameManager.player_data.get("year", 1))
+	var day: int = int(GameManager.player_data.get("day", 1))
+	return (year - 1) * 112 + season_idx * 28 + day
 
 func turn_in_quest(quest_id: String):
 	if not quests.has(quest_id):
@@ -411,3 +1022,14 @@ func load_snapshot(data: Variant) -> void:
 	for qid in completed_quests:
 		if active_quests.has(qid):
 			active_quests.erase(qid)
+	_migrate_loaded_snapshot()
+
+func _migrate_loaded_snapshot() -> void:
+	for qid in quests.keys():
+		var q: Dictionary = quests[qid]
+		if str(q.get("source", "")) != "managed_story_chain":
+			continue
+		if not q.has("chain_id"):
+			q["chain_id"] = str(chain_id_by_step_id.get(str(qid), "managed_supply_chain"))
+		if not q.has("managed_state"):
+			q["managed_state"] = "active"
