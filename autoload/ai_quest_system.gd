@@ -729,8 +729,28 @@ func verify_active_objectives() -> void:
 				continue
 			if InventoryManager.count_item(item_id2) < need2:
 				continue
+			var target_npc: String = str(quest.get("target_npc", ""))
+			if target_npc.is_empty():
+				if InventoryManager.consume_item_by_id(item_id2, need2):
+					complete_quest(str(qid), true, {"verified_by": "inventory_delivery", "item_id": item_id2, "count": need2})
+				continue
+			var talked_to_target := false
+			for ev in _recent_events:
+				if str(ev.get("type", "")) != "talk":
+					continue
+				var ed: Dictionary = ev.get("data", {})
+				if str(ed.get("npc_id", "")) == target_npc:
+					talked_to_target = true
+					break
+			if not talked_to_target:
+				continue
 			if InventoryManager.consume_item_by_id(item_id2, need2):
-				complete_quest(str(qid), true, {"verified_by": "inventory_delivery", "item_id": item_id2, "count": need2})
+				complete_quest(str(qid), true, {
+					"verified_by": "talk_delivery",
+					"item_id": item_id2,
+					"count": need2,
+					"target_npc": target_npc
+				})
 		elif qtype == "problem_solving":
 			var giver: String = str(quest.get("quest_giver", ""))
 			if giver.is_empty():
