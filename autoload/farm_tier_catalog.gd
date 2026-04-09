@@ -126,6 +126,10 @@ func get_farm_upgrade_rect() -> Rect2:
 
 
 func get_farm_upgrade_hint() -> String:
+	if UITextCatalog:
+		var t: String = UITextCatalog.get_text("farm_tier", "farm_upgrade_hint")
+		if not t.is_empty():
+			return t
 	return str(_interaction.get("farm_upgrade_hint", ""))
 
 
@@ -133,7 +137,21 @@ func next_tier_def(current_tier: int) -> Dictionary:
 	return tier_def(current_tier + 1)
 
 
+func localized_display_name(tier_num: int) -> String:
+	var k: String = "tier_name_%d" % tier_num
+	if UITextCatalog:
+		var t: String = UITextCatalog.get_text("farm_tier", k)
+		if not t.is_empty():
+			return t
+	var d: Dictionary = tier_def(tier_num)
+	return str(d.get("display_name", "?"))
+
+
 func get_message(key: String) -> String:
+	if UITextCatalog:
+		var loc: String = UITextCatalog.get_text("farm_tier", key)
+		if not loc.is_empty():
+			return loc
 	var msgs: Dictionary = _interaction.get("messages", {})
 	var fallback: Dictionary = {
 		"unavailable": "Farm tiers unavailable.",

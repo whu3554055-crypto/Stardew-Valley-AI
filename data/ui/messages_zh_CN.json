@@ -74,6 +74,30 @@
     "audio_panel_hint": "F10 关闭 · Esc 关闭 · 配置：user://audio_mix.json",
     "language_label": "界面语言"
   },
+  "farm_tier": {
+    "farm_upgrade_hint": "站在农田上 · U 升级农场等级",
+    "unavailable": "农场等级不可用。",
+    "max_tier": "农场已是最高等级。",
+    "not_enough_gold": "金币不足（需要 {gold}g）。",
+    "missing_materials": "升级材料不足。",
+    "upgraded": "农场已升级：{tier_name} — 作物生长略快。",
+    "hud_speed": "生长 {speed_pct}%",
+    "hud_bonus": "产量 +{bonus_pct}% 最高 +{bonus_max}",
+    "hud_line_upgradable": "农田 · T{tier} {tier_name} · {speed_text} · {bonus_text} · U 升级",
+    "hud_line_max": "农田 · T{tier} {tier_name} · {speed_text} · {bonus_text} · 已满级",
+    "tier_name_1": "家园",
+    "tier_name_2": "扩建地块"
+  },
+  "shop": {
+    "title_pierre": "皮埃尔杂货店",
+    "gold": "持有金币：{gold}g",
+    "total": "合计：{gold}g",
+    "season_weekly": "季节：{season} | 本周策略：{strategy}",
+    "close": "关闭商店",
+    "item_row": "{name} - {price}g（库存：{stock}）{oos}{market}",
+    "out_of_season": " [非当季]",
+    "chain_focus": " [连锁焦点]"
+  },
   "achievements": {
     "first_crop": { "title": "新手农夫", "description": "种下第一株作物" },
     "master_farmer": { "title": "农场大师", "description": "累计收获 100 株作物" },

@@ -74,6 +74,30 @@
     "audio_panel_hint": "F10 close · Esc close · settings: user://audio_mix.json",
     "language_label": "Language"
   },
+  "farm_tier": {
+    "farm_upgrade_hint": "Stand on the field · U = upgrade farm tier",
+    "unavailable": "Farm tiers unavailable.",
+    "max_tier": "Farm is already at max tier.",
+    "not_enough_gold": "Not enough gold ({gold}g needed).",
+    "missing_materials": "Missing materials for upgrade.",
+    "upgraded": "Farm upgraded: {tier_name} — crops grow a bit faster.",
+    "hud_speed": "grow {speed_pct}%",
+    "hud_bonus": "yield +{bonus_pct}% up to +{bonus_max}",
+    "hud_line_upgradable": "farm · T{tier} {tier_name} · {speed_text} · {bonus_text} · U upgrade",
+    "hud_line_max": "farm · T{tier} {tier_name} · {speed_text} · {bonus_text} · max",
+    "tier_name_1": "Homestead",
+    "tier_name_2": "Expanded Plot"
+  },
+  "shop": {
+    "title_pierre": "Pierre's General Store",
+    "gold": "Your Gold: {gold}g",
+    "total": "Total: {gold}g",
+    "season_weekly": "Season: {season} | Weekly: {strategy}",
+    "close": "Close Shop",
+    "item_row": "{name} - {price}g (Stock: {stock}){oos}{market}",
+    "out_of_season": " [Out of season]",
+    "chain_focus": " [Chain Focus]"
+  },
   "achievements": {
     "first_crop": { "title": "Greenhorn", "description": "Plant your first crop" },
     "master_farmer": { "title": "Master Farmer", "description": "Harvest 100 crops" },
