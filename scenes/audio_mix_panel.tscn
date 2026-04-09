@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://audio_mix_panel"]
+
+[ext_resource type="Script" path="res://scripts/audio_mix_panel.gd" id="1_script"]
+
+[node name="AudioMixPanel" type="CanvasLayer"]
+layer = 75
+script = ExtResource("1_script")

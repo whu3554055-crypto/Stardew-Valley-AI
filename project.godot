@@ -87,6 +87,11 @@ house_upgrade={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":72,"key_label":0,"unicode":104,"location":0,"echo":false,"script":null)
 ]
 }
+toggle_audio_mix={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194340,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
 
 [autoload]
 
@@ -101,6 +106,7 @@ GatheringAlmanac="*res://autoload/gathering_almanac.gd"
 ShopSystem="*res://autoload/shop_system.gd"
 WeatherSystem="*res://autoload/weather_system.gd"
 ImmersionConfig="*res://autoload/immersion_config.gd"
+AudioMixSettings="*res://autoload/audio_mix_settings.gd"
 MineSfxAcoustics="*res://autoload/mine_sfx_acoustics.gd"
 ForestPresenceController="*res://autoload/forest_presence_controller.gd"
 WorldWeatherVisuals="*res://autoload/world_weather_visuals.gd"
