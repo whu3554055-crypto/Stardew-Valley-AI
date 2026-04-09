@@ -56,7 +56,7 @@
 
 - [ ] **B3 — 每日叙事可见化**  
   除生成与任务外，增加**当日摘要 UI**，可选 **地图热点 / 弹窗**，让玩家每天「看见」叙事结果。
-  *进度：`DailyNarrativeSystem` 的后端日叙事请求已改为统一入口 `AIAgentManager.request_text_generation(use_backend)`，与 AI 任务链路一致，减少分散 HTTP 客户端实现；`main.gd` 已接 `DailyNarrativeSystem.narrative_generated`，将当日标题/来源/摘要写入 `WorldEventFeed`，并在叙事任务落地时附带 `narrative_id/narrative_day_key` 索引，形成「每天可见 + 可追踪」最小闭环。*
+  *进度：`DailyNarrativeSystem` 的后端日叙事请求已改为统一入口 `AIAgentManager.request_text_generation(use_backend)`，与 AI 任务链路一致，减少分散 HTTP 客户端实现；`main.gd` 已接 `DailyNarrativeSystem.narrative_generated`，将当日标题/来源/摘要写入 `WorldEventFeed`，并在叙事任务落地时附带 `narrative_id/narrative_day_key` 索引；`QuestLog` 对日叙事任务显示 `[Story <day_key>]` 标签，形成「每天可见 + 可追踪」最小闭环。*
 
 - [ ] **B4 — AI 增强（后排）**  
   **NPC↔NPC 社交**、**真实 TTS 与语音队列** 等，见本文「实施中发现（防遗漏）」中的 TTS/社交条目；在 B1–B3 稳定后再展开。

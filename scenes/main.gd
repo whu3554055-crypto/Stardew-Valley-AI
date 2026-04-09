@@ -824,7 +824,14 @@ func _refresh_quest_log() -> void:
 			suffix = " %d/%d" % [cur, goal]
 		elif obj_list.size() > 1:
 			suffix = " (%d steps)" % obj_list.size()
-		lines.append("• %s%s" % [title, suffix])
+		var tag: String = ""
+		if str(q.get("source", "")) == "daily_narrative":
+			var ndk: String = str(q.get("narrative_day_key", ""))
+			if not ndk.is_empty():
+				tag = " [Story %s]" % ndk
+			else:
+				tag = " [Story]"
+		lines.append("• %s%s%s" % [title, suffix, tag])
 	quest_log_label.text = "Quests\n" + "\n".join(lines)
 
 
