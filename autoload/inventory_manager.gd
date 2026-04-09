@@ -147,7 +147,13 @@ func load_snapshot(data: Variant) -> void:
 				if entry == null:
 					inventory[i] = null
 				elif entry is Dictionary:
-					inventory[i] = entry.duplicate(true)
+					var it: Dictionary = entry.duplicate(true)
+					var st: int = int(it.get("stack", 0))
+					if st <= 0:
+						inventory[i] = null
+					else:
+						it["stack"] = st
+						inventory[i] = it
 				else:
 					inventory[i] = null
 			for i in range(n, INVENTORY_SIZE):
