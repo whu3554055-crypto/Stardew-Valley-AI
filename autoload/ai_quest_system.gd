@@ -599,6 +599,7 @@ func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_
 		quest.target_count = maxi(1, int(ai_data.get("target_count", quest.get("target_count", 1))))
 	if ai_data.has("objective_type"):
 		quest.objective_type = str(ai_data.get("objective_type", quest.get("objective_type", "")))
+	quest.description = _append_completion_hint(quest)
 	
 	ai_quest_request_completed.emit(npc_id, quest)
 	assign_quest_to_player(quest)
@@ -630,6 +631,36 @@ func _normalize_ai_quest_payload(ai_data: Dictionary) -> Dictionary:
 	else:
 		out["objective_type"] = OBJECTIVE_FETCH
 	return out
+
+func _append_completion_hint(quest: Dictionary) -> String:
+	var desc: String = str(quest.get("description", "")).strip_edges()
+	var qtype: String = str(quest.get("type", ""))
+	var hint: String = ""
+	if qtype == "fetch":
+		hint = "Completion: Keep %s x%d in your backpack." % [
+			str(quest.get("target_item", "item")),
+			int(quest.get("target_count", 1))
+		]
+	elif qtype == "delivery":
+		var npc: String = str(quest.get("target_npc", ""))
+		if npc.is_empty():
+			hint = "Completion: Carry %s x%d in your backpack." % [
+				str(quest.get("target_item", "item")),
+				int(quest.get("target_count", 1))
+			]
+		else:
+			hint = "Completion: Carry %s x%d, then talk to %s." % [
+				str(quest.get("target_item", "item")),
+				int(quest.get("target_count", 1)),
+				npc
+			]
+	elif qtype == "problem_solving":
+		hint = "Completion: Talk to %s." % str(quest.get("quest_giver", "the quest giver"))
+	if hint.is_empty():
+		return desc
+	if desc.find("Completion:") >= 0:
+		return desc
+	return "%s\n%s" % [desc, hint]
 
 func _parse_ai_quest_json(raw_text: String) -> Dictionary:
 	var text: String = raw_text.strip_edges()
@@ -692,7 +723,7 @@ func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: D
 			quest.quest_giver = npc_id
 			quest.objective_type = OBJECTIVE_SOLVE
 			quest.description = quest.description.replace("{problem}", quest.problem)
-	
+	quest.description = _append_completion_hint(quest)
 	return quest
 
 func generate_target_item(opportunity: Dictionary) -> String:
