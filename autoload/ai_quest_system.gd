@@ -35,9 +35,18 @@ var generation_state = {
 # Narrative threads
 var narrative_threads = []
 var daily_narrative_cache = {}
+var _verify_tick_accum: float = 0.0
 
 func _ready():
 	initialize_quest_system()
+	set_process(true)
+
+func _process(delta: float) -> void:
+	_verify_tick_accum += delta
+	if _verify_tick_accum < 1.0:
+		return
+	_verify_tick_accum = 0.0
+	verify_active_objectives()
 
 func initialize_quest_system():
 	"""Initialize the quest generation system"""
@@ -611,12 +620,14 @@ func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: D
 	match quest.type:
 		"fetch":
 			quest.target_item = generate_target_item(opportunity)
+			quest.target_count = int(opportunity.get("target_count", 1))
 			quest.description = quest.description.replace("{item}", quest.target_item)
 			quest.description = quest.description.replace("{reason}", generate_item_reason(npc_id))
 		
 		"delivery":
 			quest.target_item = generate_target_item(opportunity)
 			quest.target_npc = generate_target_npc()
+			quest.target_count = int(opportunity.get("target_count", 1))
 			quest.description = quest.description.replace("{item}", quest.target_item)
 			quest.description = quest.description.replace("{target_npc}", get_npc_name(quest.target_npc))
 		
@@ -684,6 +695,31 @@ func calculate_quest_rewards(quest: Dictionary, template: Dictionary) -> Diction
 		rewards.gold = int(base_reward * multiplier)
 	
 	return rewards
+
+func verify_active_objectives() -> void:
+	# Phase-B minimum verifier: fetch/delivery by inventory checks.
+	if not InventoryManager:
+		return
+	var ids: Array = active_quests.keys()
+	for qid in ids:
+		var quest: Dictionary = active_quests.get(qid, {})
+		if quest.is_empty():
+			continue
+		var qtype: String = str(quest.get("type", ""))
+		if qtype == "fetch":
+			var item_id: String = str(quest.get("target_item", ""))
+			var need: int = int(quest.get("target_count", 1))
+			if not item_id.is_empty() and InventoryManager.count_item(item_id) >= need:
+				complete_quest(str(qid), true, {"verified_by": "inventory_fetch", "item_id": item_id, "count": need})
+		elif qtype == "delivery":
+			var item_id2: String = str(quest.get("target_item", ""))
+			var need2: int = int(quest.get("target_count", 1))
+			if item_id2.is_empty():
+				continue
+			if InventoryManager.count_item(item_id2) < need2:
+				continue
+			if InventoryManager.consume_item_by_id(item_id2, need2):
+				complete_quest(str(qid), true, {"verified_by": "inventory_delivery", "item_id": item_id2, "count": need2})
 
 func assign_quest_to_player(quest: Dictionary):
 	"""Assign generated quest to player"""
