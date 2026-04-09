@@ -394,6 +394,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var inflation: Dictionary = _check_reward_inflation(chain_data, steps)
 	if not bool(inflation.get("ok", false)):
 		return inflation
+	var semantic: Dictionary = _check_objective_semantic_coherence(steps)
+	if not bool(semantic.get("ok", false)):
+		return semantic
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -956,3 +959,29 @@ func _estimate_existing_chain_value_baseline() -> float:
 	if n <= 0:
 		return 0.0
 	return total / float(n)
+
+func _check_objective_semantic_coherence(steps: Array) -> Dictionary:
+	# Guard against "talk to X" objective while text implies "talk to Y".
+	var known_npcs: Dictionary = {
+		"pierre": "Pierre",
+		"abigail": "Abigail",
+		"lewis": "Lewis"
+	}
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var objective: Dictionary = sd.get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		if ot != "talk":
+			continue
+		var target_id: String = str(objective.get("npc_id", "")).to_lower().strip_edges()
+		if target_id.is_empty():
+			return {"ok": false, "error": "talk_missing_npc"}
+		var text_blob: String = "%s %s" % [str(sd.get("title", "")), str(sd.get("description", ""))]
+		var lower_blob: String = text_blob.to_lower()
+		for npc_id in known_npcs.keys():
+			var npc_name: String = str(known_npcs[npc_id]).to_lower()
+			if lower_blob.find(npc_name) >= 0 and npc_id != target_id:
+				return {"ok": false, "error": "talk_npc_semantic_mismatch"}
+	return {"ok": true}
