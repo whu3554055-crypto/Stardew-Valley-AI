@@ -7,6 +7,7 @@ signal generation_published(chain_id, mode)
 signal generation_failed(reason)
 signal generation_degraded(reason)
 signal runtime_status_updated(snapshot)
+signal guardrail_blocked(reason, snapshot)
 
 const RUNTIME_STORE_PATH := "user://runtime_chain_templates.json"
 const MANUAL_INBOX_PATH := "user://manual_chain_inbox.json"
@@ -40,6 +41,8 @@ var _failure_pressure: Dictionary = {"streak": 0, "last_day": -1}
 var _recent_reward_profiles: Array = []
 var _daily_rejects: Dictionary = {}
 var _safe_fallback_history: Array = []
+var _reject_reason_counts: Dictionary = {}
+var _last_block_reason: String = ""
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -202,6 +205,7 @@ func get_chain_performance(chain_id: String) -> Dictionary:
 	return (_performance.get(chain_id, {}) as Dictionary).duplicate(true)
 
 func get_runtime_status() -> Dictionary:
+	var top_block: Dictionary = _top_block_reason()
 	return {
 		"breaker_state": _breaker_state,
 		"consecutive_failures": _consecutive_failures,
@@ -209,17 +213,22 @@ func get_runtime_status() -> Dictionary:
 		"runtime_chain_count": _runtime_chain_ids.size(),
 		"attempted": int(_stats.get("attempted", 0)),
 		"published": int(_stats.get("published", 0)),
-		"failed": int(_stats.get("failed", 0))
+		"failed": int(_stats.get("failed", 0)),
+		"last_block_reason": _last_block_reason,
+		"top_block_reason": str(top_block.get("reason", "")),
+		"top_block_count": int(top_block.get("count", 0))
 	}
 
 func get_runtime_status_line() -> String:
 	var s: Dictionary = get_runtime_status()
-	return "Agentic runtime | breaker=%s | queued=%d | chains=%d | ok=%d fail=%d" % [
+	var top_block: String = str(s.get("top_block_reason", ""))
+	return "Agentic runtime | breaker=%s | queued=%d | chains=%d | ok=%d fail=%d | top_block=%s" % [
 		str(s.get("breaker_state", "open")),
 		int(s.get("manual_queue_size", 0)),
 		int(s.get("runtime_chain_count", 0)),
 		int(s.get("published", 0)),
-		int(s.get("failed", 0))
+		int(s.get("failed", 0)),
+		(top_block if not top_block.is_empty() else "-")
 	]
 
 func get_recovery_guidance(reason: String) -> String:
@@ -564,8 +573,11 @@ func _take_manual_chain() -> Dictionary:
 func _on_generation_failure(reason: String) -> void:
 	_consecutive_failures += 1
 	_stats["failed"] = int(_stats.get("failed", 0)) + 1
+	_last_block_reason = reason
+	_reject_reason_counts[reason] = int(_reject_reason_counts.get(reason, 0)) + 1
 	_record_daily_reject(reason)
 	generation_failed.emit(reason)
+	guardrail_blocked.emit(reason, get_runtime_status())
 	if _consecutive_failures >= int(config.get("max_consecutive_failures", 3)):
 		_breaker_state = "closed"
 		_breaker_last_closed_day = _current_day_index()
@@ -683,6 +695,10 @@ func _load_runtime_store() -> void:
 	var daily_rejects: Dictionary = root.get("daily_rejects", {})
 	if daily_rejects is Dictionary:
 		_daily_rejects = daily_rejects.duplicate(true)
+	var rrc: Dictionary = root.get("reject_reason_counts", {})
+	if rrc is Dictionary:
+		_reject_reason_counts = rrc.duplicate(true)
+	_last_block_reason = str(root.get("last_block_reason", ""))
 	var sfh: Array = root.get("safe_fallback_history", [])
 	if sfh is Array:
 		_safe_fallback_history = sfh.duplicate(true)
@@ -702,6 +718,8 @@ func _save_runtime_store() -> void:
 		"recent_reward_profiles": _recent_reward_profiles.duplicate(),
 		"daily_rejects": _daily_rejects.duplicate(),
 		"safe_fallback_history": _safe_fallback_history.duplicate(),
+		"reject_reason_counts": _reject_reason_counts.duplicate(true),
+		"last_block_reason": _last_block_reason,
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1549,6 +1567,16 @@ func _build_safe_recovery_chain(theme: String) -> Dictionary:
 			}
 		]
 	}
+
+func _top_block_reason() -> Dictionary:
+	var best_reason: String = ""
+	var best_count: int = 0
+	for k in _reject_reason_counts.keys():
+		var c: int = int(_reject_reason_counts.get(k, 0))
+		if c > best_count:
+			best_count = c
+			best_reason = str(k)
+	return {"reason": best_reason, "count": best_count}
 
 func _safe_fallback_count_today() -> int:
 	var dk: String = _day_key()

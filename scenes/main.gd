@@ -72,6 +72,8 @@ func _ready():
 		AgenticContentOrchestrator.generation_degraded.connect(_on_agentic_chain_generation_degraded)
 		if AgenticContentOrchestrator.has_signal("runtime_status_updated"):
 			AgenticContentOrchestrator.runtime_status_updated.connect(_on_agentic_runtime_status_updated)
+		if AgenticContentOrchestrator.has_signal("guardrail_blocked"):
+			AgenticContentOrchestrator.guardrail_blocked.connect(_on_agentic_guardrail_blocked)
 	if shop_ui:
 		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
 	update_ui()
@@ -1261,6 +1263,10 @@ func _on_agentic_runtime_status_updated(snapshot: Dictionary) -> void:
 		show_quick_tip("Agentic runtime paused (breaker closed)", 1.8)
 	elif breaker == "half_open":
 		show_quick_tip("Agentic runtime retrying (half-open)", 1.6)
+
+func _on_agentic_guardrail_blocked(reason: String, snapshot: Dictionary) -> void:
+	var top_reason: String = str(snapshot.get("top_block_reason", ""))
+	record_world_event("Agentic guardrail blocked: %s (top=%s)" % [reason, top_reason if not top_reason.is_empty() else "-"])
 
 func _reset_daily_event_budget() -> void:
 	daily_event_budget["narrative"] = 1
