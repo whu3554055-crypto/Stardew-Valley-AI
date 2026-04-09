@@ -213,50 +213,74 @@ func get_speech_style_guide(style: String) -> String:
 			return "Use natural, conversational language"
 
 # Make HTTP request to LLM API
-func make_llm_request(npc_id: String, prompt: String, cache_key: String) -> void:
-	var http = HTTPRequest.new()
+func request_text_generation(request: Dictionary) -> Dictionary:
+	"""
+	Unified client-side text generation entry.
+	Request keys:
+	- prompt (String, required)
+	- model (String, optional)
+	- temperature (float, optional)
+	- max_tokens (int, optional)
+	- extra_options (Dictionary, optional)
+	"""
+	var prompt: String = str(request.get("prompt", ""))
+	if prompt.is_empty():
+		return {"ok": false, "error": "Missing prompt"}
+
+	var http := HTTPRequest.new()
 	add_child(http)
-	
-	var url = "%s/api/generate" % api_config.base_url
-	var headers = ["Content-Type: application/json"]
-	
-	var body = {
-		"model": api_config.model,
+
+	var url: String = "%s/api/generate" % str(api_config.get("base_url", "http://localhost:11434"))
+	var headers := ["Content-Type: application/json"]
+
+	var options: Dictionary = {
+		"temperature": float(request.get("temperature", api_config.get("temperature", 0.7))),
+		"num_predict": int(request.get("max_tokens", api_config.get("max_tokens", 256))),
+	}
+	var extra_options: Dictionary = request.get("extra_options", {})
+	if extra_options is Dictionary:
+		options.merge(extra_options, true)
+
+	var body := {
+		"model": str(request.get("model", api_config.get("model", "qwen3.5:9b"))),
 		"prompt": prompt,
 		"stream": false,
-		"options": {
-			"temperature": api_config.temperature,
-			"num_predict": api_config.max_tokens
-		}
+		"options": options
 	}
-	
-	var json_body = JSON.stringify(body)
-	var error = http.request(url, headers, HTTPClient.METHOD_POST, json_body)
-	
+
+	var error := http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body))
 	if error != OK:
-		agent_error.emit(npc_id, "Failed to send request: " + str(error))
 		http.queue_free()
-		return
-	
-	# Wait for response
+		return {"ok": false, "error": "Request failed: %s" % str(error)}
+
 	var result = await http.request_completed
-	
 	if result[1] != 200:
-		agent_error.emit(npc_id, "HTTP Error: %d" % result[1])
 		http.queue_free()
-		return
-	
-	var response_text = result[3].get_string_from_utf8()
-	var json = JSON.new()
-	var parse_result = json.parse(response_text)
-	
-	if parse_result != OK:
-		agent_error.emit(npc_id, "JSON Parse Error")
+		return {"ok": false, "error": "HTTP %d" % int(result[1])}
+
+	var response_text: String = result[3].get_string_from_utf8()
+	var json := JSON.new()
+	if json.parse(response_text) != OK:
 		http.queue_free()
+		return {"ok": false, "error": "JSON parse failed"}
+
+	var data: Dictionary = json.data if json.data is Dictionary else {}
+	http.queue_free()
+	return {
+		"ok": true,
+		"text": str(data.get("response", "...")),
+		"raw": data
+	}
+
+
+func make_llm_request(npc_id: String, prompt: String, cache_key: String) -> void:
+	var gen: Dictionary = await request_text_generation({
+		"prompt": prompt
+	})
+	if not bool(gen.get("ok", false)):
+		agent_error.emit(npc_id, str(gen.get("error", "Generation failed")))
 		return
-	
-	var data = json.data
-	var generated_text = data.get("response", "...")
+	var generated_text: String = str(gen.get("text", "..."))
 	
 	# Cache the response
 	response_cache[cache_key] = {
@@ -265,7 +289,6 @@ func make_llm_request(npc_id: String, prompt: String, cache_key: String) -> void
 	}
 	
 	dialogue_generated.emit(npc_id, generated_text)
-	http.queue_free()
 
 # Quick chat function for simple interactions
 func quick_chat(

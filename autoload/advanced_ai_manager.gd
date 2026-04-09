@@ -151,60 +151,31 @@ func process_request(request: Dictionary):
 
 func make_llm_request(agent_id: String, prompt: String, callback: Callable):
 	"""发送 HTTP 请求到 LLM"""
-	var http = HTTPRequest.new()
-	add_child(http)
-	
-	var url = "%s/api/generate" % api_config.base_url
-	var headers = ["Content-Type: application/json"]
-	
-	var body = {
-		"model": api_config.model,
-		"prompt": prompt,
-		"stream": false,
-		"options": {
-			"temperature": api_config.temperature,
-			"num_predict": api_config.max_tokens,
-			"top_p": 0.9,
-			"top_k": 40
-		}
-	}
-	
-	var error = http.request(url, headers, HTTPClient.METHOD_POST, JSON.stringify(body))
-	
-	if error != OK:
-		active_requests -= 1
-		callback.call(agent_id, {"error": "Request failed: " + str(error)})
-		http.queue_free()
-		process_next_in_queue()
-		return
-	
-	var result = await http.request_completed
+	var gen: Dictionary = {}
+	if AIAgentManager and AIAgentManager.has_method("request_text_generation"):
+		gen = await AIAgentManager.request_text_generation({
+			"prompt": prompt,
+			"model": api_config.get("model", "qwen3.5:9b"),
+			"temperature": api_config.get("temperature", 0.85),
+			"max_tokens": api_config.get("max_tokens", 300),
+			"extra_options": {"top_p": 0.9, "top_k": 40}
+		})
+	else:
+		gen = {"ok": false, "error": "AIAgentManager.request_text_generation unavailable"}
+
 	active_requests -= 1
-	
-	if result[1] != 200:
-		callback.call(agent_id, {"error": "HTTP %d" % result[1]})
-		http.queue_free()
+
+	if not bool(gen.get("ok", false)):
+		callback.call(agent_id, {"error": str(gen.get("error", "Generation failed"))})
 		process_next_in_queue()
 		return
-	
-	var response_text = result[3].get_string_from_utf8()
-	var json = JSON.new()
-	
-	if json.parse(response_text) != OK:
-		callback.call(agent_id, {"error": "JSON parse failed"})
-		http.queue_free()
-		process_next_in_queue()
-		return
-	
-	var data = json.data
-	var generated_text = data.get("response", "...")
+
+	var generated_text: String = str(gen.get("text", "..."))
 	
 	# 解析响应（可能包含动作和对话）
 	var parsed = parse_agent_response(generated_text)
 	
 	callback.call(agent_id, parsed)
-	
-	http.queue_free()
 	process_next_in_queue()
 
 func process_next_in_queue():
