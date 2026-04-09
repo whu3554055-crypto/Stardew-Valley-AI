@@ -1,7 +1,5 @@
 extends Node
 
-class_name EnhancedPersonalitySystem
-
 # ============================================
 # Enhanced NPC Personality System
 # Includes secrets, occupational depth, and dynamic traits
@@ -1415,12 +1413,20 @@ func get_weather_reaction(npc_id: String, weather: String) -> String:
 func loves_topic(npc_id: String, topic: String) -> bool:
 	"""Check if NPC loves discussing a topic"""
 	var topics = get_npc_preferences(npc_id, "topics").get("loves", [])
-	return topic.to_lower() in [t.to_lower() for t in topics]
+	var tl: String = topic.to_lower()
+	for t in topics:
+		if str(t).to_lower() == tl:
+			return true
+	return false
 
 func hates_topic(npc_id: String, topic: String) -> bool:
 	"""Check if NPC hates discussing a topic"""
 	var topics = get_npc_preferences(npc_id, "topics").get("hates", [])
-	return topic.to_lower() in [t.to_lower() for t in topics]
+	var tl: String = topic.to_lower()
+	for t in topics:
+		if str(t).to_lower() == tl:
+			return true
+	return false
 
 func get_npc_audio_profile(npc_id: String) -> Dictionary:
 	"""Get NPC's audio profile configuration"""
