@@ -380,6 +380,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 		return {"ok": false, "error": "gold_out_of_range"}
 	if not _has_sellable_economy_route(steps):
 		return {"ok": false, "error": "economy_route_unreachable"}
+	var dep: Dictionary = _check_dependency_coherence(steps)
+	if not bool(dep.get("ok", false)):
+		return dep
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -746,3 +749,45 @@ func _has_sellable_economy_route(steps: Array) -> bool:
 	# One chain should not demand extreme liquidation.
 	var hard_cap: int = maxi(220, best_sell_price * 4)
 	return sum_target_gold <= hard_cap
+
+func _check_dependency_coherence(steps: Array) -> Dictionary:
+	# Prevent chains that ask for selling before any plausible acquisition path appears.
+	var earned_before: int = 0
+	var seen_gathering_source: bool = false
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var objective: Dictionary = sd.get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		if ot in ["harvest", "fish_caught", "mine_ore"]:
+			seen_gathering_source = true
+		if ot == "earn_gold":
+			var need_gold: int = int(objective.get("count", 0))
+			if need_gold <= 0:
+				continue
+			# If no gathering path exists yet, only allow modest sell targets.
+			if not seen_gathering_source and need_gold > 120:
+				return {"ok": false, "error": "missing_preceding_supply_path"}
+			if earned_before < int(round(float(need_gold) * 0.35)) and need_gold > 140:
+				return {"ok": false, "error": "insufficient_preceding_reward_path"}
+		var reward: Dictionary = sd.get("reward", {})
+		earned_before += int(reward.get("gold", 0))
+		var items: Array = reward.get("items", [])
+		for item_spec in items:
+			earned_before += _estimate_item_spec_sell_value(str(item_spec))
+	return {"ok": true}
+
+func _estimate_item_spec_sell_value(item_spec: String) -> int:
+	var s: String = item_spec.strip_edges()
+	if s.is_empty():
+		return 0
+	var parts: PackedStringArray = s.split(":")
+	var item_id: String = str(parts[0]).strip_edges()
+	var count: int = int(parts[1]) if parts.size() > 1 else 1
+	if count <= 0:
+		return 0
+	if ItemDatabase and ItemDatabase.has_method("get_item"):
+		var tpl: Dictionary = ItemDatabase.get_item(item_id)
+		return max(0, int(tpl.get("sell_price", 0))) * count
+	return 0
