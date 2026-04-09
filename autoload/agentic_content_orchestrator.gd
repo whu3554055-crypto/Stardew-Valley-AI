@@ -44,6 +44,8 @@ var _safe_fallback_history: Array = []
 var _reject_reason_counts: Dictionary = {}
 var _last_block_reason: String = ""
 var _continuity_hint: String = ""
+var _chain_primary_type_by_id: Dictionary = {}
+var _player_pref_scores: Dictionary = {}
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -102,19 +104,21 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 				_record_today_objective_signature(manual_take)
 				_record_recent_signature(manual_take)
 				_record_reward_profile(manual_take)
+				_chain_primary_type_by_id[manual_chain_id] = _chain_primary_objective_type(manual_take)
 				_emit_runtime_status()
 				return
 		_on_generation_failure("manual_chain_invalid")
 		_save_manual_inbox()
 		return
 	var theme: String = str(reason.get("theme", "joyful"))
+	var preferred_objective: String = str(reason.get("preferred_objective", "harvest"))
 	var chain_data: Dictionary = {}
 	var mode: String = "none"
 	if bool(config.get("use_ai_first", true)):
-		chain_data = await _generate_chain_via_ai(theme)
+		chain_data = await _generate_chain_via_ai(theme, preferred_objective)
 		mode = "ai"
 	if chain_data.is_empty() and bool(config.get("allow_procedural_fallback", true)):
-		chain_data = _build_procedural_chain(theme)
+		chain_data = _build_procedural_chain(theme, preferred_objective)
 		mode = "fallback"
 	if chain_data.is_empty():
 		_on_generation_failure("empty_chain_data")
@@ -173,6 +177,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	_record_today_objective_signature(chain_data)
 	_record_recent_signature(chain_data)
 	_record_reward_profile(chain_data)
+	_chain_primary_type_by_id[chain_id] = _chain_primary_objective_type(chain_data)
 	if mode == "safe_fallback":
 		_safe_fallback_history.append({
 			"day_key": _day_key(),
@@ -256,18 +261,21 @@ func _compute_generation_reason(narrative: Dictionary) -> Dictionary:
 	var max_runtime: int = int(config.get("max_runtime_chains", 12))
 	if _runtime_chain_ids.size() >= max_runtime:
 		return {"should_generate": false}
+	var preferred_objective: String = _preferred_objective_type()
 	if total < int(config.get("target_total_chains_min", 24)):
 		return {
 			"should_generate": true,
 			"reason": "below_target_total",
-			"theme": _pick_theme_from_narrative(narrative)
+			"theme": _pick_theme_from_narrative(narrative),
+			"preferred_objective": preferred_objective
 		}
 	var theme: String = _pick_theme_from_narrative(narrative)
 	if _count_chains_for_theme(theme) < 2:
 		return {
 			"should_generate": true,
 			"reason": "theme_gap",
-			"theme": theme
+			"theme": theme,
+			"preferred_objective": preferred_objective
 		}
 	return {"should_generate": false}
 
@@ -290,10 +298,10 @@ func _pick_theme_from_narrative(narrative: Dictionary) -> String:
 		return "joyful"
 	return theme
 
-func _generate_chain_via_ai(theme: String) -> Dictionary:
+func _generate_chain_via_ai(theme: String, preferred_objective: String) -> Dictionary:
 	if AIAgentManager == null or not AIAgentManager.has_method("request_text_generation"):
 		return {}
-	var prompt: String = _build_generation_prompt(theme)
+	var prompt: String = _build_generation_prompt(theme, preferred_objective)
 	var gen: Dictionary = await AIAgentManager.request_text_generation({
 		"prompt": prompt,
 		"temperature": 0.72,
@@ -304,13 +312,14 @@ func _generate_chain_via_ai(theme: String) -> Dictionary:
 		return {}
 	return _extract_chain_json(str(gen.get("text", "")), theme)
 
-func _build_generation_prompt(theme: String) -> String:
+func _build_generation_prompt(theme: String, preferred_objective: String) -> String:
 	var continuity_line: String = _continuity_hint
 	if continuity_line.is_empty():
 		continuity_line = "No special carry-over from previous day."
 	return """You generate ONE quest chain JSON object for a farming game.
 Theme: %s
 Continuity from previous day: %s
+Preferred objective family: %s
 
 Return ONLY JSON, no markdown fences.
 Schema:
@@ -351,7 +360,7 @@ Rules:
 4) Avoid special objective keys except type/count/npc_id/crop_id/ore_id/fish_id.
 5) Make text concise.
 6) Keep at least one sentence that naturally follows yesterday's continuity hint.
-""" % [theme, continuity_line, theme]
+""" % [theme, continuity_line, preferred_objective, theme]
 
 func _extract_chain_json(raw_text: String, theme: String) -> Dictionary:
 	var text: String = raw_text.strip_edges()
@@ -370,15 +379,20 @@ func _extract_chain_json(raw_text: String, theme: String) -> Dictionary:
 		cd["id"] = "%s%s_%d" % [CHAIN_ID_PREFIX, theme, int(Time.get_unix_time_from_system())]
 	return cd
 
-func _build_procedural_chain(theme: String) -> Dictionary:
+func _build_procedural_chain(theme: String, preferred_objective: String) -> Dictionary:
 	var stamp: int = int(Time.get_unix_time_from_system())
 	var cid: String = "%s%s_%d" % [CHAIN_ID_PREFIX, theme, stamp]
 	var continuity_phrase: String = _continuity_phrase()
+	var s1_objective: Dictionary = {"type": "harvest", "count": 2}
+	if preferred_objective == "fish_caught":
+		s1_objective = {"type": "fish_caught", "count": 2}
+	elif preferred_objective == "mine_ore":
+		s1_objective = {"type": "mine_ore", "count": 2}
 	var s1: Dictionary = {
 		"id": "%s_s1" % cid,
 		"title": "%s I: Gather Supplies" % theme.capitalize(),
 		"description": "Collect materials for today's %s request. %s" % [theme, continuity_phrase],
-		"objective": {"type": "harvest", "count": 2},
+		"objective": s1_objective,
 		"reward": {"gold": 68, "items": ["bread:1"]}
 	}
 	var s2: Dictionary = {
@@ -644,6 +658,10 @@ func _on_managed_chain_resolved(outcome: Dictionary) -> void:
 	row["samples"] = int(row.get("samples", 0)) + 1
 	row["last_result"] = result
 	_performance[chain_id] = row
+	var primary_type: String = str(_chain_primary_type_by_id.get(chain_id, ""))
+	if not primary_type.is_empty():
+		var delta: float = -0.4 if result == "failed" else 1.0
+		_player_pref_scores[primary_type] = float(_player_pref_scores.get(primary_type, 0.0)) + delta
 	_check_rollout_promotions_and_offline()
 	_save_runtime_store()
 
@@ -719,6 +737,12 @@ func _load_runtime_store() -> void:
 	if rrc is Dictionary:
 		_reject_reason_counts = rrc.duplicate(true)
 	_last_block_reason = str(root.get("last_block_reason", ""))
+	var chain_primary: Dictionary = root.get("chain_primary_type_by_id", {})
+	if chain_primary is Dictionary:
+		_chain_primary_type_by_id = chain_primary.duplicate(true)
+	var pref_scores: Dictionary = root.get("player_pref_scores", {})
+	if pref_scores is Dictionary:
+		_player_pref_scores = pref_scores.duplicate(true)
 	var sfh: Array = root.get("safe_fallback_history", [])
 	if sfh is Array:
 		_safe_fallback_history = sfh.duplicate(true)
@@ -741,6 +765,8 @@ func _save_runtime_store() -> void:
 		"reject_reason_counts": _reject_reason_counts.duplicate(true),
 		"last_block_reason": _last_block_reason,
 		"continuity_hint": _continuity_hint,
+		"chain_primary_type_by_id": _chain_primary_type_by_id.duplicate(true),
+		"player_pref_scores": _player_pref_scores.duplicate(true),
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1603,6 +1629,26 @@ func _continuity_phrase() -> String:
 	if _continuity_hint.is_empty():
 		return "The town expects a steady follow-up."
 	return _continuity_hint
+
+func _chain_primary_objective_type(chain_data: Dictionary) -> String:
+	var steps: Array = chain_data.get("steps", [])
+	for s in steps:
+		if s is Dictionary:
+			var objective: Dictionary = (s as Dictionary).get("objective", {})
+			var ot: String = str(objective.get("type", "")).strip_edges()
+			if not ot.is_empty() and ot != "talk":
+				return ot
+	return "harvest"
+
+func _preferred_objective_type() -> String:
+	var best_type: String = "harvest"
+	var best_score: float = -99999.0
+	for t in ["harvest", "fish_caught", "mine_ore"]:
+		var s: float = float(_player_pref_scores.get(t, 0.0))
+		if s > best_score:
+			best_score = s
+			best_type = t
+	return best_type
 
 func _safe_fallback_count_today() -> int:
 	var dk: String = _day_key()
