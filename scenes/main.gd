@@ -58,6 +58,10 @@ func _ready():
 		QuestSystem.quest_started.connect(_on_quest_log_changed)
 		QuestSystem.quest_updated.connect(_on_quest_log_changed)
 		QuestSystem.quest_completed.connect(_on_quest_completed)
+		if QuestSystem.has_signal("quest_failed"):
+			QuestSystem.quest_failed.connect(_on_quest_failed)
+		if QuestSystem.has_signal("quest_impact_applied"):
+			QuestSystem.quest_impact_applied.connect(_on_quest_impact_applied)
 		if QuestSystem.has_signal("managed_chain_resolved"):
 			QuestSystem.managed_chain_resolved.connect(_on_managed_chain_resolved)
 	if DailyNarrativeSystem:
@@ -1062,6 +1066,26 @@ func _on_quest_completed(quest_id: String):
 		show_dialogue("Quest completed: " + str(title))
 		_apply_story_completion_feedback(quest_data)
 	_refresh_quest_log()
+
+func _on_quest_failed(quest_id: String, reason: String) -> void:
+	var line: String = "Quest failed: %s (%s)" % [quest_id, reason if not reason.is_empty() else "unknown"]
+	record_world_event(line)
+	show_quick_tip("Quest failed: " + quest_id, 1.8)
+	_refresh_quest_log()
+
+func _on_quest_impact_applied(quest_id: String, impact: Dictionary) -> void:
+	var social_delta: int = int(impact.get("social_delta", 0))
+	var growth_xp: int = int(impact.get("growth_xp", 0))
+	var parts: Array[String] = []
+	if social_delta != 0:
+		parts.append("social %s%d" % ["+" if social_delta > 0 else "", social_delta])
+	if growth_xp != 0:
+		parts.append("growth_xp %s%d" % ["+" if growth_xp > 0 else "", growth_xp])
+	if parts.is_empty():
+		return
+	var line: String = "Quest impact [%s]: %s" % [quest_id, ", ".join(parts)]
+	record_world_event(line)
+	show_quick_tip(line, 1.9)
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
