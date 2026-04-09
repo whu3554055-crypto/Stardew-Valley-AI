@@ -443,6 +443,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var map_guard: Dictionary = _check_map_reachability_constraints(steps)
 	if not bool(map_guard.get("ok", false)):
 		return map_guard
+	var granularity: Dictionary = _check_objective_granularity_balance(steps)
+	if not bool(granularity.get("ok", false)):
+		return granularity
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -1295,6 +1298,45 @@ func _check_map_reachability_constraints(steps: Array) -> Dictionary:
 				return {"ok": false, "error": "map_reachability_weather_fishing"}
 			if hour >= 20 and cnt > 2:
 				return {"ok": false, "error": "map_reachability_late_hour_fishing"}
+	return {"ok": true}
+
+func _check_objective_granularity_balance(steps: Array) -> Dictionary:
+	# Normalize counts by objective effort so equal "count" does not imply wildly different workload.
+	var effort_weights: Dictionary = {
+		"talk": 1.0,
+		"harvest": 1.8,
+		"fish_caught": 2.6,
+		"mine_ore": 2.8,
+		"earn_gold": 0.025 # count is in gold units
+	}
+	var normalized: Array = []
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var objective: Dictionary = (s as Dictionary).get("objective", {})
+		var ot: String = str(objective.get("type", "")).strip_edges()
+		var cnt: int = maxi(1, int(objective.get("count", 1)))
+		var w: float = float(effort_weights.get(ot, 2.0))
+		var unit: float = float(cnt) * w
+		if ot == "earn_gold":
+			unit = maxf(1.0, float(cnt) * w)
+		normalized.append(unit)
+		# Per-type cap to avoid inflated counts under same objective family.
+		if ot == "talk" and cnt > 2:
+			return {"ok": false, "error": "granularity_talk_count_too_high"}
+		if ot == "harvest" and cnt > 5:
+			return {"ok": false, "error": "granularity_harvest_count_too_high"}
+		if ot == "fish_caught" and cnt > 4:
+			return {"ok": false, "error": "granularity_fishing_count_too_high"}
+		if ot == "mine_ore" and cnt > 4:
+			return {"ok": false, "error": "granularity_mining_count_too_high"}
+	if normalized.size() <= 1:
+		return {"ok": true}
+	normalized.sort()
+	var min_u: float = float(normalized[0])
+	var max_u: float = float(normalized[normalized.size() - 1])
+	if max_u > min_u * 3.2:
+		return {"ok": false, "error": "granularity_effort_imbalance"}
 	return {"ok": true}
 
 func _estimate_free_inventory_slots() -> int:
