@@ -1,7 +1,5 @@
 extends Node
 
-class_name AIEconomySystem
-
 # ============================================
 # AI-Driven Economy System
 # Dynamic prices, supply/demand, NPC trading behaviors
@@ -623,6 +621,24 @@ func get_weather_demand_modifier(item_id: String, weather: String) -> float:
 			if item_id.contains("outdoor") or item_id.contains("sport"):
 				modifier += 20
 	
+	return modifier
+
+func get_seasonal_demand_modifier(item_id: String, season: Variant) -> float:
+	var modifier: float = 0.0
+	var s: String = str(season).to_lower()
+	match s:
+		"spring":
+			if item_id.contains("seed") or item_id.contains("flower"):
+				modifier += 12.0
+		"summer":
+			if item_id.contains("cool") or item_id.contains("drink") or item_id.contains("crop"):
+				modifier += 10.0
+		"fall":
+			if item_id.contains("pumpkin") or item_id.contains("harvest"):
+				modifier += 10.0
+		"winter":
+			if item_id.contains("heating") or item_id.contains("soup") or item_id.contains("warm"):
+				modifier += 12.0
 	return modifier
 
 func record_ai_decision(decision_type: String, data: Dictionary):
