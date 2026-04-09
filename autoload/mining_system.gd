@@ -2,31 +2,16 @@ extends Node
 
 const GT := preload("res://scripts/gathering_tables.gd")
 
-## Bounds must match Main scene node `MineArea` (global AABB used for point test).
-const MINE_GLOBAL_X_MIN := 70.0
-const MINE_GLOBAL_X_MAX := 310.0
-const MINE_GLOBAL_Y_MIN := 300.0
-const MINE_GLOBAL_Y_MAX := 520.0
-## Global Y boundaries between depth tiers — must match `MineArea` layer polygons in `main.tscn`.
-const MINE_GLOBAL_DEPTH_BREAK_1 := 380.0
-const MINE_GLOBAL_DEPTH_BREAK_2 := 460.0
+## Bounds / depth breaks: `data/presentation/immersion_config.json` → `zones.mine` (`GameZones`). Keep `main.tscn` MineArea aligned.
 
 var _last_swing_time: float = -100.0
 const SWING_COOLDOWN_SEC := 1.2
 
 func can_mine_here(player_pos: Vector2) -> bool:
-	return player_pos.x >= MINE_GLOBAL_X_MIN and player_pos.x <= MINE_GLOBAL_X_MAX \
-		and player_pos.y >= MINE_GLOBAL_Y_MIN and player_pos.y <= MINE_GLOBAL_Y_MAX
+	return GameZones.can_mine_here(player_pos)
 
 func depth_from_global_y(global_y: float) -> int:
-	return _depth_from_y(global_y)
-
-func _depth_from_y(player_y: float) -> int:
-	if player_y < MINE_GLOBAL_DEPTH_BREAK_1:
-		return 0
-	if player_y < MINE_GLOBAL_DEPTH_BREAK_2:
-		return 1
-	return 2
+	return GameZones.mine_depth_from_global_y(global_y)
 
 func _pickaxe_tier(pickaxe_id: String) -> int:
 	match pickaxe_id:
@@ -53,7 +38,7 @@ func try_swing(player_pos: Vector2, pickaxe_id: String) -> Dictionary:
 	if GatheringSfx:
 		GatheringSfx.play_mine_swing()
 
-	var depth := _depth_from_y(player_pos.y)
+	var depth: int = GameZones.mine_depth_from_global_y(player_pos.y)
 	var weights: Dictionary = GT.mining_ore_weights(depth, tier)
 	var item_id: String = _weighted_pick(weights)
 	if item_id.is_empty():
