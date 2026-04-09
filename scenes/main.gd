@@ -29,6 +29,7 @@ var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
 var ai_config_instance = null
 var world_event_feed: Array[String] = []
 var managed_chain_status_banner: String = ""
+var active_story_hotspot: Dictionary = {}
 var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
@@ -472,6 +473,8 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 			world_event_feed.append(str(item))
 			if world_event_feed.size() >= WORLD_EVENT_FEED_MAX:
 				break
+	if bundle.get("active_story_hotspot") is Dictionary:
+		active_story_hotspot = (bundle["active_story_hotspot"] as Dictionary).duplicate(true)
 	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
 		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
 
@@ -495,6 +498,7 @@ func _build_save_bundle() -> Dictionary:
 		"inventory": InventoryManager.save_snapshot(),
 		"quests": QuestSystem.save_snapshot(),
 		"world_event_feed": world_event_feed.duplicate(),
+		"active_story_hotspot": active_story_hotspot.duplicate(true),
 		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {}
 	}
 
@@ -1160,9 +1164,51 @@ func _on_daily_narrative_generated(_narrative_id: String, narrative_data: Dictio
 	if not summary.is_empty():
 		line += " — " + summary
 	record_world_event(line)
+	_emit_narrative_hotspot_hint(narrative_data)
 
 func _on_narrative_backend_fallback(reason: String) -> void:
 	_record_ai_fallback_event("daily_narrative", reason, "local_generator")
+
+func _emit_narrative_hotspot_hint(narrative_data: Dictionary) -> void:
+	var hotspot: Dictionary = _resolve_narrative_hotspot(narrative_data)
+	if hotspot.is_empty():
+		return
+	active_story_hotspot = hotspot.duplicate(true)
+	var place: String = str(hotspot.get("location", "town_square"))
+	var npc_name: String = str(hotspot.get("npc_name", ""))
+	var line: String = "Story clue: check %s." % place
+	if not npc_name.is_empty():
+		line = "Story clue: check %s and talk to %s." % [place, npc_name]
+	record_world_event(line)
+	show_quick_tip(line, 2.0)
+
+func _resolve_narrative_hotspot(narrative_data: Dictionary) -> Dictionary:
+	var events: Array = narrative_data.get("events", [])
+	if events.is_empty():
+		return {}
+	var first_evt: Dictionary = events[0] if events[0] is Dictionary else {}
+	if first_evt.is_empty():
+		return {}
+	var location: String = str(first_evt.get("location", first_evt.get("zone", "town_square"))).strip_edges()
+	if location.is_empty():
+		location = "town_square"
+	var npc_id: String = str(first_evt.get("npc_id", "")).strip_edges()
+	var npc_name: String = npc_id
+	if not npc_id.is_empty() and EnhancedPersonalitySystem and EnhancedPersonalitySystem.has_method("get_npc_complete_profile"):
+		var profile: Dictionary = EnhancedPersonalitySystem.get_npc_complete_profile(npc_id)
+		if profile.has("basic_info"):
+			npc_name = str((profile["basic_info"] as Dictionary).get("name", npc_id))
+	return {
+		"location": location,
+		"npc_id": npc_id,
+		"npc_name": npc_name,
+		"narrative_id": str(narrative_data.get("id", "")),
+		"day_key": "%d-%s-%d" % [
+			int(GameManager.player_data.get("year", 1)),
+			str(GameManager.player_data.get("season", "spring")),
+			int(GameManager.player_data.get("day", 1))
+		]
+	}
 
 func _on_ai_quest_generation_failed(npc_id: String, reason: String) -> void:
 	var source: String = "ai_quest:%s" % (npc_id if not npc_id.is_empty() else "unknown_npc")
