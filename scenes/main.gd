@@ -816,6 +816,8 @@ func _on_day_changed(new_day):
 	update_ui()
 	if QuestSystem and QuestSystem.has_method("on_day_passed"):
 		QuestSystem.on_day_passed()
+	if AIEconomySystem and AIEconomySystem.has_method("on_day_passed"):
+		AIEconomySystem.on_day_passed()
 	# Auto-water crops if raining
 	if WeatherSystem.is_raining():
 		auto_water_crops()

@@ -27,6 +27,7 @@ var market_state = {
 # AI decision history
 var ai_decisions = []
 const MAX_DECISION_HISTORY = 100
+var _daily_quest_pressure: Dictionary = {}
 
 # Economic simulation parameters
 var sim_params = {
@@ -730,6 +731,14 @@ func on_quest_completed(quest_data: Dictionary) -> void:
 	var reward: Dictionary = quest_data.get("reward", {})
 	var gold: int = int(reward.get("gold", 0))
 	var source: String = str(quest_data.get("source", ""))
+	var day_idx: int = _current_day_index()
+	var pressure: Dictionary = _daily_quest_pressure.get(day_idx, {
+		"count": 0,
+		"gold": 0,
+		"items": {}
+	})
+	pressure["count"] = int(pressure.get("count", 0)) + 1
+	pressure["gold"] = int(pressure.get("gold", 0)) + maxi(0, gold)
 
 	for objective in quest_data.get("objectives", []):
 		if typeof(objective) != TYPE_DICTIONARY:
@@ -740,11 +749,18 @@ func on_quest_completed(quest_data: Dictionary) -> void:
 			_bump_item_demand(crop_id, 1.06)
 			if not crop_id.ends_with("_seeds"):
 				_bump_item_demand("%s_seeds" % crop_id, 1.04)
+			var items_map: Dictionary = pressure.get("items", {})
+			items_map[crop_id] = int(items_map.get(crop_id, 0)) + 1
+			pressure["items"] = items_map
 
 	for item_str in reward.get("items", []):
 		var parts: PackedStringArray = str(item_str).split(":")
 		if parts.size() > 0:
-			_bump_item_demand(str(parts[0]), 1.05)
+			var rid: String = str(parts[0])
+			_bump_item_demand(rid, 1.05)
+			var items_map2: Dictionary = pressure.get("items", {})
+			items_map2[rid] = int(items_map2.get(rid, 0)) + 1
+			pressure["items"] = items_map2
 
 	if gold > 0:
 		_boost_town_commerce_from_quest_reward(gold)
@@ -757,6 +773,36 @@ func on_quest_completed(quest_data: Dictionary) -> void:
 		"gold": gold,
 		"source": source
 	})
+	_daily_quest_pressure[day_idx] = pressure
+
+func on_day_passed() -> void:
+	var prev_day: int = _current_day_index() - 1
+	if not _daily_quest_pressure.has(prev_day):
+		return
+	var pressure: Dictionary = _daily_quest_pressure.get(prev_day, {})
+	var quest_count: int = int(pressure.get("count", 0))
+	var total_gold: int = int(pressure.get("gold", 0))
+	var factor: float = 1.0 + clampf(float(quest_count) * 0.01 + float(total_gold) / 12000.0, 0.01, 0.08)
+	var ranked: Array = []
+	var item_counts: Dictionary = pressure.get("items", {})
+	for k in item_counts.keys():
+		ranked.append({"item": str(k), "count": int(item_counts.get(k, 0))})
+	ranked.sort_custom(func(a, b): return int(a.get("count", 0)) > int(b.get("count", 0)))
+	var pulse_items: Array = []
+	for i in range(mini(3, ranked.size())):
+		pulse_items.append(str((ranked[i] as Dictionary).get("item", "")))
+	if pulse_items.is_empty():
+		pulse_items = get_top_demanded_items(3)
+	for item_id in pulse_items:
+		_bump_item_demand(str(item_id), factor)
+	record_ai_decision("daily_quest_pressure_pulse", {
+		"day": prev_day,
+		"quest_count": quest_count,
+		"total_gold": total_gold,
+		"factor": factor,
+		"items": pulse_items
+	})
+	_daily_quest_pressure.erase(prev_day)
 
 func _bump_item_demand(item_id: String, factor: float) -> void:
 	if not market_state.items.has(item_id):
@@ -793,3 +839,23 @@ func pulse_story_completion(pace: String, bonus_gold: int, pulse_factor: float =
 		"factor": factor,
 		"items": targets
 	})
+
+func _current_day_index() -> int:
+	if not GameManager or not GameManager.player_data:
+		return 0
+	var season: String = str(GameManager.player_data.get("season", "spring"))
+	var season_idx: int = 0
+	match season:
+		"spring":
+			season_idx = 0
+		"summer":
+			season_idx = 1
+		"fall":
+			season_idx = 2
+		"winter":
+			season_idx = 3
+		_:
+			season_idx = 0
+	var year: int = int(GameManager.player_data.get("year", 1))
+	var day: int = int(GameManager.player_data.get("day", 1))
+	return (year - 1) * 112 + season_idx * 28 + day

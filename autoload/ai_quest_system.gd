@@ -907,6 +907,14 @@ func complete_quest(quest_id: String, success: bool = true, extra_data: Dictiona
 	if success:
 		# Grant rewards
 		grant_quest_rewards(quest)
+		if AIEconomySystem and AIEconomySystem.has_method("on_quest_completed"):
+			var econ_payload: Dictionary = {
+				"id": quest_id,
+				"source": "ai_quest_system",
+				"reward": quest.get("rewards", {}),
+				"objectives": [_to_econ_objective(quest)]
+			}
+			AIEconomySystem.on_quest_completed(econ_payload)
 		quest_completed.emit(quest_id, "success", quest.rewards)
 		_emit_structured_completion_feedback(quest_id, quest)
 	else:
@@ -951,6 +959,16 @@ func _emit_structured_completion_feedback(quest_id: String, quest: Dictionary) -
 		line += " | market %s" % market_note
 	if get_tree() and get_tree().current_scene and get_tree().current_scene.has_method("record_world_event"):
 		get_tree().current_scene.call("record_world_event", line)
+
+func _to_econ_objective(quest: Dictionary) -> Dictionary:
+	var qtype: String = str(quest.get("type", ""))
+	if qtype == "fetch":
+		return {"type": "harvest", "crop_id": str(quest.get("target_item", "")), "count": int(quest.get("target_count", 1))}
+	if qtype == "delivery":
+		return {"type": "delivery", "item_id": str(quest.get("target_item", "")), "count": int(quest.get("target_count", 1))}
+	if qtype == "problem_solving" or qtype == "talk":
+		return {"type": "talk", "npc_id": str(quest.get("quest_giver", quest.get("target_npc", ""))), "count": 1}
+	return {"type": qtype, "count": int(quest.get("target_count", 1))}
 
 func update_narrative_from_quest(quest: Dictionary, success: bool):
 	"""Update narrative threads based on quest outcome"""
