@@ -427,6 +427,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var semantic: Dictionary = _check_objective_semantic_coherence(steps)
 	if not bool(semantic.get("ok", false)):
 		return semantic
+	var state_guard: Dictionary = _check_current_player_state_fit(steps)
+	if not bool(state_guard.get("ok", false)):
+		return state_guard
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -1095,3 +1098,49 @@ func _record_recent_signature(chain_data: Dictionary) -> void:
 	_recent_signatures.append(sig)
 	while _recent_signatures.size() > 8:
 		_recent_signatures.pop_front()
+
+func _check_current_player_state_fit(steps: Array) -> Dictionary:
+	var stamina_ratio: float = 1.0
+	if GameManager and GameManager.has_method("get_stamina_ratio"):
+		stamina_ratio = float(GameManager.get_stamina_ratio())
+	var free_slots: int = _estimate_free_inventory_slots()
+	var effort_score: int = 0
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var objective: Dictionary = sd.get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		var cnt: int = maxi(1, int(objective.get("count", 1)))
+		match ot:
+			"mine_ore":
+				effort_score += 3 * cnt
+			"fish_caught":
+				effort_score += 3 * cnt
+			"harvest":
+				effort_score += 2 * cnt
+			"earn_gold":
+				effort_score += 2
+			_:
+				effort_score += 1
+	# Low stamina: avoid heavy objectives for the current day.
+	if stamina_ratio < 0.35 and effort_score >= 12:
+		return {"ok": false, "error": "player_state_low_stamina_for_heavy_chain"}
+	# Low inventory headroom: avoid item-generating routes.
+	if free_slots <= 2:
+		for s in steps:
+			if not (s is Dictionary):
+				continue
+			var ot2: String = str((s as Dictionary).get("objective", {}).get("type", ""))
+			if ot2 in ["harvest", "fish_caught", "mine_ore"]:
+				return {"ok": false, "error": "player_state_low_inventory_for_gather_chain"}
+	return {"ok": true}
+
+func _estimate_free_inventory_slots() -> int:
+	if InventoryManager == null:
+		return 99
+	var free: int = 0
+	for i in range(int(InventoryManager.INVENTORY_SIZE)):
+		if InventoryManager.get_item(i) == null:
+			free += 1
+	return free
