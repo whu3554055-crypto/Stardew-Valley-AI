@@ -1,5 +1,6 @@
-class_name GameZones
-extends RefCounted
+extends Node
+
+## Autoload singleton: GameZones (see project.godot). Zone helpers are static methods.
 
 ## World hit-tests for stations, fishing, mining, and upgrade zones.
 ## - **Stations + mine AABB**: `data/presentation/immersion_config.json` → `zones.stations`, `zones.mine`

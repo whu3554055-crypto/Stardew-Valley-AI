@@ -1,5 +1,6 @@
-class_name RecipeHelpers
-extends RefCounted
+extends Node
+
+## Autoload singleton: RecipeHelpers (see project.godot).
 
 static func recipe_cost(recipe: Dictionary) -> Dictionary:
 	if recipe.has("inputs"):
