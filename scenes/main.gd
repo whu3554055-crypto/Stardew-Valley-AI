@@ -595,6 +595,7 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 		if not GameManager.player_data.has("stamina_max"):
 			GameManager.player_data["stamina_max"] = 100.0
 		_apply_house_stamina_bonus()
+		_clamp_player_stamina_and_gold()
 	if bundle.get("farm") is Dictionary and farm_manager:
 		farm_manager.load_farm_data(bundle["farm"])
 	if bundle.get("inventory") is Dictionary and InventoryManager:
@@ -611,6 +612,17 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 		active_story_hotspot = (bundle["active_story_hotspot"] as Dictionary).duplicate(true)
 	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
 		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
+
+func _clamp_player_stamina_and_gold() -> void:
+	if not GameManager:
+		return
+	var smax: float = maxf(1.0, float(GameManager.player_data.get("stamina_max", 100.0)))
+	GameManager.player_data["stamina_max"] = smax
+	var scur: float = float(GameManager.player_data.get("stamina", smax))
+	GameManager.player_data["stamina"] = clampf(scur, 0.0, smax)
+	var g: int = int(GameManager.player_data.get("gold", 0))
+	GameManager.player_data["gold"] = maxi(0, g)
+
 
 func _migrate_player_data_if_needed(src_version: int) -> void:
 	if not GameManager:
