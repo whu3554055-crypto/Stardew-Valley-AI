@@ -944,6 +944,10 @@ func _try_sell_selected_inventory() -> bool:
 			shop_ui.update_gold_display()
 		var unit: int = ShopSystem.get_sell_price_per_unit(item_id)
 		show_quick_tip(UITextCatalog.format_text("quick_tip", "sell_success_gold", {"gold": unit}))
+		if AIEconomySystem:
+			var market_note: String = AIEconomySystem.get_market_brief(item_id)
+			if not market_note.is_empty():
+				record_world_event("Market shift after selling %s: %s" % [item_id, market_note])
 		return true
 	return false
 
@@ -955,6 +959,10 @@ func _on_shop_purchase(item_id: String, quantity: int) -> void:
 		var tpl: Dictionary = ItemDatabase.get_item(item_id)
 		var nm: String = str(tpl.get("name", item_id)) if not tpl.is_empty() else item_id
 		show_quick_tip(UITextCatalog.format_text("quick_tip", "shop_bought_item", {"item": nm}))
+		if AIEconomySystem:
+			var market_note: String = AIEconomySystem.get_market_brief(item_id)
+			if not market_note.is_empty():
+				record_world_event("Market shift after buying %s: %s" % [nm, market_note])
 		update_ui()
 		if shop_ui:
 			shop_ui.populate_shop_items()
