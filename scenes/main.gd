@@ -1526,7 +1526,7 @@ func _refresh_world_event_feed_ui() -> void:
 	if not world_event_feed_label:
 		return
 	if world_event_feed.is_empty():
-		world_event_feed_label.text = "No events yet."
+		world_event_feed_label.text = UITextCatalog.get_text("hud", "world_feed_empty") if UITextCatalog else "No events yet."
 		return
 	world_event_feed_label.text = "\n".join(world_event_feed)
 
