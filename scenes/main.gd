@@ -19,6 +19,7 @@ extends Node2D
 @onready var activity_zone_label = $UILayer/ActivityZoneLabel
 @onready var fx_fish = $FXLayer/FishSplash
 @onready var fx_mine = $FXLayer/MineSpark
+@onready var fx_chop = $FXLayer/ChopLeaves
 @onready var almanac_panel = $UILayer/AlmanacPanel
 @onready var recipe_picker = $UILayer/RecipePicker
 @onready var shop_ui = $UILayer/ShopUI
@@ -31,11 +32,13 @@ var world_event_feed: Array[String] = []
 var managed_chain_status_banner: String = ""
 var active_story_hotspot: Dictionary = {}
 const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
+const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
+var audio_mix_panel: CanvasLayer = null
+var _stamina_low_latched: bool = false
 var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
 const SAVE_BUNDLE_VERSION := 3
-const PIERRE_SHOP_RADIUS_PX := 140.0
 const BASE_STAMINA_MAX := 100.0
 ## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
 var _visible_feed_last: Dictionary = {}
@@ -105,6 +108,8 @@ func _ready():
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
 	add_child(WEATHER_OVERLAY_SCENE.instantiate())
+	audio_mix_panel = AUDIO_MIX_PANEL_SCENE.instantiate() as CanvasLayer
+	add_child(audio_mix_panel)
 	_apply_a3_ui_polish()
 	
 	print("======================================")
@@ -112,11 +117,12 @@ func _ready():
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop near Pierre | U = farm tier | H = house upgrade")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop (store entrance zone) | U = farm tier | H = house upgrade")
 	print("======================================")
 
 func _process(_delta: float) -> void:
 	_update_activity_zone_label()
+	_check_stamina_low_feedback()
 
 func _apply_a3_ui_polish() -> void:
 	## Readability + panel chrome (A3 presentation pass).
@@ -325,6 +331,14 @@ func _apply_seasonal_hud_tint() -> void:
 	var palette: Dictionary = _season_hud_colors(season_name)
 	var accent: Color = palette.get("accent", Color(0.72, 0.8, 0.88, 0.95))
 	var text_col: Color = palette.get("text", Color(0.9, 0.92, 0.96, 1.0))
+	if WeatherSystem and ImmersionConfig:
+		var wm: Color = ImmersionConfig.get_ui_weather_accent_mult(WeatherSystem.current_weather)
+		accent = Color(
+			clampf(accent.r * wm.r, 0.0, 1.0),
+			clampf(accent.g * wm.g, 0.0, 1.0),
+			clampf(accent.b * wm.b, 0.0, 1.0),
+			clampf(accent.a * wm.a, 0.0, 1.0)
+		)
 
 	var hud_bg: Panel = ui_layer.get_node_or_null("HUDBackdrop") as Panel
 	if hud_bg:
@@ -409,7 +423,7 @@ func _update_activity_zone_label() -> void:
 		activity_zone_label.text = UITextCatalog.get_activity_text("chop_forest")
 		return
 	if farm_manager and FarmTierCatalog:
-		var fr: Rect2 = FarmTierCatalog.get_farm_upgrade_rect()
+		var fr: Rect2 = GameZones.rect_farm_upgrade()
 		if fr.has_point(player.global_position):
 			var ft: int = farm_manager.farm_tier
 			var td: Dictionary = FarmTierCatalog.tier_def(ft)
@@ -441,7 +455,7 @@ func _update_activity_zone_label() -> void:
 				})
 			return
 	if player and BuildingUpgradeCatalog:
-		var hr: Rect2 = BuildingUpgradeCatalog.get_house_rect()
+		var hr: Rect2 = GameZones.rect_house_upgrade()
 		if hr.has_point(player.global_position):
 			var lv: int = int(GameManager.player_data.get("house_level", 1))
 			var cur: Dictionary = BuildingUpgradeCatalog.level_def(lv)
@@ -696,6 +710,7 @@ func _on_player_interact(tile_position: Vector2):
 				show_quick_tip(str(catch_result.get("message", "Press E!")))
 				if WorldAmbientController:
 					WorldAmbientController.request_activity_duck(0.85)
+				_play_fx_fish()
 				return
 			var fish_msg: String = str(catch_result.get("message", ""))
 			if catch_result.get("ok", false):
@@ -760,6 +775,7 @@ func _on_player_interact(tile_position: Vector2):
 				record_world_event(ch_msg)
 				if WorldAmbientController:
 					WorldAmbientController.request_activity_duck(1.0)
+				_play_fx_chop()
 				return
 			if not ch_msg.is_empty():
 				show_dialogue(ch_msg)
@@ -943,17 +959,10 @@ func _refresh_quest_log() -> void:
 	quest_log_label.text = title_text + "\n".join(lines)
 
 
-func _is_near_pierre() -> bool:
-	var pierre = get_node_or_null("Pierre")
-	if not pierre or not player:
-		return false
-	return player.global_position.distance_to(pierre.global_position) <= PIERRE_SHOP_RADIUS_PX
-
-
 func _try_farm_tier_upgrade() -> void:
 	if not farm_manager or not FarmTierCatalog or not player:
 		return
-	var fr: Rect2 = FarmTierCatalog.get_farm_upgrade_rect()
+	var fr: Rect2 = GameZones.rect_farm_upgrade()
 	if not fr.has_point(player.global_position):
 		show_quick_tip(UITextCatalog.get_text("quick_tip", "farm_upgrade_stand_on_field"))
 		return
@@ -993,7 +1002,7 @@ func _apply_house_stamina_bonus() -> void:
 func _try_house_upgrade() -> void:
 	if not BuildingUpgradeCatalog or not GameManager or not player:
 		return
-	var hr: Rect2 = BuildingUpgradeCatalog.get_house_rect()
+	var hr: Rect2 = GameZones.rect_house_upgrade()
 	if not hr.has_point(player.global_position):
 		show_quick_tip(BuildingUpgradeCatalog.format_message("tip_outside"))
 		return
@@ -1033,12 +1042,12 @@ func _try_open_shop_near_pierre() -> void:
 	if shop_ui.visible:
 		shop_ui.close_shop()
 		return
-	if not _is_near_pierre():
+	if not GameZones.can_open_shop_at(player.global_position):
 		show_quick_tip(UITextCatalog.get_text("quick_tip", "shop_open_near_pierre"))
 		return
 	shop_ui.open_shop()
 	if GatheringSfx:
-		GatheringSfx.play_shop_bell()
+		GatheringSfx.play_shop_enter()
 
 
 func _try_sell_selected_inventory() -> bool:
@@ -1623,7 +1632,67 @@ func _play_fx_mine() -> void:
 		fx_mine.restart()
 		fx_mine.emitting = true
 
+func _play_fx_chop() -> void:
+	if fx_chop:
+		fx_chop.global_position = player.global_position
+		fx_chop.restart()
+		fx_chop.emitting = true
+
+## Called from `WeatherOverlay` during storms (`visual.screen_shake.strength_px` in `immersion_config.json`).
+func play_screen_shake(strength_px: float = 5.5) -> void:
+	var cam: Camera2D = player.get_node_or_null("Camera2D") as Camera2D
+	if cam == null:
+		return
+	var s: float = strength_px
+	if ImmersionConfig:
+		s = ImmersionConfig.get_float("visual.screen_shake.strength_px", strength_px)
+	cam.offset = Vector2.ZERO
+	var tw: Tween = create_tween()
+	tw.set_ease(Tween.EASE_OUT)
+	tw.set_trans(Tween.TRANS_QUAD)
+	var shake: Vector2 = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * s
+	tw.tween_property(cam, "offset", shake, 0.07)
+	tw.tween_property(cam, "offset", Vector2.ZERO, 0.16)
+
+func _check_stamina_low_feedback() -> void:
+	if not GameManager:
+		return
+	var smax: float = float(GameManager.player_data.get("stamina_max", BASE_STAMINA_MAX))
+	if smax <= 0.0:
+		return
+	var s: float = float(GameManager.player_data.get("stamina", BASE_STAMINA_MAX))
+	var ratio: float = s / smax
+	var thr: float = 0.22
+	var reset: float = 0.38
+	var tip_sec: float = 2.4
+	if ImmersionConfig:
+		var cfg: Dictionary = ImmersionConfig.get_stamina_low_config()
+		thr = float(cfg.get("ratio_threshold", 0.22))
+		reset = float(cfg.get("ratio_reset_above", 0.38))
+		tip_sec = float(cfg.get("tip_duration_sec", 2.4))
+	if ratio >= reset:
+		_stamina_low_latched = false
+		return
+	if ratio > thr:
+		return
+	if _stamina_low_latched:
+		return
+	_stamina_low_latched = true
+	if GatheringSfx:
+		GatheringSfx.play_stamina_low()
+	var msg: String = "Low stamina — eat food or rest."
+	if UITextCatalog:
+		var t: String = UITextCatalog.get_text("quick_tip", "stamina_low")
+		if not t.is_empty():
+			msg = t
+	show_quick_tip(msg, tip_sec)
+
 func _unhandled_input(event):
+	if event.is_action_pressed("toggle_audio_mix"):
+		if audio_mix_panel:
+			audio_mix_panel.toggle()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("toggle_almanac") and almanac_panel:
 		almanac_panel.visible = not almanac_panel.visible
 		return
