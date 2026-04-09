@@ -15,10 +15,11 @@ const CHAIN_ID_PREFIX := "runtime_chain_"
 
 var config: Dictionary = {
 	"enabled": true,
-	"max_runtime_chains": 12,
+	# Raised from 12: more headroom before runtime list blocks new Agentic chains (still capped per save).
+	"max_runtime_chains": 24,
 	"target_total_chains_min": 24,
 	"max_generations_per_day": 1,
-	"max_consecutive_failures": 3,
+	"max_consecutive_failures": 5,
 	"breaker_reopen_days": 2,
 	"default_cooldown_days": 1,
 	"max_chain_expected_value": 760,
@@ -26,7 +27,12 @@ var config: Dictionary = {
 	"safe_fallback_daily_cap": 1,
 	"safe_fallback_weekly_cap": 3,
 	"use_ai_first": true,
-	"allow_procedural_fallback": true
+	"allow_procedural_fallback": true,
+	# When total chains >= target and each theme has 2+ chains, still try AI once per day
+	# while under max_runtime_chains (so configured LLM keeps getting used).
+	"daily_ai_slot_without_theme_gate": true,
+	# When a managed village chain completes successfully, drop its id from the runtime cap list so new Agentic chains can spawn.
+	"release_runtime_slot_on_chain_success": true
 }
 
 var _runtime_chain_ids: Array = []
@@ -55,11 +61,26 @@ var _stats: Dictionary = {
 }
 
 func _ready() -> void:
+	_load_agentic_config_overrides()
 	_load_crop_catalog()
 	_load_runtime_store()
 	_load_manual_inbox()
 	if QuestSystem and QuestSystem.has_signal("managed_chain_resolved"):
 		QuestSystem.managed_chain_resolved.connect(_on_managed_chain_resolved)
+
+
+func _load_agentic_config_overrides() -> void:
+	var p: String = "user://agentic_content_config.json"
+	if not FileAccess.file_exists(p):
+		return
+	var f: FileAccess = FileAccess.open(p, FileAccess.READ)
+	if f == null:
+		return
+	var data = JSON.parse_string(f.get_as_text())
+	f.close()
+	if data is Dictionary:
+		config.merge(data)
+		print("[AgenticContentOrchestrator] Merged user://agentic_content_config.json")
 
 func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	if not bool(config.get("enabled", true)):
@@ -261,6 +282,8 @@ func get_recovery_guidance(reason: String) -> String:
 		"too_many_failures_breaker_closed":
 			return "Runtime is paused; wait for half-open retry window or enqueue a curated manual chain."
 		_:
+			if reason.begins_with("llm_request_failed:"):
+				return "Check user://ai_agent_config.json: base_url, api_key (OpenAI-compatible), model name, and network/TLS."
 			return "Use manual override chain for today and keep runtime in canary mode."
 
 func _compute_generation_reason(narrative: Dictionary) -> Dictionary:
@@ -281,6 +304,13 @@ func _compute_generation_reason(narrative: Dictionary) -> Dictionary:
 		return {
 			"should_generate": true,
 			"reason": "theme_gap",
+			"theme": theme,
+			"preferred_objective": preferred_objective
+		}
+	if bool(config.get("daily_ai_slot_without_theme_gate", true)):
+		return {
+			"should_generate": true,
+			"reason": "daily_ai_slot",
 			"theme": theme,
 			"preferred_objective": preferred_objective
 		}
@@ -312,17 +342,31 @@ func _pick_theme_from_narrative(narrative: Dictionary) -> String:
 
 func _generate_chain_via_ai(theme: String, preferred_objective: String) -> Dictionary:
 	if AIAgentManager == null or not AIAgentManager.has_method("request_text_generation"):
+		push_warning("AgenticContentOrchestrator: AIAgentManager.request_text_generation unavailable")
 		return {}
 	var prompt: String = _build_generation_prompt(theme, preferred_objective)
 	var gen: Dictionary = await AIAgentManager.request_text_generation({
 		"prompt": prompt,
 		"temperature": 0.72,
 		"max_tokens": 640,
-		"source": "runtime_chain:%s" % theme
+		"source": "runtime_chain:%s" % theme,
+		"timeout_sec": 120.0
 	})
 	if not bool(gen.get("ok", false)):
+		var err: String = str(gen.get("error", "unknown"))
+		push_warning("AgenticContentOrchestrator: LLM failed (%s)" % err)
+		generation_degraded.emit("llm_request_failed:%s" % err)
 		return {}
-	return _extract_chain_json(str(gen.get("text", "")), theme)
+	var raw: String = str(gen.get("text", "")).strip_edges()
+	if raw.is_empty():
+		push_warning("AgenticContentOrchestrator: LLM returned empty text")
+		generation_degraded.emit("llm_empty_response")
+		return {}
+	var out: Dictionary = _extract_chain_json(raw, theme)
+	if out.is_empty():
+		push_warning("AgenticContentOrchestrator: LLM response was not valid quest JSON (check model output)")
+		generation_degraded.emit("llm_invalid_json")
+	return out
 
 func _build_generation_prompt(theme: String, preferred_objective: String) -> String:
 	var continuity_line: String = _continuity_hint
@@ -678,6 +722,11 @@ func _on_managed_chain_resolved(outcome: Dictionary) -> void:
 		var delta: float = -0.4 if result == "failed" else 1.0
 		_player_pref_scores[primary_type] = float(_player_pref_scores.get(primary_type, 0.0)) + delta
 	_check_rollout_promotions_and_offline()
+	if bool(config.get("release_runtime_slot_on_chain_success", true)) and result == "success":
+		var idx: int = _runtime_chain_ids.find(chain_id)
+		if idx >= 0:
+			_runtime_chain_ids.remove_at(idx)
+			_record_abnormal_event("runtime_slot_released", chain_id)
 	_save_runtime_store()
 
 func _check_rollout_promotions_and_offline() -> void:
