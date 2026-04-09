@@ -85,6 +85,8 @@ func open_shop():
 	update_gold_display()
 
 func close_shop():
+	if visible and GatheringSfx:
+		GatheringSfx.play_shop_exit()
 	visible = false
 	shop_closed.emit()
 
