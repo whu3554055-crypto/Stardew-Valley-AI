@@ -88,6 +88,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 				generation_published.emit(manual_chain_id, "manual")
 				_stats["published"] = int(_stats.get("published", 0)) + 1
 				_breaker_state = "open"
+				_record_today_objective_signature(manual_take)
 				_emit_runtime_status()
 				return
 		_on_generation_failure("manual_chain_invalid")
@@ -112,6 +113,9 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	if not bool(v.get("ok", false)):
 		_on_generation_failure(str(v.get("error", "validation_failed")))
 		return
+	if _conflicts_with_today_objective_mix(chain_data):
+		_on_generation_failure("daily_objective_mix_conflict")
+		return
 	_apply_canary_rollout(chain_data)
 	var reg: Dictionary = QuestSystem.register_runtime_chain_template(chain_data, "runtime_agentic")
 	if not bool(reg.get("ok", false)):
@@ -131,6 +135,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	generation_published.emit(chain_id, mode)
 	_stats["published"] = int(_stats.get("published", 0)) + 1
 	_breaker_state = "open"
+	_record_today_objective_signature(chain_data)
 	_check_rollout_promotions_and_offline()
 	_emit_runtime_status()
 
@@ -985,3 +990,46 @@ func _check_objective_semantic_coherence(steps: Array) -> Dictionary:
 			if lower_blob.find(npc_name) >= 0 and npc_id != target_id:
 				return {"ok": false, "error": "talk_npc_semantic_mismatch"}
 	return {"ok": true}
+
+func _chain_primary_objective_type(chain_data: Dictionary) -> String:
+	var steps: Array = chain_data.get("steps", [])
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var ot: String = str((s as Dictionary).get("objective", {}).get("type", "")).strip_edges()
+		if ot.is_empty():
+			continue
+		if ot == "talk":
+			continue
+		return ot
+	if steps.size() > 0 and steps[0] is Dictionary:
+		return str((steps[0] as Dictionary).get("objective", {}).get("type", "")).strip_edges()
+	return ""
+
+func _today_mix_key() -> String:
+	return "agentic_runtime_mix_%s" % _day_key()
+
+func _conflicts_with_today_objective_mix(chain_data: Dictionary) -> bool:
+	if not GameManager or not GameManager.player_data:
+		return false
+	var primary: String = _chain_primary_objective_type(chain_data)
+	if primary.is_empty():
+		return false
+	var mix: Dictionary = GameManager.player_data.get(_today_mix_key(), {})
+	if not (mix is Dictionary):
+		return false
+	var count_same: int = int((mix as Dictionary).get(primary, 0))
+	return count_same >= 1
+
+func _record_today_objective_signature(chain_data: Dictionary) -> void:
+	if not GameManager or not GameManager.player_data:
+		return
+	var primary: String = _chain_primary_objective_type(chain_data)
+	if primary.is_empty():
+		return
+	var key: String = _today_mix_key()
+	var mix: Dictionary = GameManager.player_data.get(key, {})
+	if not (mix is Dictionary):
+		mix = {}
+	mix[primary] = int(mix.get(primary, 0)) + 1
+	GameManager.player_data[key] = mix
