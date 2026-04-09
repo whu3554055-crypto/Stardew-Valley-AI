@@ -55,6 +55,8 @@ func _ready():
 		QuestSystem.quest_started.connect(_on_quest_log_changed)
 		QuestSystem.quest_updated.connect(_on_quest_log_changed)
 		QuestSystem.quest_completed.connect(_on_quest_completed)
+	if DailyNarrativeSystem:
+		DailyNarrativeSystem.narrative_generated.connect(_on_daily_narrative_generated)
 	if shop_ui:
 		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
 	update_ui()
@@ -488,7 +490,6 @@ func initialize_playable_first_loop():
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
 		if not narrative.is_empty():
 			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
-			record_world_event("Daily story generated: %s" % str(narrative.get("title", "A new day begins")))
 			_apply_narrative_daily_quest(narrative)
 
 func give_starter_items():
@@ -1042,6 +1043,17 @@ func _apply_narrative_daily_quest(narrative: Dictionary):
 	var events = narrative.get("events", [])
 	if events is Array and events.size() > 0:
 		QuestSystem.add_story_daily_quest(events[0])
+
+func _on_daily_narrative_generated(_narrative_id: String, narrative_data: Dictionary) -> void:
+	if narrative_data.is_empty():
+		return
+	var title: String = str(narrative_data.get("title", "A new day begins"))
+	var source: String = str(narrative_data.get("source", "local"))
+	var summary: String = str(narrative_data.get("description", "")).strip_edges()
+	var line: String = "Daily story (%s): %s" % [source, title]
+	if not summary.is_empty():
+		line += " — " + summary
+	record_world_event(line)
 
 func _on_season_changed(new_season):
 	_apply_seasonal_hud_tint()
