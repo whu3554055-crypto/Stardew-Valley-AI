@@ -872,6 +872,25 @@ func _on_tts_request_completed(result: int, response_code: int, _headers: Packed
 		tts_lane_request_started_at.erase(npc_id)
 		call_deferred("_process_tts_queue")
 		return
+	if mode == "mock_audio_pcm_base64":
+		var played: bool = _play_backend_pcm_payload(npc_id, payload)
+		if not played:
+			var fallback_ok4 = play_greeting_sound(npc_id, emotion if emotion in ["happy", "neutral", "sad"] else "neutral")
+			if not fallback_ok4:
+				tts_fallback_used.emit(npc_id, text)
+			tts_result_received.emit(npc_id, "fallback_pcm_decode_failed", payload)
+			_bump_tts_metric(npc_id, "fallback")
+			tts_in_flight_by_npc[npc_id] = false
+			tts_lane_request_started_at.erase(npc_id)
+			call_deferred("_process_tts_queue")
+			return
+		tts_result_received.emit(npc_id, "backend_audio_ready", payload)
+		_bump_tts_metric(npc_id, "success")
+		tts_in_flight_by_npc[npc_id] = false
+		tts_lane_last_active[npc_id] = Time.get_unix_time_from_system()
+		tts_lane_request_started_at.erase(npc_id)
+		call_deferred("_process_tts_queue")
+		return
 	
 	# Future-ready: if backend returns playable URL, this branch can stream/queue playback.
 	tts_result_received.emit(npc_id, "backend_audio_ready", payload)
@@ -880,6 +899,46 @@ func _on_tts_request_completed(result: int, response_code: int, _headers: Packed
 	tts_lane_last_active[npc_id] = Time.get_unix_time_from_system()
 	tts_lane_request_started_at.erase(npc_id)
 	call_deferred("_process_tts_queue")
+
+func _play_backend_pcm_payload(npc_id: String, payload: Dictionary) -> bool:
+	var b64: String = str(payload.get("audio_pcm_base64", "")).strip_edges()
+	if b64.is_empty():
+		return false
+	var raw: PackedByteArray = Marshalls.base64_to_raw(b64)
+	if raw.is_empty():
+		return false
+	var stream := AudioStreamWAV.new()
+	stream.data = raw
+	stream.mix_rate = maxi(8000, int(payload.get("sample_rate", 22050)))
+	stream.stereo = int(payload.get("channels", 1)) > 1
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	return play_npc_stream(npc_id, "tts_backend", stream, 8)
+
+func play_npc_stream(npc_id: String, sound_type: String, stream: AudioStream, priority: int = 0) -> bool:
+	if stream == null:
+		return false
+	var player = find_available_player(priority)
+	if not player:
+		if priority > 0:
+			player = stop_lowest_priority_sound()
+		else:
+			return false
+	player.stream = stream
+	player.volume_db = calculate_volume_adjustment("greeting")
+	player.pitch_scale = 1.0
+	player.play()
+	var sound_id = "%s_%s_%d" % [npc_id, sound_type, Time.get_ticks_usec()]
+	active_sounds[sound_id] = {
+		"player": player,
+		"npc_id": npc_id,
+		"sound_type": sound_type,
+		"priority": priority,
+		"start_time": Time.get_unix_time_from_system()
+	}
+	if not player.finished.is_connected(_on_sound_finished):
+		player.finished.connect(_on_sound_finished.bind(sound_id, npc_id, sound_type))
+	sound_played.emit(npc_id, sound_type, "backend_stream")
+	return true
 
 func _notification(what):
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_PREDELETE:

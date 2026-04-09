@@ -5,8 +5,11 @@ Provides REST endpoints for chat, NPC dialogue, story generation, and embeddings
 Integrates with the multi-LLM router for intelligent provider selection.
 """
 
+import base64
 import logging
+import math
 import os
+import struct
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -342,6 +345,20 @@ async def generate_tts(request: TTSRequest):
     Returns text fallback when no provider is configured.
     """
     provider_enabled = os.getenv("ENABLE_MOCK_TTS_URL", "false").lower() == "true"
+    mock_audio_enabled = os.getenv("ENABLE_MOCK_TTS_AUDIO", "true").lower() == "true"
+    if mock_audio_enabled:
+        pcm_bytes, sample_rate = _build_mock_tts_pcm(request.text, request.emotion)
+        return {
+            "success": True,
+            "npc_id": request.npc_id,
+            "text": request.text,
+            "emotion": request.emotion,
+            "audio_pcm_base64": base64.b64encode(pcm_bytes).decode("ascii"),
+            "sample_rate": sample_rate,
+            "channels": 1,
+            "sample_format": "s16le",
+            "fallback_mode": "mock_audio_pcm_base64",
+        }
     if provider_enabled:
         # Mock URL mode helps front-end integration without a real TTS provider.
         return {
@@ -362,6 +379,32 @@ async def generate_tts(request: TTSRequest):
         "audio_url": None,
         "fallback_mode": "text_only",
     }
+
+
+def _build_mock_tts_pcm(text: str, emotion: str) -> tuple[bytes, int]:
+    """
+    Generate a tiny synthetic WAV clip for MVP integration.
+    Keeps frontend audio path testable without external TTS provider.
+    """
+    sr = 22050
+    base_freq = {
+        "happy": 640.0,
+        "neutral": 520.0,
+        "sad": 420.0,
+    }.get((emotion or "neutral").lower(), 520.0)
+    duration = min(1.8, max(0.45, 0.22 + len(text or "") * 0.008))
+    total = int(sr * duration)
+    amplitude = 0.22
+
+    frames = bytearray()
+    for i in range(total):
+        t = i / float(sr)
+        sample = amplitude * math.sin(2.0 * math.pi * base_freq * t)
+        sample += 0.08 * math.sin(2.0 * math.pi * (base_freq * 0.5) * t)
+        sample *= (1.0 - min(1.0, t / duration) * 0.15)  # tiny fade
+        s16 = int(max(-1.0, min(1.0, sample)) * 32767.0)
+        frames.extend(struct.pack("<h", s16))
+    return bytes(frames), sr
 
 
 # ============================================================================
