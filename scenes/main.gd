@@ -33,12 +33,18 @@ var managed_chain_status_banner: String = ""
 var active_story_hotspot: Dictionary = {}
 const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
 const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
+const PLAYER_CREATION_SCENE := preload("res://scenes/player_creation_panel.tscn")
+const PLAYER_JOURNAL_SCENE := preload("res://scenes/player_journal_panel.tscn")
 var audio_mix_panel: CanvasLayer = null
+var player_creation_panel: CanvasLayer = null
+var player_journal_panel: CanvasLayer = null
+var _had_savegame: bool = false
+var _boot_finished: bool = false
 var _stamina_low_latched: bool = false
 var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
-const SAVE_BUNDLE_VERSION := 3
+const SAVE_BUNDLE_VERSION := 4
 const BASE_STAMINA_MAX := 100.0
 ## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
 var _visible_feed_last: Dictionary = {}
@@ -55,16 +61,18 @@ func _ready():
 			GameManager.season_changed.connect(_on_season_changed)
 	if LocaleSettings:
 		LocaleSettings.locale_changed.connect(_on_locale_changed)
+	if AchievementSystem:
+		AchievementSystem.achievement_unlocked.connect(_on_achievement_unlocked_history)
 	
 	# Connect farming signals for quest tracking
 	farm_manager.crop_planted.connect(_on_crop_planted)
 	farm_manager.crop_harvested.connect(_on_crop_harvested)
 	
 	# Single save file: `game_save.bundle` (see `save_game` / `_build_save_bundle`)
-	var had_savegame: bool = _try_load_save_bundle()
+	_had_savegame = _try_load_save_bundle()
+	_ensure_profile_defaults()
 	_refresh_world_event_feed_ui()
-	if not had_savegame:
-		give_starter_items()
+	if not _had_savegame:
 		_ensure_house_level_default()
 	if QuestSystem:
 		QuestSystem.quest_started.connect(_on_quest_log_changed)
@@ -105,26 +113,101 @@ func _ready():
 			AgenticContentOrchestrator.guardrail_blocked.connect(_on_agentic_guardrail_blocked)
 	if shop_ui:
 		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
-	update_ui()
-	initialize_playable_first_loop()
+	add_child(WEATHER_OVERLAY_SCENE.instantiate())
+	audio_mix_panel = AUDIO_MIX_PANEL_SCENE.instantiate() as CanvasLayer
+	add_child(audio_mix_panel)
+	player_creation_panel = PLAYER_CREATION_SCENE.instantiate() as CanvasLayer
+	add_child(player_creation_panel)
+	player_journal_panel = PLAYER_JOURNAL_SCENE.instantiate() as CanvasLayer
+	add_child(player_journal_panel)
+	if player_creation_panel.has_signal("creation_finished"):
+		player_creation_panel.creation_finished.connect(_on_player_creation_done)
 	
 	# Setup AI config button
 	if ai_config_button and not ai_config_button.pressed.is_connected(_on_ai_config_pressed):
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
-	add_child(WEATHER_OVERLAY_SCENE.instantiate())
-	audio_mix_panel = AUDIO_MIX_PANEL_SCENE.instantiate() as CanvasLayer
-	add_child(audio_mix_panel)
 	_apply_a3_ui_polish()
 	
+	if not GameManager.player_data.get("profile", {}).get("confirmed", false):
+		call_deferred("_open_player_creation")
+		return
+	
+	_finish_boot_after_profile()
+
+
+func _open_player_creation() -> void:
+	if player_creation_panel and player_creation_panel.has_method("begin"):
+		player_creation_panel.begin()
+
+
+func _on_player_creation_done() -> void:
+	_record_history("game_start", {})
+	save_game()
+	_finish_boot_after_profile()
+
+
+func _finish_boot_after_profile() -> void:
+	if _boot_finished:
+		return
+	_boot_finished = true
+	if not _had_savegame:
+		give_starter_items()
+	update_ui()
+	initialize_playable_first_loop()
+	_print_boot_banner()
+
+
+func _print_boot_banner() -> void:
 	print("======================================")
 	print("  Stardew Valley Clone - AI Edition")
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop (store entrance zone) | U = farm tier | H = house upgrade")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | O journal | F10 audio")
 	print("======================================")
+
+
+func _record_history(event_key: String, params: Dictionary = {}) -> void:
+	if not GameManager:
+		return
+	if not GameManager.player_data.has("history_log"):
+		GameManager.player_data["history_log"] = []
+	var log: Array = GameManager.player_data["history_log"]
+	var entry: Dictionary = {
+		"key": event_key,
+		"params": params,
+		"day": int(GameManager.player_data.get("day", 1)),
+		"season": str(GameManager.player_data.get("season", "spring")),
+		"year": int(GameManager.player_data.get("year", 1)),
+	}
+	log.append(entry)
+	while log.size() > 140:
+		log.pop_front()
+
+
+func _on_achievement_unlocked_history(achievement_id: String) -> void:
+	_record_history("achievement_unlocked", {"achievement_id": achievement_id})
+
+
+func _ensure_profile_defaults() -> void:
+	if not GameManager:
+		return
+	if not GameManager.player_data.has("history_log"):
+		GameManager.player_data["history_log"] = []
+	if not GameManager.player_data.has("profile"):
+		GameManager.player_data["profile"] = {
+			"display_name": "",
+			"gender": "neutral",
+			"personality": "kind",
+			"hobbies": [],
+			"avatar_id": 0,
+			"body_type": 0,
+			"hairstyle_id": 0,
+			"outfit_id": 0,
+			"confirmed": false
+		}
 
 
 func _on_locale_changed(_code: String) -> void:
@@ -132,6 +215,8 @@ func _on_locale_changed(_code: String) -> void:
 	_refresh_quest_log()
 	if audio_mix_panel and audio_mix_panel.has_method("refresh_locale_text"):
 		audio_mix_panel.refresh_locale_text()
+	if recipe_picker and recipe_picker.has_method("refresh_locale"):
+		recipe_picker.refresh_locale()
 
 
 func _process(_delta: float) -> void:
@@ -536,6 +621,21 @@ func _migrate_player_data_if_needed(src_version: int) -> void:
 			GameManager.player_data["chain_last_selected_day"] = -1
 		if not GameManager.player_data.has("managed_chain_streak"):
 			GameManager.player_data["managed_chain_streak"] = 0
+	if src_version < 4:
+		if not GameManager.player_data.has("history_log"):
+			GameManager.player_data["history_log"] = []
+		if not GameManager.player_data.has("profile"):
+			GameManager.player_data["profile"] = {
+				"display_name": "",
+				"gender": "neutral",
+				"personality": "kind",
+				"hobbies": [],
+				"avatar_id": 0,
+				"body_type": 0,
+				"hairstyle_id": 0,
+				"outfit_id": 0,
+				"confirmed": true
+			}
 
 
 func _build_save_bundle() -> Dictionary:
@@ -571,7 +671,12 @@ func initialize_playable_first_loop():
 	if DailyNarrativeSystem:
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
 		if not narrative.is_empty():
-			show_dialogue("Today's story: " + str(narrative.get("title", "A new day begins")))
+			var nt: String = str(narrative.get("title", "A new day begins"))
+			var nd: String = "Today's story: " + nt
+			if UITextCatalog:
+				nd = UITextCatalog.format_text("history", "narrative_seed", {"title": nt})
+			show_dialogue(nd)
+			_record_history("narrative_seed", {"title": nt})
 			_apply_narrative_daily_quest(narrative)
 			if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative"):
 				QuestSystem.activate_chain_for_narrative(narrative)
@@ -619,7 +724,7 @@ func _try_eat_selected_food() -> bool:
 		return false
 	var amt: float = float(item.get("stamina_restore", 0.0))
 	var item_id: String = str(item.get("id", ""))
-	var nm: String = str(item.get("name", "Food"))
+	var nm: String = UITextCatalog.get_item_display_name(item_id) if UITextCatalog else str(item.get("name", "Food"))
 	if GameManager:
 		GameManager.restore_stamina(amt)
 	InventoryManager.remove_item(slot, 1)
@@ -1752,6 +1857,11 @@ func _check_stamina_low_feedback() -> void:
 	show_quick_tip(msg, tip_sec)
 
 func _unhandled_input(event):
+	if event.is_action_pressed("toggle_player_journal"):
+		if player_journal_panel and player_journal_panel.has_method("toggle_panel"):
+			player_journal_panel.toggle_panel()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("toggle_audio_mix"):
 		if audio_mix_panel:
 			audio_mix_panel.toggle()

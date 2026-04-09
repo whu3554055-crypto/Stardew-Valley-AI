@@ -86,7 +86,16 @@ func unlock_achievement(achievement_id: String):
 		achievement.unlocked = true
 		unlocked_achievements.append(achievement_id)
 		achievement_unlocked.emit(achievement_id)
-		print("Achievement Unlocked: %s - %s" % [achievement.title, achievement.description])
+		if UITextCatalog:
+			var lt: String = UITextCatalog.get_achievement_field(achievement_id, "title")
+			var ld: String = UITextCatalog.get_achievement_field(achievement_id, "description")
+			if lt.is_empty():
+				lt = str(achievement.get("title", achievement_id))
+			if ld.is_empty():
+				ld = str(achievement.get("description", ""))
+			print("Achievement Unlocked: %s - %s" % [lt, ld])
+		else:
+			print("Achievement Unlocked: %s - %s" % [achievement.title, achievement.description])
 
 func check_progress(stat_name: String, value: int):
 	match stat_name:

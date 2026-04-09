@@ -127,6 +127,19 @@ func _grant_catch(item_id: String, junk_message: String) -> Dictionary:
 	return {"ok": true, "message": msg, "item_id": item_id}
 
 func _catch_message(item_id: String, template: Dictionary) -> String:
+	if UITextCatalog:
+		match item_id:
+			"junk_boot":
+				return UITextCatalog.get_text("fishing", "junk_boot")
+			"junk_seaweed":
+				return UITextCatalog.get_text("fishing", "junk_seaweed")
+			"fish_pike":
+				return UITextCatalog.get_text("fishing", "fish_pike")
+			"fish_halibut":
+				return UITextCatalog.get_text("fishing", "fish_halibut")
+			_:
+				var nm: String = UITextCatalog.get_item_display_name(item_id)
+				return UITextCatalog.format_text("fishing", "catch_generic", {"name": nm})
 	match item_id:
 		"junk_boot":
 			return "Only an old boot… better luck next cast."

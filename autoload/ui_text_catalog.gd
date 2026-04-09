@@ -109,3 +109,54 @@ func localized_season_name(season_id: String) -> String:
 
 func get_ui_text(key: String) -> String:
 	return get_text("ui", key)
+
+
+## Achievement copy lives under `achievements.{id}.title` / `.description` in JSON.
+func get_achievement_field(achievement_id: String, field: String) -> String:
+	var sec: Variant = _messages.get("achievements", {})
+	if sec is Dictionary:
+		var inner: Variant = (sec as Dictionary).get(achievement_id, {})
+		if inner is Dictionary:
+			return str((inner as Dictionary).get(field, ""))
+	return ""
+
+
+## Prefer `items.{item_id}` in JSON; fallback to ItemDatabase name.
+func get_item_display_name(item_id: String) -> String:
+	var n: String = get_text("items", item_id)
+	if not n.is_empty():
+		return n
+	if ItemDatabase:
+		var it: Dictionary = ItemDatabase.get_item(item_id)
+		if not it.is_empty():
+			return str(it.get("name", item_id))
+	return item_id
+
+
+func get_recipe_picker_title(mode: String) -> String:
+	return get_text("recipe_picker", mode + "_title")
+
+
+func get_recipe_picker_empty_detail() -> String:
+	return get_text("recipe_picker", "empty_detail")
+
+
+## History entries: `{ "key", "params", "day", "season", "year" }` → localized line.
+func format_history_line(e: Dictionary) -> String:
+	var key: String = str(e.get("key", "unknown"))
+	var params: Dictionary = {}
+	if e.get("params") is Dictionary:
+		params = (e.get("params") as Dictionary).duplicate(true)
+	params["day"] = int(e.get("day", 1))
+	params["season"] = localized_season_name(str(e.get("season", "spring")))
+	params["year"] = int(e.get("year", 1))
+	if key == "achievement_unlocked":
+		var aid: String = str(params.get("achievement_id", ""))
+		var tit: String = get_achievement_field(aid, "title")
+		if tit.is_empty() and AchievementSystem and AchievementSystem.achievements.has(aid):
+			tit = str(AchievementSystem.achievements[aid].get("title", aid))
+		params["title"] = tit
+	var template: String = get_text("history", key)
+	if template.is_empty():
+		return "[%s / %s / day %s] %s" % [str(params["year"]), str(params["season"]), str(params["day"]), key]
+	return format_text("history", key, params)

@@ -73,5 +73,70 @@
     "audio_panel_title": "Audio mix (dB) — saved automatically",
     "audio_panel_hint": "F10 close · Esc close · settings: user://audio_mix.json",
     "language_label": "Language"
+  },
+  "achievements": {
+    "first_crop": { "title": "Greenhorn", "description": "Plant your first crop" },
+    "master_farmer": { "title": "Master Farmer", "description": "Harvest 100 crops" },
+    "rich": { "title": "Millionaire", "description": "Hold at least 10,000 gold" },
+    "socialite": { "title": "Socialite", "description": "Talk to every villager" },
+    "angler": { "title": "Master Angler", "description": "Catch 10 different fish" },
+    "explorer": { "title": "Explorer", "description": "Reach the bottom of the mines" },
+    "chef": { "title": "Gourmet Chef", "description": "Cook every recipe" },
+    "collector": { "title": "Collector", "description": "Complete the museum collection" }
+  },
+  "items": {
+    "hoe": "Hoe", "watering_can": "Watering Can", "parsnip_seeds": "Parsnip Seeds", "pickaxe": "Pickaxe", "fishing_rod": "Fishing Rod",
+    "worm_bait": "Worm Bait", "bread": "Bread", "basic_fertilizer": "Basic Fertilizer", "axe": "Axe", "corn": "Corn", "potato": "Potato"
+  },
+  "fishing": {
+    "catch_generic": "You caught {name}!",
+    "junk_boot": "Only an old boot… better luck next cast.",
+    "junk_seaweed": "A soggy clump of seaweed. The sea mocks you.",
+    "fish_pike": "A fierce northern pike — long jaws, cold water.",
+    "fish_halibut": "A flat halibut from the deep — heavy pull on the line."
+  },
+  "recipe_picker": {
+    "cooking_title": "Cooking — pick a recipe (E again to close)",
+    "smelting_title": "Smelting — pick a recipe (E again to close)",
+    "crafting_title": "Workbench — pick a recipe (E again to close)",
+    "empty_detail": "(No recipe data — check data/recipes/*.json)"
+  },
+  "player_creation": {
+    "title": "Create your farmer",
+    "name_placeholder": "Enter a name",
+    "default_name": "Farmer",
+    "hobbies": "Hobbies (multi-select)",
+    "appearance": "Appearance presets (values for future portraits)",
+    "avatar": "Portrait set",
+    "body": "Build",
+    "hair": "Hair",
+    "outfit": "Outfit",
+    "confirm": "Start game",
+    "gender_male": "Male",
+    "gender_female": "Female",
+    "gender_neutral": "Other",
+    "personality_kind": "Kind",
+    "personality_bold": "Bold",
+    "personality_calm": "Calm",
+    "personality_curious": "Curious",
+    "hobby_farming": "Farming",
+    "hobby_fishing": "Fishing",
+    "hobby_mining": "Mining",
+    "hobby_foraging": "Foraging",
+    "hobby_cooking": "Cooking",
+    "hobby_social": "Social"
+  },
+  "journal": {
+    "tab_achievements": "Achievements",
+    "tab_history": "History",
+    "history_empty": "No entries yet — farm, fish, and complete quests!",
+    "close": "Close",
+    "hint_toggle": "Press O to toggle"
+  },
+  "history": {
+    "game_start": "Year {year} · {season} · Day {day}: adventure begins.",
+    "achievement_unlocked": "Achievement unlocked: {title} (Y{year} {season} D{day})",
+    "first_harvest": "First crop harvested.",
+    "narrative_seed": "Today's story: {title}"
   }
 }

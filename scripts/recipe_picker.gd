@@ -87,13 +87,37 @@ func _apply_recipe_button_styles() -> void:
 		btn_close.add_theme_stylebox_override("hover", _recipe_btn_style())
 		btn_close.add_theme_stylebox_override("pressed", _recipe_btn_style())
 
+func refresh_locale() -> void:
+	if not UITextCatalog or mode == "":
+		return
+	if _title:
+		var t: String = UITextCatalog.get_recipe_picker_title(mode)
+		if not t.is_empty():
+			_title.text = t
+		else:
+			_title.text = str(TITLE_BY_MODE.get(mode, mode))
+	if recipes.is_empty():
+		if detail:
+			detail.text = UITextCatalog.get_recipe_picker_empty_detail() if UITextCatalog else "（无配方）"
+		return
+	var sel: PackedInt32Array = item_list.get_selected_items()
+	if not sel.is_empty():
+		_on_item_selected(sel[0])
+	else:
+		_on_item_selected(0)
+
+
 func open_picker(p_mode: String, p_recipes: Array) -> void:
 	mode = p_mode
 	recipes = p_recipes
-	_title.text = str(TITLE_BY_MODE.get(p_mode, "配方"))
+	if UITextCatalog:
+		var tt: String = UITextCatalog.get_recipe_picker_title(p_mode)
+		_title.text = tt if not tt.is_empty() else str(TITLE_BY_MODE.get(p_mode, "Recipe"))
+	else:
+		_title.text = str(TITLE_BY_MODE.get(p_mode, "配方"))
 	item_list.clear()
 	if recipes.is_empty():
-		detail.text = "（无配方数据：检查 data/recipes/*.json）"
+		detail.text = UITextCatalog.get_recipe_picker_empty_detail() if UITextCatalog else "（无配方数据：检查 data/recipes/*.json）"
 		btn_confirm.disabled = true
 		visible = true
 		return
@@ -111,7 +135,7 @@ func close_picker() -> void:
 func _format_row(recipe: Dictionary) -> String:
 	var out_id: String = RecipeHelpers.recipe_output_id(recipe)
 	var qty: int = int(recipe.get("output_qty", recipe.get("qty", 1)))
-	var nm: String = str(ItemDatabase.get_item(out_id).get("name", out_id))
+	var nm: String = UITextCatalog.get_item_display_name(out_id) if UITextCatalog else str(ItemDatabase.get_item(out_id).get("name", out_id))
 	var cost: Dictionary = RecipeHelpers.recipe_cost(recipe)
 	var ok: bool = _can_afford(cost)
 	var tag: String = "[可]" if ok else "[缺]"
@@ -140,7 +164,7 @@ func _on_item_selected(idx: int) -> void:
 	var out_id: String = RecipeHelpers.recipe_output_id(r)
 	var qty: int = int(r.get("output_qty", r.get("qty", 1)))
 	var st: float = float(r.get("stamina", 2.0))
-	var nm: String = str(ItemDatabase.get_item(out_id).get("name", out_id))
+	var nm: String = UITextCatalog.get_item_display_name(out_id) if UITextCatalog else str(ItemDatabase.get_item(out_id).get("name", out_id))
 	var cost: Dictionary = RecipeHelpers.recipe_cost(r)
 	var gap: String = RecipeHelpers.format_material_gap(cost)
 	var gap_line: String = gap if not gap.is_empty() else "（材料足够）"

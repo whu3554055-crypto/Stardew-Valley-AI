@@ -73,5 +73,70 @@
     "audio_panel_title": "音频混音（分贝）— 自动保存",
     "audio_panel_hint": "F10 关闭 · Esc 关闭 · 配置：user://audio_mix.json",
     "language_label": "界面语言"
+  },
+  "achievements": {
+    "first_crop": { "title": "新手农夫", "description": "种下第一株作物" },
+    "master_farmer": { "title": "农场大师", "description": "累计收获 100 株作物" },
+    "rich": { "title": "腰缠万贯", "description": "持有至少 10000 金币" },
+    "socialite": { "title": "社交达人", "description": "与每位村民交谈" },
+    "angler": { "title": "垂钓大师", "description": "钓起 10 种不同的鱼" },
+    "explorer": { "title": "探险家", "description": "抵达矿井最深处" },
+    "chef": { "title": "美食家", "description": "完成所有烹饪配方" },
+    "collector": { "title": "收藏家", "description": "完成博物馆收藏" }
+  },
+  "items": {
+    "hoe": "锄头", "watering_can": "浇水壶", "parsnip_seeds": "防风草种子", "pickaxe": "镐", "fishing_rod": "鱼竿",
+    "worm_bait": "虫饵", "bread": "面包", "basic_fertilizer": "基础肥料", "axe": "斧头", "corn": "玉米", "potato": "土豆"
+  },
+  "fishing": {
+    "catch_generic": "钓到了 {name}！",
+    "junk_boot": "只钓到一只旧靴子……下次好运。",
+    "junk_seaweed": "一团湿漉漉的海草，大海在嘲笑你。",
+    "fish_pike": "一条凶猛的北方狗鱼——长颚，冷水。",
+    "fish_halibut": "一条沉甸甸的比目鱼——深水猛拉。"
+  },
+  "recipe_picker": {
+    "cooking_title": "烹饪 — 选择配方（再按 E 关闭）",
+    "smelting_title": "熔炼 — 选择配方（再按 E 关闭）",
+    "crafting_title": "工作台 — 选择配方（再按 E 关闭）",
+    "empty_detail": "（无配方数据：检查 data/recipes/*.json）"
+  },
+  "player_creation": {
+    "title": "创建你的农夫",
+    "name_placeholder": "输入昵称",
+    "default_name": "农夫",
+    "hobbies": "爱好（可多选）",
+    "appearance": "外观预设（数值供日后扩展立绘）",
+    "avatar": "头像方案",
+    "body": "体型",
+    "hair": "发型",
+    "outfit": "衣着",
+    "confirm": "开始游戏",
+    "gender_male": "男",
+    "gender_female": "女",
+    "gender_neutral": "其他",
+    "personality_kind": "和善",
+    "personality_bold": "果敢",
+    "personality_calm": "沉稳",
+    "personality_curious": "好奇",
+    "hobby_farming": "耕种",
+    "hobby_fishing": "钓鱼",
+    "hobby_mining": "挖矿",
+    "hobby_foraging": "采集",
+    "hobby_cooking": "烹饪",
+    "hobby_social": "社交"
+  },
+  "journal": {
+    "tab_achievements": "成就",
+    "tab_history": "历程",
+    "history_empty": "暂无记录。去种田、钓鱼、完成任务吧！",
+    "close": "关闭",
+    "hint_toggle": "按 O 打开 / 关闭"
+  },
+  "history": {
+    "game_start": "第 {year} 年 · {season} · 第 {day} 天：开始冒险。",
+    "achievement_unlocked": "解锁成就：{title}（{year} 年 {season} 第 {day} 天）",
+    "first_harvest": "第一次收获作物。",
+    "narrative_seed": "今日故事：{title}"
   }
 }
