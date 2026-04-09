@@ -1,0 +1,1143 @@
+{
+  "version": 1,
+  "daily_pick_policy": "theme_priority_then_rotate",
+  "chains": [
+    {
+      "id": "b20260409_adventure_convoy_chain",
+      "display_name": "Convoy Prep Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "adventure",
+        "fairy_tale"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_adventure_convoy_chain_s1",
+          "title": "Convoy I: Catch Route Rations",
+          "description": "Catch fish 2 times for convoy ration packs.",
+          "objective": {
+            "type": "fish_caught",
+            "count": 2
+          },
+          "reward": {
+            "gold": 76,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_adventure_convoy_chain_s2",
+          "title": "Convoy II: Loadout Check",
+          "description": "Talk to Pierre and confirm route loadout.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 94,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_adventure_convoy_chain_s3",
+          "title": "Convoy III: Sell Expedition Cargo",
+          "description": "Sell expedition cargo worth 148g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 148
+          },
+          "reward": {
+            "gold": 150,
+            "items": [
+              "worm_bait:3"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_adventure_ridge_chain",
+      "display_name": "Ridge Expedition Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "adventure",
+        "fairy_tale"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_adventure_ridge_chain_s1",
+          "title": "Ridge I: Catch River Rations",
+          "description": "Catch fish 2 times for expedition rations.",
+          "objective": {
+            "type": "fish_caught",
+            "count": 2
+          },
+          "reward": {
+            "gold": 74,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_adventure_ridge_chain_s2",
+          "title": "Ridge II: Route Confirmation",
+          "description": "Talk to Pierre and confirm route supply numbers.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 90,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_adventure_ridge_chain_s3",
+          "title": "Ridge III: Sell Outbound Stock",
+          "description": "Sell outbound stock worth 140g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 140
+          },
+          "reward": {
+            "gold": 142,
+            "items": [
+              "worm_bait:3"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_comedy_apology_chain",
+      "display_name": "Apology Tour Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "comedy",
+        "joyful"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_comedy_apology_chain_s1",
+          "title": "Apology I: Gather Peace Offerings",
+          "description": "Harvest 2 crops to assemble peace offerings.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 64,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_comedy_apology_chain_s2",
+          "title": "Apology II: Public Clarification",
+          "description": "Talk to Pierre and clear the misunderstanding.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 86,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_comedy_apology_chain_s3",
+          "title": "Apology III: Sell Cleanup Surplus",
+          "description": "Sell cleanup surplus worth 118g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 118
+          },
+          "reward": {
+            "gold": 122,
+            "items": [
+              "bread:1"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_comedy_messfix_chain",
+      "display_name": "Comical Cleanup Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "comedy",
+        "joyful"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_comedy_messfix_chain_s1",
+          "title": "Cleanup I: Chop Extra Wood",
+          "description": "Chop wood once to fix today's accidental stall collapse.",
+          "objective": {
+            "type": "chop_wood",
+            "count": 1
+          },
+          "reward": {
+            "gold": 62,
+            "items": [
+              "coal:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_comedy_messfix_chain_s2",
+          "title": "Cleanup II: Public Apology",
+          "description": "Talk to Pierre and smooth over the town gossip.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 86,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_comedy_messfix_chain_s3",
+          "title": "Cleanup III: Sell Repair Surplus",
+          "description": "Sell repair surplus worth 120g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 120
+          },
+          "reward": {
+            "gold": 128,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 40
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 60
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_fairytale_mirror_chain",
+      "display_name": "Mirror Tale Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "fairy_tale",
+        "magical"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_fairytale_mirror_chain_s1",
+          "title": "Mirror I: Gather Garden Offerings",
+          "description": "Harvest 2 crops as offerings for the mirror ritual.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 69,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_fairytale_mirror_chain_s2",
+          "title": "Mirror II: Speak the Oath",
+          "description": "Talk to Pierre and complete the sworn exchange.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 93,
+            "items": [
+              "basic_fertilizer:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_fairytale_mirror_chain_s3",
+          "title": "Mirror III: Sell Blessed Goods",
+          "description": "Sell blessed goods worth 135g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 135
+          },
+          "reward": {
+            "gold": 138,
+            "items": [
+              "bread:2"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_horror_blackout_chain",
+      "display_name": "Blackout Patrol Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "horror",
+        "sci_fi"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_horror_blackout_chain_s1",
+          "title": "Blackout I: Gather Emergency Produce",
+          "description": "Harvest 2 crops to prepare emergency supplies.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 74,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_horror_blackout_chain_s2",
+          "title": "Blackout II: Confirm Outage Reports",
+          "description": "Talk to Pierre and verify outage impact.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 92,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_horror_blackout_chain_s3",
+          "title": "Blackout III: Sell Emergency Stock",
+          "description": "Sell emergency stock worth 145g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 145
+          },
+          "reward": {
+            "gold": 148,
+            "items": [
+              "coal:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "coal:2",
+                  "weight": 60
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_horror_nightwatch_chain",
+      "display_name": "Nightwatch Alert Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "horror",
+        "adventure"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_horror_nightwatch_chain_s1",
+          "title": "Nightwatch I: Gather Field Clues",
+          "description": "Harvest 2 crops around dusk to inspect unusual traces.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 72,
+            "items": [
+              "bread:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "bread:1",
+                  "weight": 55
+                },
+                {
+                  "item": "worm_bait:2",
+                  "weight": 45
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "b20260409_horror_nightwatch_chain_s2",
+          "title": "Nightwatch II: Report to Pierre",
+          "description": "Talk to Pierre and confirm the trace report.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 88,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_horror_nightwatch_chain_s3",
+          "title": "Nightwatch III: Sell Secured Goods",
+          "description": "Sell suspiciously sourced goods worth 130g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 130
+          },
+          "reward": {
+            "gold": 135,
+            "items": [
+              "basic_fertilizer:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "basic_fertilizer:1",
+                  "weight": 60
+                },
+                {
+                  "item": "coal:2",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_joyful_picnic_chain",
+      "display_name": "Picnic Prep Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "joyful",
+        "comedy"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_joyful_picnic_chain_s1",
+          "title": "Picnic I: Pick Fresh Greens",
+          "description": "Harvest 2 crops for the picnic basket.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 66,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_joyful_picnic_chain_s2",
+          "title": "Picnic II: Confirm Guest List",
+          "description": "Talk to Pierre and confirm today's guest list.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 88,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_joyful_picnic_chain_s3",
+          "title": "Picnic III: Sell Festival Extras",
+          "description": "Sell festival extras worth 120g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 120
+          },
+          "reward": {
+            "gold": 126,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_romance_giftline_chain",
+      "display_name": "Heartline Gift Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "romantic",
+        "joyful"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_romance_giftline_chain_s1",
+          "title": "Heartline I: Prepare Courtyard Produce",
+          "description": "Harvest 2 crops for a special village gift basket.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 68,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_romance_giftline_chain_s2",
+          "title": "Heartline II: Deliver Message",
+          "description": "Talk to Pierre and pass on the heartfelt note.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 92,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 50
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 50
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "b20260409_romance_giftline_chain_s3",
+          "title": "Heartline III: Sell Celebration Stock",
+          "description": "Sell celebration-related goods worth 125g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 125
+          },
+          "reward": {
+            "gold": 132,
+            "items": [
+              "bread:2"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_romance_truce_chain",
+      "display_name": "Truce Bouquet Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "romantic",
+        "joyful"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_romance_truce_chain_s1",
+          "title": "Truce I: Harvest Bouquet Ingredients",
+          "description": "Harvest 2 crops for a reconciliation bouquet.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 70,
+            "items": [
+              "bread:1"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_romance_truce_chain_s2",
+          "title": "Truce II: Carry the Message",
+          "description": "Talk to Pierre and pass the reconciliation message.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 92,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_romance_truce_chain_s3",
+          "title": "Truce III: Sell Celebration Goods",
+          "description": "Sell celebration goods worth 132g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 132
+          },
+          "reward": {
+            "gold": 138,
+            "items": [
+              "bread:2"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_scifi_relay_chain",
+      "display_name": "Relay Calibration Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "sci_fi",
+        "adventure"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_scifi_relay_chain_s1",
+          "title": "Relay I: Mine Signal Ore",
+          "description": "Mine ore 3 times for relay calibration material.",
+          "objective": {
+            "type": "mine_ore",
+            "count": 3
+          },
+          "reward": {
+            "gold": 78,
+            "items": [
+              "coal:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_scifi_relay_chain_s2",
+          "title": "Relay II: Technician Brief",
+          "description": "Talk to Pierre and sync calibration notes.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 96,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_scifi_relay_chain_s3",
+          "title": "Relay III: Sell Calibrated Cargo",
+          "description": "Sell calibrated cargo worth 150g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 150
+          },
+          "reward": {
+            "gold": 152,
+            "items": [
+              "coal:2"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_scifi_signal_chain",
+      "display_name": "Signal Analysis Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "sci_fi",
+        "adventure"
+      ],
+      "steps": [
+        {
+          "id": "b20260409_scifi_signal_chain_s1",
+          "title": "Signal I: Mine Conductive Ore",
+          "description": "Mine ore 3 times to gather conductive fragments.",
+          "objective": {
+            "type": "mine_ore",
+            "count": 3
+          },
+          "reward": {
+            "gold": 76,
+            "items": [
+              "coal:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_scifi_signal_chain_s2",
+          "title": "Signal II: Lab Briefing",
+          "description": "Talk to Pierre and sync the analyzer notes.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 94,
+            "items": [
+              "worm_bait:2"
+            ]
+          }
+        },
+        {
+          "id": "b20260409_scifi_signal_chain_s3",
+          "title": "Signal III: Sell Calibrated Cargo",
+          "description": "Sell calibrated cargo worth 145g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 145
+          },
+          "reward": {
+            "gold": 146,
+            "items": [
+              "coal:2"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "managed_cooking_chain",
+      "display_name": "Kitchen Support Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "joyful",
+        "comedy",
+        "romantic"
+      ],
+      "steps": [
+        {
+          "id": "managed_cooking_chain_1",
+          "title": "Kitchen Request I: Prep Ingredients",
+          "description": "Harvest 2 crops to prep a village meal.",
+          "objective": {
+            "type": "harvest",
+            "count": 2
+          },
+          "reward": {
+            "gold": 65,
+            "items": [
+              "bread:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "bread:1",
+                  "weight": 60
+                },
+                {
+                  "item": "basic_fertilizer:1",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_cooking_chain_2",
+          "title": "Kitchen Request II: Light the Stove",
+          "description": "Cook 1 meal at home kitchen.",
+          "objective": {
+            "type": "cook_meal",
+            "count": 1
+          },
+          "reward": {
+            "gold": 95,
+            "items": [
+              "bread:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "bread:1",
+                  "weight": 50
+                },
+                {
+                  "item": "worm_bait:2",
+                  "weight": 50
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_cooking_chain_3",
+          "title": "Kitchen Request III: Sell Festival Menu",
+          "description": "Sell food-related goods worth 130g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 130
+          },
+          "reward": {
+            "gold": 135,
+            "items": [
+              "basic_fertilizer:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "basic_fertilizer:1",
+                  "weight": 55
+                },
+                {
+                  "item": "bread:2",
+                  "weight": 45
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "managed_fishing_chain",
+      "display_name": "Harbor Supply Chain",
+      "cooldown_days": 2,
+      "preferred_themes": [
+        "adventure",
+        "fairy_tale",
+        "sci_fi"
+      ],
+      "steps": [
+        {
+          "id": "managed_fishing_chain_1",
+          "title": "Harbor Request I: First Catch Batch",
+          "description": "Catch fish 2 times to start today's harbor supply.",
+          "objective": {
+            "type": "fish_caught",
+            "count": 2
+          },
+          "reward": {
+            "gold": 70,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 70
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 30
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_fishing_chain_2",
+          "title": "Harbor Request II: Dockside Report",
+          "description": "Talk to Pierre to confirm fish shipment quality.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 90,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 60
+                },
+                {
+                  "item": "basic_fertilizer:1",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_fishing_chain_3",
+          "title": "Harbor Request III: Sell Coastal Lot",
+          "description": "Sell fish-related goods worth 140g.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 140
+          },
+          "reward": {
+            "gold": 145,
+            "items": [
+              "worm_bait:3"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:3",
+                  "weight": 50
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 50
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "managed_mining_chain",
+      "display_name": "Mining Support Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "adventure",
+        "horror",
+        "sci_fi"
+      ],
+      "steps": [
+        {
+          "id": "managed_mining_chain_1",
+          "title": "Mine Request I: Ore Rush",
+          "description": "Mine ore 3 times to help replenish workshop materials.",
+          "objective": {
+            "type": "mine_ore",
+            "count": 3
+          },
+          "reward": {
+            "gold": 70,
+            "items": [
+              "coal:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "coal:2",
+                  "weight": 70
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 30
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_mining_chain_2",
+          "title": "Mine Request II: Report In",
+          "description": "Talk to Pierre and report today's ore pickup status.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 90,
+            "items": [
+              "bread:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "bread:1",
+                  "weight": 50
+                },
+                {
+                  "item": "worm_bait:2",
+                  "weight": 50
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_mining_chain_3",
+          "title": "Mine Request III: Sell Shipment",
+          "description": "Sell mined goods worth 150g to finalize the shipment.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 150
+          },
+          "reward": {
+            "gold": 140,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 45
+                },
+                {
+                  "item": "coal:3",
+                  "weight": 55
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "managed_supply_chain",
+      "display_name": "Village Supply Chain",
+      "cooldown_days": 1,
+      "preferred_themes": [
+        "joyful",
+        "romantic",
+        "fairy_tale"
+      ],
+      "steps": [
+        {
+          "id": "managed_supply_chain_1",
+          "title": "Village Request I: Fresh Produce",
+          "description": "Harvest 2 parsnips so the town can prepare a shared meal.",
+          "objective": {
+            "type": "harvest",
+            "crop_id": "parsnip",
+            "count": 2
+          },
+          "reward": {
+            "gold": 60,
+            "items": [
+              "bread:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "bread:1",
+                  "weight": 60
+                },
+                {
+                  "item": "worm_bait:2",
+                  "weight": 40
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_supply_chain_2",
+          "title": "Village Request II: Deliver the News",
+          "description": "Talk to Pierre and tell him the produce is ready.",
+          "objective": {
+            "type": "talk",
+            "npc_id": "pierre",
+            "count": 1
+          },
+          "reward": {
+            "gold": 80,
+            "items": [
+              "worm_bait:2"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "worm_bait:2",
+                  "weight": 70
+                },
+                {
+                  "item": "bread:1",
+                  "weight": 30
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "managed_supply_chain_3",
+          "title": "Village Request III: Market Momentum",
+          "description": "Sell goods worth 120g to complete today's village supply loop.",
+          "objective": {
+            "type": "earn_gold",
+            "count": 120
+          },
+          "reward": {
+            "gold": 120,
+            "items": [
+              "basic_fertilizer:1"
+            ],
+            "pool": {
+              "count": 1,
+              "entries": [
+                {
+                  "item": "basic_fertilizer:1",
+                  "weight": 65
+                },
+                {
+                  "item": "worm_bait:3",
+                  "weight": 35
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "batch_meta": {
+    "batch_id": "batch_20260409_01",
+    "author": "agentic_generator",
+    "target_count": 6
+  },
+  "daily_pick_policy": "theme_priority_then_rotate",
+  "chains": [
+    {
+      "id": "b20260409_horror_nightwatch_chain",
+      "display_name": "Nightwatch Alert Chain",
+      "cooldown_days": 2,
+      "preferred_themes": ["horror", "adventure"],
+      "steps": [
+        {
+          "id": "b20260409_horror_nightwatch_chain_s1",
+          "title": "Nightwatch I: Gather Field Clues",
+          "description": "Harvest 2 crops around dusk to inspect unusual traces.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": {
+            "gold": 72,
+            "items": ["bread:1"],
+            "pool": {
+              "count": 1,
+              "entries": [
+                { "item": "bread:1", "weight": 55 },
+                { "item": "worm_bait:2", "weight": 45 }
+              ]
+            }
+          }
+        },
+        {
+          "id": "b20260409_horror_nightwatch_chain_s2",
+          "title": "Nightwatch II: Report to Pierre",
+          "description": "Talk to Pierre and confirm the trace report.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 88, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_horror_nightwatch_chain_s3",
+          "title": "Nightwatch III: Sell Secured Goods",
+          "description": "Sell suspiciously sourced goods worth 130g.",
+          "objective": { "type": "earn_gold", "count": 130 },
+          "reward": {
+            "gold": 135,
+            "items": ["basic_fertilizer:1"],
+            "pool": {
+              "count": 1,
+              "entries": [
+                { "item": "basic_fertilizer:1", "weight": 60 },
+                { "item": "coal:2", "weight": 40 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_romance_giftline_chain",
+      "display_name": "Heartline Gift Chain",
+      "cooldown_days": 1,
+      "preferred_themes": ["romantic", "joyful"],
+      "steps": [
+        {
+          "id": "b20260409_romance_giftline_chain_s1",
+          "title": "Heartline I: Prepare Courtyard Produce",
+          "description": "Harvest 2 crops for a special village gift basket.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": { "gold": 68, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_romance_giftline_chain_s2",
+          "title": "Heartline II: Deliver Message",
+          "description": "Talk to Pierre and pass on the heartfelt note.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": {
+            "gold": 92,
+            "items": ["worm_bait:2"],
+            "pool": {
+              "count": 1,
+              "entries": [
+                { "item": "worm_bait:2", "weight": 50 },
+                { "item": "bread:1", "weight": 50 }
+              ]
+            }
+          }
+        },
+        {
+          "id": "b20260409_romance_giftline_chain_s3",
+          "title": "Heartline III: Sell Celebration Stock",
+          "description": "Sell celebration-related goods worth 125g.",
+          "objective": { "type": "earn_gold", "count": 125 },
+          "reward": { "gold": 132, "items": ["bread:2"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_comedy_messfix_chain",
+      "display_name": "Comical Cleanup Chain",
+      "cooldown_days": 1,
+      "preferred_themes": ["comedy", "joyful"],
+      "steps": [
+        {
+          "id": "b20260409_comedy_messfix_chain_s1",
+          "title": "Cleanup I: Chop Extra Wood",
+          "description": "Chop wood once to fix today's accidental stall collapse.",
+          "objective": { "type": "chop_wood", "count": 1 },
+          "reward": { "gold": 62, "items": ["coal:1"] }
+        },
+        {
+          "id": "b20260409_comedy_messfix_chain_s2",
+          "title": "Cleanup II: Public Apology",
+          "description": "Talk to Pierre and smooth over the town gossip.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 86, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_comedy_messfix_chain_s3",
+          "title": "Cleanup III: Sell Repair Surplus",
+          "description": "Sell repair surplus worth 120g.",
+          "objective": { "type": "earn_gold", "count": 120 },
+          "reward": {
+            "gold": 128,
+            "items": ["worm_bait:2"],
+            "pool": {
+              "count": 1,
+              "entries": [
+                { "item": "worm_bait:2", "weight": 40 },
+                { "item": "bread:1", "weight": 60 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_scifi_signal_chain",
+      "display_name": "Signal Analysis Chain",
+      "cooldown_days": 2,
+      "preferred_themes": ["sci_fi", "adventure"],
+      "steps": [
+        {
+          "id": "b20260409_scifi_signal_chain_s1",
+          "title": "Signal I: Mine Conductive Ore",
+          "description": "Mine ore 3 times to gather conductive fragments.",
+          "objective": { "type": "mine_ore", "count": 3 },
+          "reward": { "gold": 76, "items": ["coal:2"] }
+        },
+        {
+          "id": "b20260409_scifi_signal_chain_s2",
+          "title": "Signal II: Lab Briefing",
+          "description": "Talk to Pierre and sync the analyzer notes.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 94, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_scifi_signal_chain_s3",
+          "title": "Signal III: Sell Calibrated Cargo",
+          "description": "Sell calibrated cargo worth 145g.",
+          "objective": { "type": "earn_gold", "count": 145 },
+          "reward": { "gold": 146, "items": ["coal:2"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_adventure_ridge_chain",
+      "display_name": "Ridge Expedition Chain",
+      "cooldown_days": 1,
+      "preferred_themes": ["adventure", "fairy_tale"],
+      "steps": [
+        {
+          "id": "b20260409_adventure_ridge_chain_s1",
+          "title": "Ridge I: Catch River Rations",
+          "description": "Catch fish 2 times for expedition rations.",
+          "objective": { "type": "fish_caught", "count": 2 },
+          "reward": { "gold": 74, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_adventure_ridge_chain_s2",
+          "title": "Ridge II: Route Confirmation",
+          "description": "Talk to Pierre and confirm route supply numbers.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 90, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_adventure_ridge_chain_s3",
+          "title": "Ridge III: Sell Outbound Stock",
+          "description": "Sell outbound stock worth 140g.",
+          "objective": { "type": "earn_gold", "count": 140 },
+          "reward": { "gold": 142, "items": ["worm_bait:3"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_fairytale_mirror_chain",
+      "display_name": "Mirror Tale Chain",
+      "cooldown_days": 2,
+      "preferred_themes": ["fairy_tale", "magical"],
+      "steps": [
+        {
+          "id": "b20260409_fairytale_mirror_chain_s1",
+          "title": "Mirror I: Gather Garden Offerings",
+          "description": "Harvest 2 crops as offerings for the mirror ritual.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": { "gold": 69, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_fairytale_mirror_chain_s2",
+          "title": "Mirror II: Speak the Oath",
+          "description": "Talk to Pierre and complete the sworn exchange.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 93, "items": ["basic_fertilizer:1"] }
+        },
+        {
+          "id": "b20260409_fairytale_mirror_chain_s3",
+          "title": "Mirror III: Sell Blessed Goods",
+          "description": "Sell blessed goods worth 135g.",
+          "objective": { "type": "earn_gold", "count": 135 },
+          "reward": { "gold": 138, "items": ["bread:2"] }
+        }
+      ]
+    }
+  ]
+}

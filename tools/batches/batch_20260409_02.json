@@ -1,0 +1,194 @@
+{
+  "batch_meta": {
+    "batch_id": "batch_20260409_02",
+    "author": "agentic_generator",
+    "target_count": 6
+  },
+  "daily_pick_policy": "theme_priority_then_rotate",
+  "chains": [
+    {
+      "id": "b20260409_horror_blackout_chain",
+      "display_name": "Blackout Patrol Chain",
+      "cooldown_days": 2,
+      "preferred_themes": ["horror", "sci_fi"],
+      "steps": [
+        {
+          "id": "b20260409_horror_blackout_chain_s1",
+          "title": "Blackout I: Gather Emergency Produce",
+          "description": "Harvest 2 crops to prepare emergency supplies.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": { "gold": 74, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_horror_blackout_chain_s2",
+          "title": "Blackout II: Confirm Outage Reports",
+          "description": "Talk to Pierre and verify outage impact.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 92, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_horror_blackout_chain_s3",
+          "title": "Blackout III: Sell Emergency Stock",
+          "description": "Sell emergency stock worth 145g.",
+          "objective": { "type": "earn_gold", "count": 145 },
+          "reward": {
+            "gold": 148,
+            "items": ["coal:2"],
+            "pool": {
+              "count": 1,
+              "entries": [
+                { "item": "coal:2", "weight": 60 },
+                { "item": "bread:1", "weight": 40 }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_scifi_relay_chain",
+      "display_name": "Relay Calibration Chain",
+      "cooldown_days": 2,
+      "preferred_themes": ["sci_fi", "adventure"],
+      "steps": [
+        {
+          "id": "b20260409_scifi_relay_chain_s1",
+          "title": "Relay I: Mine Signal Ore",
+          "description": "Mine ore 3 times for relay calibration material.",
+          "objective": { "type": "mine_ore", "count": 3 },
+          "reward": { "gold": 78, "items": ["coal:2"] }
+        },
+        {
+          "id": "b20260409_scifi_relay_chain_s2",
+          "title": "Relay II: Technician Brief",
+          "description": "Talk to Pierre and sync calibration notes.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 96, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_scifi_relay_chain_s3",
+          "title": "Relay III: Sell Calibrated Cargo",
+          "description": "Sell calibrated cargo worth 150g.",
+          "objective": { "type": "earn_gold", "count": 150 },
+          "reward": { "gold": 152, "items": ["coal:2"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_joyful_picnic_chain",
+      "display_name": "Picnic Prep Chain",
+      "cooldown_days": 1,
+      "preferred_themes": ["joyful", "comedy"],
+      "steps": [
+        {
+          "id": "b20260409_joyful_picnic_chain_s1",
+          "title": "Picnic I: Pick Fresh Greens",
+          "description": "Harvest 2 crops for the picnic basket.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": { "gold": 66, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_joyful_picnic_chain_s2",
+          "title": "Picnic II: Confirm Guest List",
+          "description": "Talk to Pierre and confirm today's guest list.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 88, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_joyful_picnic_chain_s3",
+          "title": "Picnic III: Sell Festival Extras",
+          "description": "Sell festival extras worth 120g.",
+          "objective": { "type": "earn_gold", "count": 120 },
+          "reward": { "gold": 126, "items": ["worm_bait:2"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_comedy_apology_chain",
+      "display_name": "Apology Tour Chain",
+      "cooldown_days": 1,
+      "preferred_themes": ["comedy", "joyful"],
+      "steps": [
+        {
+          "id": "b20260409_comedy_apology_chain_s1",
+          "title": "Apology I: Gather Peace Offerings",
+          "description": "Harvest 2 crops to assemble peace offerings.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": { "gold": 64, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_comedy_apology_chain_s2",
+          "title": "Apology II: Public Clarification",
+          "description": "Talk to Pierre and clear the misunderstanding.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 86, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_comedy_apology_chain_s3",
+          "title": "Apology III: Sell Cleanup Surplus",
+          "description": "Sell cleanup surplus worth 118g.",
+          "objective": { "type": "earn_gold", "count": 118 },
+          "reward": { "gold": 122, "items": ["bread:1"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_adventure_convoy_chain",
+      "display_name": "Convoy Prep Chain",
+      "cooldown_days": 2,
+      "preferred_themes": ["adventure", "fairy_tale"],
+      "steps": [
+        {
+          "id": "b20260409_adventure_convoy_chain_s1",
+          "title": "Convoy I: Catch Route Rations",
+          "description": "Catch fish 2 times for convoy ration packs.",
+          "objective": { "type": "fish_caught", "count": 2 },
+          "reward": { "gold": 76, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_adventure_convoy_chain_s2",
+          "title": "Convoy II: Loadout Check",
+          "description": "Talk to Pierre and confirm route loadout.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 94, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_adventure_convoy_chain_s3",
+          "title": "Convoy III: Sell Expedition Cargo",
+          "description": "Sell expedition cargo worth 148g.",
+          "objective": { "type": "earn_gold", "count": 148 },
+          "reward": { "gold": 150, "items": ["worm_bait:3"] }
+        }
+      ]
+    },
+    {
+      "id": "b20260409_romance_truce_chain",
+      "display_name": "Truce Bouquet Chain",
+      "cooldown_days": 1,
+      "preferred_themes": ["romantic", "joyful"],
+      "steps": [
+        {
+          "id": "b20260409_romance_truce_chain_s1",
+          "title": "Truce I: Harvest Bouquet Ingredients",
+          "description": "Harvest 2 crops for a reconciliation bouquet.",
+          "objective": { "type": "harvest", "count": 2 },
+          "reward": { "gold": 70, "items": ["bread:1"] }
+        },
+        {
+          "id": "b20260409_romance_truce_chain_s2",
+          "title": "Truce II: Carry the Message",
+          "description": "Talk to Pierre and pass the reconciliation message.",
+          "objective": { "type": "talk", "npc_id": "pierre", "count": 1 },
+          "reward": { "gold": 92, "items": ["worm_bait:2"] }
+        },
+        {
+          "id": "b20260409_romance_truce_chain_s3",
+          "title": "Truce III: Sell Celebration Goods",
+          "description": "Sell celebration goods worth 132g.",
+          "objective": { "type": "earn_gold", "count": 132 },
+          "reward": { "gold": 138, "items": ["bread:2"] }
+        }
+      ]
+    }
+  ]
+}
