@@ -1,7 +1,5 @@
 extends Node
 
-class_name AgenticContentOrchestrator
-
 signal generation_started(reason)
 signal generation_published(chain_id, mode)
 signal generation_failed(reason)
@@ -1654,16 +1652,6 @@ func _continuity_phrase() -> String:
 	if _continuity_hint.is_empty():
 		return "The town expects a steady follow-up."
 	return _continuity_hint
-
-func _chain_primary_objective_type(chain_data: Dictionary) -> String:
-	var steps: Array = chain_data.get("steps", [])
-	for s in steps:
-		if s is Dictionary:
-			var objective: Dictionary = (s as Dictionary).get("objective", {})
-			var ot: String = str(objective.get("type", "")).strip_edges()
-			if not ot.is_empty() and ot != "talk":
-				return ot
-	return "harvest"
 
 func _chain_primary_theme(chain_data: Dictionary) -> String:
 	var themes: Array = chain_data.get("preferred_themes", [])
