@@ -402,17 +402,13 @@ func generate_daily_narrative_playable(force_theme: String = "") -> Dictionary:
 	return generate_daily_narrative(force_theme)
 
 func _generate_daily_narrative_from_backend() -> Dictionary:
-	if not AIAgentManager or not AIAgentManager._backend_available:
+	if not AIAgentManager or not AIAgentManager._backend_available or not AIAgentManager.has_method("request_text_generation"):
 		return {}
 	
 	var season = GameManager.player_data.season if GameManager else "spring"
 	var day = GameManager.player_data.day if GameManager else 1
 	var year = GameManager.player_data.year if GameManager else 1
-	
-	var http = HTTPRequest.new()
-	add_child(http)
-	http.timeout = backend_api_timeout_seconds
-	
+
 	var body = {
 		"season": season,
 		"day": day,
@@ -422,26 +418,19 @@ func _generate_daily_narrative_from_backend() -> Dictionary:
 			"active_npcs": NPCBehaviorController.get_all_npc_ids() if NPCBehaviorController else []
 		}
 	}
-	var error = http.request(
-		AIAgentManager.api_config.backend_url + "/api/v1/narrative/daily",
-		["Content-Type: application/json"],
-		HTTPClient.METHOD_POST,
-		JSON.stringify(body)
-	)
-	if error != OK:
-		http.queue_free()
+	var gen: Dictionary = await AIAgentManager.request_text_generation({
+		"prompt": "daily_narrative_request",
+		"use_backend": true,
+		"backend_path": "/api/v1/narrative/daily",
+		"backend_body": body,
+		"backend_text_key": "summary",
+		"timeout_sec": backend_api_timeout_seconds
+	})
+	if not bool(gen.get("ok", false)):
 		return {}
-	
-	var result = await http.request_completed
-	var status = result[1]
-	var payload_raw = result[3].get_string_from_utf8()
-	http.queue_free()
-	
-	if status != 200:
-		return {}
-	
-	var parsed = JSON.parse_string(payload_raw)
-	if typeof(parsed) != TYPE_DICTIONARY:
+
+	var parsed: Dictionary = gen.get("raw", {})
+	if parsed.is_empty():
 		return {}
 	
 	var events = parsed.get("events", [])

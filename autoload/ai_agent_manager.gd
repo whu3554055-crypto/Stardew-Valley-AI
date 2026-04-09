@@ -226,6 +226,7 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 	- backend_path (String, optional; requires use_backend)
 	- backend_body (Dictionary, optional)
 	- backend_text_key (String, optional; default "response")
+	- timeout_sec (float, optional; overrides manager timeout)
 	"""
 	var prompt: String = str(request.get("prompt", ""))
 	if prompt.is_empty():
@@ -233,6 +234,7 @@ func request_text_generation(request: Dictionary) -> Dictionary:
 
 	var http := HTTPRequest.new()
 	add_child(http)
+	http.timeout = float(request.get("timeout_sec", api_config.get("timeout", 30)))
 
 	var headers := ["Content-Type: application/json"]
 	var use_backend: bool = bool(request.get("use_backend", false))
