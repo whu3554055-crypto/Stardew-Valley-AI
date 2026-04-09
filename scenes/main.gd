@@ -1916,6 +1916,11 @@ func save_game():
 		NPCEmotionSystem.save_emotion_state()
 	print("Game saved!")
 
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		save_game()
+
 func _on_ai_config_pressed():
 	if not ai_config_instance:
 		ai_config_instance = ai_config_scene.instantiate()
