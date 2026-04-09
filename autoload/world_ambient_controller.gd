@@ -2,61 +2,43 @@ extends Node
 
 ## Season (Music) + weather / region / night crickets (Ambience). Region follows player position.
 ## Dawn one-shot birds + gentle day/night volume on the season bed.
+## Tuning: `res://data/presentation/immersion_config.json` (ImmersionConfig autoload).
 
-const PATH_SEASON := {
+const _FB_SEASON := {
 	"spring": "res://assets/audio/ambience/spring.ogg",
 	"summer": "res://assets/audio/ambience/summer.ogg",
 	"fall": "res://assets/audio/ambience/fall.ogg",
 	"winter": "res://assets/audio/ambience/winter.ogg",
 }
 
-const PATH_WEATHER := {
-	"rain": "res://assets/audio/ambience/rain.ogg",
-	"storm": "res://assets/audio/ambience/storm.ogg",
-	"snow_wind": "res://assets/audio/ambience_extended/wind_trees.wav",
-}
-
-const PATH_REGION := {
-	"forest": "res://assets/audio/locations/forest_birds.ogg",
-	"beach": "res://assets/audio/locations/beach_waves.ogg",
-	"river": "res://assets/audio/ambience_extended/river_flow.wav",
-	"town": "res://assets/audio/locations/town_crowd.ogg",
-	"farm": "res://assets/audio/ambience_extended/stream_gentle.wav",
-}
-
-const PATH_NIGHT_CRICKETS := "res://assets/audio/ambience_extended/crickets_night.wav"
-const PATH_MORNING_BIRDS := "res://assets/audio/ambience_extended/birds_morning.wav"
-
-const SEASON_DB_DAY := -10.0
-const SEASON_DB_NIGHT := -13.0
-const REGION_DB_DAY := -16.0
-const REGION_DB_NIGHT := -17.5
-
 var _season_player: AudioStreamPlayer
 var _weather_player: AudioStreamPlayer
+var _windy_player: AudioStreamPlayer
 var _region_player: AudioStreamPlayer
 var _night_player: AudioStreamPlayer
 var _morning_player: AudioStreamPlayer
 
 var _poll_accum: float = 0.0
-const REGION_POLL_MAX := 0.5
-const REGION_MOVE_MIN := 48.0
 var _last_region_sample_pos: Vector2 = Vector2(1e12, 1e12)
 var _last_region_key: String = "__init__"
 var _last_morning_chirp_key: int = -1
 var _activity_duck_sec: float = 0.0
-const ACTIVITY_DUCK_DB := 2.5
-const INDOOR_DUCK_DB := 2.0
+var _season_crossfade_active: bool = false
+var _season_crossfade_tween: Tween = null
 
 func _ready() -> void:
-	_season_player = _make_player("SeasonBed", "Music", SEASON_DB_DAY)
+	var sdb: float = _lvl("audio.levels.season_db_day", -10.0)
+	_season_player = _make_player("SeasonBed", "Music", sdb)
 	_weather_player = _make_player("WeatherLayer", "Ambience", -14.0)
-	_region_player = _make_player("RegionLayer", "Ambience", REGION_DB_DAY)
+	_windy_player = _make_player("WindyLayer", "Ambience", -14.5)
+	var rday: float = _lvl("audio.levels.region_db_day", -16.0)
+	_region_player = _make_player("RegionLayer", "Ambience", rday)
 	_night_player = _make_player("NightCrickets", "Ambience", -18.0)
 	_morning_player = _make_player("MorningBirds", "Ambience", -14.0)
 	_morning_player.volume_db = -14.0
 	add_child(_season_player)
 	add_child(_weather_player)
+	add_child(_windy_player)
 	add_child(_region_player)
 	add_child(_night_player)
 	add_child(_morning_player)
@@ -72,6 +54,9 @@ func _ready() -> void:
 			GameManager.time_changed.connect(_on_game_time_changed)
 	call_deferred("_refresh_all")
 
+func _lvl(path: String, fb: float) -> float:
+	return ImmersionConfig.get_float(path, fb) if ImmersionConfig else fb
+
 func request_activity_duck(duration_sec: float = 1.0) -> void:
 	_activity_duck_sec = maxf(_activity_duck_sec, duration_sec)
 
@@ -79,13 +64,16 @@ func _process(delta: float) -> void:
 	if _activity_duck_sec > 0.0:
 		_activity_duck_sec = maxf(0.0, _activity_duck_sec - delta)
 	_apply_ambient_volume_modifiers()
+	_apply_season_volume_mix()
 
+	var poll_max: float = _lvl("audio.levels.region_poll_max_sec", 0.5)
+	var move_min: float = _lvl("audio.levels.region_move_min_px", 48.0)
 	_poll_accum += delta
 	if get_tree().current_scene == null:
 		return
 	var pos: Vector2 = _get_player_position()
-	var moved_far: bool = _last_region_sample_pos.distance_to(pos) >= REGION_MOVE_MIN
-	if _poll_accum < REGION_POLL_MAX and not moved_far:
+	var moved_far: bool = _last_region_sample_pos.distance_to(pos) >= move_min
+	if _poll_accum < poll_max and not moved_far:
 		return
 	_poll_accum = 0.0
 	_last_region_sample_pos = pos
@@ -111,9 +99,10 @@ func _on_weather_changed(_new_weather: int) -> void:
 	_apply_weather_layer()
 	_apply_season_volume_mix()
 	_apply_day_night_layer()
+	_sync_ambience_lowpass()
 
 func _on_season_changed(_season: String) -> void:
-	_apply_season_bed()
+	_begin_season_crossfade_if_needed()
 
 func _on_day_changed(_day: int) -> void:
 	_apply_season_bed()
@@ -133,91 +122,161 @@ func _refresh_all() -> void:
 	_apply_season_volume_mix()
 	_apply_ambient_volume_modifiers()
 	_apply_day_night_layer()
+	_sync_ambience_lowpass()
+
+func _season_db_day() -> float:
+	return _lvl("audio.levels.season_db_day", -10.0)
+
+func _season_db_night() -> float:
+	return _lvl("audio.levels.season_db_night", -13.0)
+
+func _region_db_day() -> float:
+	return _lvl("audio.levels.region_db_day", -16.0)
+
+func _region_db_night() -> float:
+	return _lvl("audio.levels.region_db_night", -17.5)
+
+func _activity_duck_db() -> float:
+	return _lvl("audio.levels.activity_duck_db", 2.5)
+
+func _indoor_duck_db() -> float:
+	return _lvl("audio.levels.indoor_duck_db", 2.0)
+
+func _resolve_season_stream_path() -> String:
+	if not GameManager:
+		return ""
+	var s: String = str(GameManager.player_data.get("season", "spring")).to_lower()
+	var path: String = ImmersionConfig.get_season_audio_path(s) if ImmersionConfig else ""
+	if path.is_empty():
+		path = _FB_SEASON.get(s, _FB_SEASON["spring"])
+	return path
 
 func _apply_season_bed() -> void:
-	if not GameManager:
+	var path: String = _resolve_season_stream_path()
+	if path.is_empty():
 		return
-	var s: String = str(GameManager.player_data.get("season", "spring")).to_lower()
-	var path: String = PATH_SEASON.get(s, PATH_SEASON["spring"])
 	_play_loop_stream(_season_player, path)
+	_apply_season_volume_mix()
+
+func _kill_season_crossfade_tween() -> void:
+	if _season_crossfade_tween and is_instance_valid(_season_crossfade_tween):
+		_season_crossfade_tween.kill()
+	_season_crossfade_tween = null
+	if _season_crossfade_active:
+		_season_crossfade_active = false
+		call_deferred("_apply_season_volume_mix")
+
+func _begin_season_crossfade_if_needed() -> void:
+	_kill_season_crossfade_tween()
+	if not _season_player or not GameManager:
+		return
+	var fade_out: float = _lvl("audio.season_crossfade.fade_out_sec", 0.28)
+	var fade_in: float = _lvl("audio.season_crossfade.fade_in_sec", 0.42)
+	var path: String = _resolve_season_stream_path()
+	if path.is_empty():
+		return
+	if fade_out <= 0.0 and fade_in <= 0.0:
+		_apply_season_bed()
+		return
+	if _season_player.stream == null:
+		_apply_season_bed()
+		return
+	var duck_db: float = _lvl("audio.season_crossfade.duck_db_during", -38.0)
+	_season_crossfade_active = true
+	var tw: Tween = create_tween()
+	_season_crossfade_tween = tw
+	tw.set_parallel(false)
+	tw.tween_property(_season_player, "volume_db", duck_db, fade_out).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_callback(_season_crossfade_swap_stream.bind(path, duck_db))
+	var target_db: float = _compute_season_final_output_db()
+	tw.tween_property(_season_player, "volume_db", target_db, fade_in).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_callback(_on_season_crossfade_complete)
+
+func _season_crossfade_swap_stream(path: String, duck_db: float) -> void:
+	_play_loop_stream(_season_player, path)
+	if _season_player:
+		_season_player.volume_db = duck_db
+
+func _on_season_crossfade_complete() -> void:
+	_season_crossfade_active = false
+	_season_crossfade_tween = null
 	_apply_season_volume_mix()
 
 func _compute_season_volume_db() -> float:
 	if not GameManager:
-		return SEASON_DB_DAY + _weather_music_offset_db()
+		return _season_db_day() + _weather_music_offset_db()
 	var t: float = GameManager.current_time
+	var sday: float = _season_db_day()
+	var snight: float = _season_db_night()
 	var base: float
 	if _is_night_hours(t):
-		base = SEASON_DB_NIGHT
+		base = snight
 	elif t >= 6.0 and t < 7.5:
 		var k: float = clampf((t - 6.0) / 1.5, 0.0, 1.0)
-		base = lerpf(SEASON_DB_NIGHT, SEASON_DB_DAY, k)
+		base = lerpf(snight, sday, k)
 	elif t >= 19.0 and t < 20.0:
 		var k2: float = clampf((t - 19.0) / 1.0, 0.0, 1.0)
-		base = lerpf(SEASON_DB_DAY, SEASON_DB_NIGHT, k2)
+		base = lerpf(sday, snight, k2)
 	else:
-		base = SEASON_DB_DAY
+		base = sday
 	return base + _weather_music_offset_db()
 
 func _weather_music_offset_db() -> float:
-	if not WeatherSystem:
+	if not WeatherSystem or not ImmersionConfig:
 		return 0.0
-	match WeatherSystem.current_weather:
-		WeatherSystem.WeatherType.SUNNY:
-			return 0.0
-		WeatherSystem.WeatherType.OVERCAST, WeatherSystem.WeatherType.WINDY:
-			return -1.5
-		WeatherSystem.WeatherType.RAIN:
-			return -2.5
-		WeatherSystem.WeatherType.STORM:
-			return -3.5
-		WeatherSystem.WeatherType.SNOW:
-			return -2.0
-	return 0.0
+	return ImmersionConfig.get_music_offset_db_for_weather(WeatherSystem.current_weather)
 
 func _weather_music_pitch() -> float:
-	if not WeatherSystem:
+	if not WeatherSystem or not ImmersionConfig:
 		return 1.0
-	match WeatherSystem.current_weather:
-		WeatherSystem.WeatherType.SUNNY:
-			return 1.0
-		WeatherSystem.WeatherType.OVERCAST, WeatherSystem.WeatherType.WINDY:
-			return 0.993
-		WeatherSystem.WeatherType.RAIN:
-			return 0.982
-		WeatherSystem.WeatherType.STORM:
-			return 0.971
-		WeatherSystem.WeatherType.SNOW:
-			return 0.986
-	return 1.0
+	return ImmersionConfig.get_music_pitch_for_weather(WeatherSystem.current_weather)
+
+func _compute_season_final_output_db() -> float:
+	var db: float = _compute_season_volume_db()
+	var pos: Vector2 = _get_player_position()
+	if GameZones.is_indoor_station(pos):
+		db -= _indoor_duck_db()
+	if _activity_duck_sec > 0.0:
+		db -= _activity_duck_db()
+	return db
 
 func _apply_season_volume_mix() -> void:
+	if _season_crossfade_active:
+		return
 	if not _season_player:
 		return
 	if _season_player.stream == null:
 		return
-	_season_player.volume_db = _compute_season_volume_db()
+	var db: float = _compute_season_final_output_db()
+	_season_player.volume_db = db
 	_season_player.pitch_scale = _weather_music_pitch()
 
 func _apply_ambient_volume_modifiers() -> void:
 	if not GameManager:
 		return
 	var night: bool = _is_night_hours(GameManager.current_time)
-	var base_r: float = REGION_DB_NIGHT if night else REGION_DB_DAY
+	var base_r: float = _region_db_night() if night else _region_db_day()
 	var pos: Vector2 = _get_player_position()
 	if GameZones.is_indoor_station(pos):
-		base_r -= INDOOR_DUCK_DB
+		base_r -= _indoor_duck_db()
 	if _activity_duck_sec > 0.0:
-		base_r -= ACTIVITY_DUCK_DB
+		base_r -= _activity_duck_db()
 	if _region_player.playing:
 		_region_player.volume_db = base_r
 	if _weather_player.playing:
 		var vb: float = float(_weather_player.get_meta("wa_vol_base", -14.0))
 		if GameZones.is_indoor_station(pos):
-			vb -= INDOOR_DUCK_DB
+			vb -= _indoor_duck_db()
 		if _activity_duck_sec > 0.0:
-			vb -= ACTIVITY_DUCK_DB
+			vb -= _activity_duck_db()
 		_weather_player.volume_db = vb
+	if _windy_player.playing:
+		var vbw: float = float(_windy_player.get_meta("wa_vol_base", -14.5))
+		if GameZones.is_indoor_station(pos):
+			vbw -= _indoor_duck_db()
+		if _activity_duck_sec > 0.0:
+			vbw -= _activity_duck_db()
+		_windy_player.volume_db = vbw
 
 func _morning_chirp_key() -> int:
 	if not GameManager:
@@ -248,11 +307,14 @@ func _try_morning_birds_one_shot() -> void:
 		return
 	if _should_skip_morning_birds():
 		return
-	if not ResourceLoader.exists(PATH_MORNING_BIRDS):
+	var path_m: String = ImmersionConfig.get_one_shot_path("morning_birds") if ImmersionConfig else ""
+	if path_m.is_empty():
+		path_m = "res://assets/audio/ambience_extended/birds_morning.wav"
+	if not ResourceLoader.exists(path_m):
 		return
 	if _morning_player.playing:
 		return
-	var stream: AudioStream = load(PATH_MORNING_BIRDS) as AudioStream
+	var stream: AudioStream = load(path_m) as AudioStream
 	if stream == null:
 		return
 	if stream is AudioStreamWAV:
@@ -267,17 +329,52 @@ func _apply_weather_layer() -> void:
 		return
 	match WeatherSystem.current_weather:
 		WeatherSystem.WeatherType.RAIN:
-			_play_loop_stream(_weather_player, PATH_WEATHER["rain"])
-			_weather_player.set_meta("wa_vol_base", -13.5)
+			_stop_stream(_windy_player)
+			var pr: String = ImmersionConfig.get_weather_audio_path("rain") if ImmersionConfig else ""
+			if pr.is_empty():
+				pr = "res://assets/audio/ambience/rain.ogg"
+			_play_loop_stream(_weather_player, pr)
+			var vbr: float = ImmersionConfig.get_weather_vol_base_db("rain") if ImmersionConfig else -13.5
+			_weather_player.set_meta("wa_vol_base", vbr)
 		WeatherSystem.WeatherType.STORM:
-			_play_loop_stream(_weather_player, PATH_WEATHER["storm"])
-			_weather_player.set_meta("wa_vol_base", -11.5)
+			_stop_stream(_windy_player)
+			var ps: String = ImmersionConfig.get_weather_audio_path("storm") if ImmersionConfig else ""
+			if ps.is_empty():
+				ps = "res://assets/audio/ambience/storm.ogg"
+			_play_loop_stream(_weather_player, ps)
+			var vbs: float = ImmersionConfig.get_weather_vol_base_db("storm") if ImmersionConfig else -11.5
+			_weather_player.set_meta("wa_vol_base", vbs)
 		WeatherSystem.WeatherType.SNOW:
-			_play_loop_stream(_weather_player, PATH_WEATHER["snow_wind"])
-			_weather_player.set_meta("wa_vol_base", -14.0)
+			_stop_stream(_windy_player)
+			var psw: String = ImmersionConfig.get_weather_audio_path("snow_wind") if ImmersionConfig else ""
+			if psw.is_empty():
+				psw = "res://assets/audio/ambience_extended/wind_trees.wav"
+			_play_loop_stream(_weather_player, psw)
+			var vbws: float = ImmersionConfig.get_weather_vol_base_db("snow") if ImmersionConfig else -14.0
+			_weather_player.set_meta("wa_vol_base", vbws)
+		WeatherSystem.WeatherType.WINDY:
+			_stop_stream(_weather_player)
+			var pw: String = ImmersionConfig.get_weather_audio_path("windy") if ImmersionConfig else ""
+			if pw.is_empty():
+				pw = "res://assets/audio/ambience_extended/leaves_rustle.wav"
+			_play_loop_stream(_windy_player, pw)
+			var vbwy: float = ImmersionConfig.get_weather_vol_base_db("windy") if ImmersionConfig else -14.5
+			_windy_player.set_meta("wa_vol_base", vbwy)
 		_:
 			_stop_stream(_weather_player)
+			_stop_stream(_windy_player)
 	_apply_ambient_volume_modifiers()
+
+func _sync_ambience_lowpass() -> void:
+	if not ImmersionConfig or not WeatherSystem:
+		return
+	var w: int = WeatherSystem.current_weather
+	var precip: bool = (
+		w == WeatherSystem.WeatherType.RAIN
+		or w == WeatherSystem.WeatherType.STORM
+		or w == WeatherSystem.WeatherType.SNOW
+	)
+	ImmersionConfig.apply_ambience_lowpass_for_precipitation(precip)
 
 func _apply_region_layer(pos: Vector2, force: bool = false) -> void:
 	var key: String = _resolve_region_ambient_key(pos)
@@ -287,7 +384,7 @@ func _apply_region_layer(pos: Vector2, force: bool = false) -> void:
 	if key == "default":
 		_stop_stream(_region_player)
 		return
-	var path: String = PATH_REGION.get(key, "")
+	var path: String = ImmersionConfig.get_region_audio_path(key) if ImmersionConfig else ""
 	if path.is_empty() or not ResourceLoader.exists(path):
 		_stop_stream(_region_player)
 		return
@@ -303,9 +400,9 @@ func _resolve_region_ambient_key(pos: Vector2) -> String:
 			return "beach"
 		if fz == "river":
 			return "river"
-	if GameZones.rect_near_pierre().has_point(pos):
+	if GameZones.can_open_shop_at(pos):
 		return "town"
-	if FarmTierCatalog and FarmTierCatalog.get_farm_upgrade_rect().has_point(pos):
+	if GameZones.contains_farm_upgrade_zone(pos):
 		return "farm"
 	return "default"
 
@@ -322,7 +419,10 @@ func _apply_day_night_layer() -> void:
 	if want_night and _is_storm_weather():
 		want_night = false
 	if want_night:
-		_play_loop_stream(_night_player, PATH_NIGHT_CRICKETS)
+		var path_n: String = ImmersionConfig.get_one_shot_path("night_crickets") if ImmersionConfig else ""
+		if path_n.is_empty():
+			path_n = "res://assets/audio/ambience_extended/crickets_night.wav"
+		_play_loop_stream(_night_player, path_n)
 	else:
 		_stop_stream(_night_player)
 
@@ -352,5 +452,5 @@ func _stop_stream(player: AudioStreamPlayer) -> void:
 	player.stop()
 	if player.has_meta("wa_path"):
 		player.remove_meta("wa_path")
-	if player == _weather_player and player.has_meta("wa_vol_base"):
+	if (player == _weather_player or player == _windy_player) and player.has_meta("wa_vol_base"):
 		player.remove_meta("wa_vol_base")
