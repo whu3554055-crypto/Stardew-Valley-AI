@@ -670,6 +670,19 @@ func get_market_brief(item_id: String) -> String:
 		return "↓%+d%%" % pct
 	return "~%+d%%" % pct
 
+func get_daily_shop_brief() -> String:
+	"""Compact one-line market status for HUD/event feed."""
+	var tops: Array = get_top_demanded_items(1)
+	if tops.is_empty():
+		return ""
+	var top_id: String = str(tops[0])
+	var tpl: Dictionary = ItemDatabase.get_item(top_id) if ItemDatabase else {}
+	var nm: String = str(tpl.get("name", top_id)) if not tpl.is_empty() else top_id
+	var trend: String = get_market_brief(top_id)
+	if trend.is_empty():
+		trend = "~+0%"
+	return "Market pulse: %s %s" % [nm, trend]
+
 func on_shop_trade(item_id: String, quantity: int, is_purchase_from_shop: bool) -> void:
 	"""
 	Player-facing minimum economy loop:

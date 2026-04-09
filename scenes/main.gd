@@ -780,6 +780,10 @@ func _on_day_changed(new_day):
 	# Auto-water crops if raining
 	if WeatherSystem.is_raining():
 		auto_water_crops()
+	if AIEconomySystem:
+		var market_line: String = AIEconomySystem.get_daily_shop_brief()
+		if not market_line.is_empty():
+			record_world_event(market_line)
 	
 	# Lightweight daily refresh keeps the game feeling alive.
 	if DailyNarrativeSystem:
