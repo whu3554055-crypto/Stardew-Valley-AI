@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "activity_zone": {
+    "fish_river": "钓鱼 · 河流",
+    "fish_ocean": "钓鱼 · 海洋",
+    "mine_prefix": "矿区 · {band}",
+    "mine_band_0": "表层",
+    "mine_band_1": "铁矿带",
+    "mine_band_2": "深脉",
+    "chop_forest": "伐木 · 森林"
+  },
+  "quick_tip": {
+    "eat_food_energy": "食用了 {item}（+{energy} 体力）",
+    "farm_tier_bonus_yield": "农场等级加成：产量 +{yield}",
+    "farm_upgrade_stand_on_field": "站在农田上可升级农场等级。",
+    "shop_open_near_pierre": "站在商店入口区域可打开商店（与 B 键同区）。",
+    "sell_nothing_selected": "未选择要出售的物品。",
+    "sell_item_cannot": "该物品无法出售。",
+    "sell_success_gold": "卖出获得 {gold} 金币。",
+    "shop_bought_item": "购买了 {item}",
+    "shop_purchase_failed": "金钱不足或缺货。",
+    "sprinkler_pickup_success": "已收回洒水器。",
+    "sprinkler_pickup_inventory_full": "背包已满，无法收回洒水器。",
+    "sprinkler_place_no_stamina": "体力不足，无法放置洒水器。",
+    "sprinkler_place_success": "已放置洒水器：相邻格子已浇水，且每天早晨自动浇水。",
+    "sprinkler_place_not_tilled": "需要先锄地且格子为空（无作物）才能放置洒水器。",
+    "sprinkler_place_has_crop": "该格已有作物，请选择空地块。",
+    "sprinkler_place_has_sprinkler": "这里已有洒水器。",
+    "sprinkler_place_failed": "无法在此放置洒水器。",
+    "fertilizer_apply_success": "已施肥：该地块下次作物成熟加快 1 天（最少 2 天）。",
+    "fertilizer_apply_already": "该地块已施肥。",
+    "fertilizer_apply_needs_empty_tilled": "只能对空的已锄地块施肥（无作物、无洒水器）。",
+    "fertilizer_apply_needs_tilled": "施肥需要已锄过的土壤。",
+    "plant_wrong_season": "当前季节不能种植该作物。",
+    "stamina_low": "体力过低——进食或休息到明天。"
+  },
+  "weather": {
+    "sunny": "晴",
+    "rain": "雨",
+    "storm": "暴风雨",
+    "snow": "雪",
+    "windy": "大风",
+    "overcast": "阴",
+    "unknown": "未知"
+  },
+  "season": {
+    "spring": "春",
+    "summer": "夏",
+    "fall": "秋",
+    "winter": "冬"
+  },
+  "hud": {
+    "gold": "金币：{gold}",
+    "stamina": "体力：{cur} / {max}",
+    "weather": "天气：{name}",
+    "season": "季节：{name}",
+    "day_year": "第 {day} 天 · 第 {year} 年",
+    "quest_title": "任务",
+    "quest_none": "（暂无）",
+    "quest_completed": "任务完成：{title}",
+    "quest_failed_tip": "任务失败：{id}",
+    "quest_failed_line": "任务失败：{id}（{reason}）",
+    "quest_chains_header": "-- 连锁 --",
+    "quest_steps_multi": "（{n} 步）",
+    "quest_tag_story_day": " [故事 {ndk}]",
+    "quest_tag_story": " [故事]",
+    "quest_tag_chain_urgent": " [连锁：紧急]",
+    "quest_tag_chain_failed": " [连锁：失败]",
+    "quest_tag_chain_active": " [连锁：进行中]",
+    "quest_tag_recovery": " [恢复]"
+  },
+  "ui": {
+    "audio_panel_title": "音频混音（分贝）— 自动保存",
+    "audio_panel_hint": "F10 关闭 · Esc 关闭 · 配置：user://audio_mix.json",
+    "language_label": "界面语言"
+  }
+}

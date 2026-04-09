@@ -46,9 +46,15 @@ var _visible_feed_last: Dictionary = {}
 func _ready():
 	# Connect signals
 	player.interacted.connect(_on_player_interact)
-	GameManager.time_changed.connect(_on_time_changed)
-	GameManager.day_changed.connect(_on_day_changed)
-	GameManager.season_changed.connect(_on_season_changed)
+	if GameManager:
+		if not GameManager.time_changed.is_connected(_on_time_changed):
+			GameManager.time_changed.connect(_on_time_changed)
+		if not GameManager.day_changed.is_connected(_on_day_changed):
+			GameManager.day_changed.connect(_on_day_changed)
+		if not GameManager.season_changed.is_connected(_on_season_changed):
+			GameManager.season_changed.connect(_on_season_changed)
+	if LocaleSettings:
+		LocaleSettings.locale_changed.connect(_on_locale_changed)
 	
 	# Connect farming signals for quest tracking
 	farm_manager.crop_planted.connect(_on_crop_planted)
@@ -103,7 +109,7 @@ func _ready():
 	initialize_playable_first_loop()
 	
 	# Setup AI config button
-	if ai_config_button:
+	if ai_config_button and not ai_config_button.pressed.is_connected(_on_ai_config_pressed):
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
@@ -119,6 +125,14 @@ func _ready():
 	print("NPCs with AI: Pierre, Abigail, Lewis")
 	print("Press E: NPCs | harvest | kitchen/smelter/workbench (配方) | fish | mine | chop | eat | place sprinkler (tilled empty tile) | J = collection | Y = sell selected | B = shop (store entrance zone) | U = farm tier | H = house upgrade")
 	print("======================================")
+
+
+func _on_locale_changed(_code: String) -> void:
+	update_ui()
+	_refresh_quest_log()
+	if audio_mix_panel and audio_mix_panel.has_method("refresh_locale_text"):
+		audio_mix_panel.refresh_locale_text()
+
 
 func _process(_delta: float) -> void:
 	_update_activity_zone_label()
@@ -904,8 +918,15 @@ func _quest_objective_goal(o: Dictionary) -> int:
 func _refresh_quest_log() -> void:
 	if not quest_log_label or not QuestSystem:
 		return
+	var qtitle: String = "Quests"
+	var qnone: String = "(none active)"
+	var qchains: String = "-- Chains --"
+	if UITextCatalog:
+		qtitle = UITextCatalog.get_text("hud", "quest_title")
+		qnone = UITextCatalog.get_text("hud", "quest_none")
+		qchains = UITextCatalog.get_text("hud", "quest_chains_header")
 	if QuestSystem.active_quests.is_empty():
-		var idle_text: String = "Quests\n(none active)"
+		var idle_text: String = "%s\n%s" % [qtitle, qnone]
 		if not managed_chain_status_banner.is_empty():
 			idle_text += "\n" + managed_chain_status_banner
 		quest_log_label.text = idle_text
@@ -926,24 +947,41 @@ func _refresh_quest_log() -> void:
 			var goal: int = _quest_objective_goal(od)
 			suffix = " %d/%d" % [cur, goal]
 		elif obj_list.size() > 1:
-			suffix = " (%d steps)" % obj_list.size()
+			if UITextCatalog:
+				suffix = " " + UITextCatalog.format_text("hud", "quest_steps_multi", {"n": obj_list.size()})
+			else:
+				suffix = " (%d steps)" % obj_list.size()
 		var tag: String = ""
 		if str(q.get("source", "")) == "daily_narrative":
 			var ndk: String = str(q.get("narrative_day_key", ""))
-			if not ndk.is_empty():
-				tag = " [Story %s]" % ndk
+			if UITextCatalog:
+				if not ndk.is_empty():
+					tag = UITextCatalog.format_text("hud", "quest_tag_story_day", {"ndk": ndk})
+				else:
+					tag = UITextCatalog.get_text("hud", "quest_tag_story")
 			else:
-				tag = " [Story]"
+				if not ndk.is_empty():
+					tag = " [Story %s]" % ndk
+				else:
+					tag = " [Story]"
 		elif str(q.get("source", "")) == "managed_story_chain":
 			var st: String = QuestSystem.get_managed_chain_status_tag(str(qid)) if QuestSystem and QuestSystem.has_method("get_managed_chain_status_tag") else ""
-			if st == "urgent":
-				tag = " [Chain: Urgent]"
-			elif st == "failed":
-				tag = " [Chain: Failed]"
+			if UITextCatalog:
+				if st == "urgent":
+					tag = UITextCatalog.get_text("hud", "quest_tag_chain_urgent")
+				elif st == "failed":
+					tag = UITextCatalog.get_text("hud", "quest_tag_chain_failed")
+				else:
+					tag = UITextCatalog.get_text("hud", "quest_tag_chain_active")
 			else:
-				tag = " [Chain: Active]"
+				if st == "urgent":
+					tag = " [Chain: Urgent]"
+				elif st == "failed":
+					tag = " [Chain: Failed]"
+				else:
+					tag = " [Chain: Active]"
 		elif str(q.get("source", "")) == "managed_recovery":
-			tag = " [Recovery]"
+			tag = UITextCatalog.get_text("hud", "quest_tag_recovery") if UITextCatalog else " [Recovery]"
 		var out_line: String = "• %s%s%s" % [title, suffix, tag]
 		if str(q.get("source", "")) == "managed_story_chain":
 			chain_lines.append(out_line)
@@ -951,9 +989,9 @@ func _refresh_quest_log() -> void:
 			regular_lines.append(out_line)
 	lines.append_array(regular_lines)
 	if not chain_lines.is_empty():
-		lines.append("-- Chains --")
+		lines.append(qchains)
 		lines.append_array(chain_lines)
-	var title_text: String = "Quests\n"
+	var title_text: String = qtitle + "\n"
 	if not managed_chain_status_banner.is_empty():
 		title_text += managed_chain_status_banner + "\n"
 	quest_log_label.text = title_text + "\n".join(lines)
@@ -1101,7 +1139,10 @@ func _on_quest_completed(quest_id: String):
 	if QuestSystem and QuestSystem.quests.has(quest_id):
 		var quest_data: Dictionary = QuestSystem.quests[quest_id]
 		var title = quest_data.get("title", quest_id)
-		show_dialogue("Quest completed: " + str(title))
+		var done_msg: String = "Quest completed: " + str(title)
+		if UITextCatalog:
+			done_msg = UITextCatalog.format_text("hud", "quest_completed", {"title": str(title)})
+		show_dialogue(done_msg)
 		var reward_line: String = _format_quest_material_rewards_line(quest_id, quest_data)
 		if not reward_line.is_empty():
 			record_world_event(reward_line)
@@ -1110,9 +1151,15 @@ func _on_quest_completed(quest_id: String):
 	_refresh_quest_log()
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
-	var line: String = "Quest failed: %s (%s)" % [quest_id, reason if not reason.is_empty() else "unknown"]
+	var rs: String = reason if not reason.is_empty() else "unknown"
+	var line: String = "Quest failed: %s (%s)" % [quest_id, rs]
+	if UITextCatalog:
+		line = UITextCatalog.format_text("hud", "quest_failed_line", {"id": quest_id, "reason": rs})
 	record_world_event(line)
-	show_quick_tip("Quest failed: " + quest_id, 1.8)
+	var tip: String = "Quest failed: " + quest_id
+	if UITextCatalog:
+		tip = UITextCatalog.format_text("hud", "quest_failed_tip", {"id": quest_id})
+	show_quick_tip(tip, 1.8)
 	_refresh_quest_log()
 
 func _on_quest_impact_applied(quest_id: String, impact: Dictionary) -> void:
@@ -1583,15 +1630,32 @@ func _on_crop_harvested(position, crop_id, quantity):
 	QuestSystem.track_event("harvest", {"crop_id": crop_id, "count": quantity})
 
 func update_ui():
-	time_label.text = GameManager.get_time_string()
-	gold_label.text = "Gold: %d" % GameManager.player_data.gold
-	if stamina_label:
-		var s: float = float(GameManager.player_data.get("stamina", 100.0))
-		var sm: float = float(GameManager.player_data.get("stamina_max", 100.0))
-		stamina_label.text = "Stamina: %d / %d" % [int(s), int(sm)]
-	weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
-	season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
-	day_label.text = "Day %d, Year %d" % [GameManager.player_data.day, GameManager.player_data.year]
+	var loc: String = LocaleSettings.get_locale() if LocaleSettings else "zh_CN"
+	time_label.text = GameManager.get_time_string_localized(loc)
+	if UITextCatalog:
+		gold_label.text = UITextCatalog.format_text("hud", "gold", {"gold": GameManager.player_data.gold})
+		if stamina_label:
+			var s: float = float(GameManager.player_data.get("stamina", 100.0))
+			var sm: float = float(GameManager.player_data.get("stamina_max", 100.0))
+			stamina_label.text = UITextCatalog.format_text("hud", "stamina", {"cur": int(s), "max": int(sm)})
+		var wname: String = WeatherSystem.get_weather_name() if WeatherSystem else ""
+		var wdisp: String = UITextCatalog.localized_weather_name(wname)
+		weather_label.text = UITextCatalog.format_text("hud", "weather", {"name": wdisp})
+		var season_key: String = str(GameManager.player_data.get("season", "spring"))
+		season_label.text = UITextCatalog.format_text("hud", "season", {"name": UITextCatalog.localized_season_name(season_key)})
+		day_label.text = UITextCatalog.format_text("hud", "day_year", {
+			"day": GameManager.player_data.day,
+			"year": GameManager.player_data.year
+		})
+	else:
+		gold_label.text = "Gold: %d" % GameManager.player_data.gold
+		if stamina_label:
+			var s2: float = float(GameManager.player_data.get("stamina", 100.0))
+			var sm2: float = float(GameManager.player_data.get("stamina_max", 100.0))
+			stamina_label.text = "Stamina: %d / %d" % [int(s2), int(sm2)]
+		weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
+		season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
+		day_label.text = "Day %d, Year %d" % [GameManager.player_data.day, GameManager.player_data.year]
 	_refresh_quest_log()
 
 func show_dialogue(text: String):

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "activity_zone": {
-    "fish_river": "钓鱼 · 河流",
-    "fish_ocean": "钓鱼 · 海洋",
-    "mine_prefix": "矿区 · {band}",
-    "mine_band_0": "表层",
-    "mine_band_1": "铁矿带",
-    "mine_band_2": "深脉",
-    "chop_forest": "伐木 · 森林"
+    "fish_river": "Fishing · River",
+    "fish_ocean": "Fishing · Ocean",
+    "mine_prefix": "Mine · {band}",
+    "mine_band_0": "Shallow",
+    "mine_band_1": "Iron band",
+    "mine_band_2": "Deep vein",
+    "chop_forest": "Chopping · Forest"
   },
   "quick_tip": {
     "eat_food_energy": "Ate {item} (+{energy} energy)",
@@ -33,5 +33,45 @@
     "fertilizer_apply_needs_tilled": "Fertilizer requires tilled soil.",
     "plant_wrong_season": "This crop cannot be planted in the current season.",
     "stamina_low": "Low stamina — eat food or rest until tomorrow."
+  },
+  "weather": {
+    "sunny": "Sunny",
+    "rain": "Rain",
+    "storm": "Storm",
+    "snow": "Snow",
+    "windy": "Windy",
+    "overcast": "Overcast",
+    "unknown": "Unknown"
+  },
+  "season": {
+    "spring": "Spring",
+    "summer": "Summer",
+    "fall": "Fall",
+    "winter": "Winter"
+  },
+  "hud": {
+    "gold": "Gold: {gold}",
+    "stamina": "Stamina: {cur} / {max}",
+    "weather": "Weather: {name}",
+    "season": "Season: {name}",
+    "day_year": "Day {day}, Year {year}",
+    "quest_title": "Quests",
+    "quest_none": "(none active)",
+    "quest_completed": "Quest completed: {title}",
+    "quest_failed_tip": "Quest failed: {id}",
+    "quest_failed_line": "Quest failed: {id} ({reason})",
+    "quest_chains_header": "-- Chains --",
+    "quest_steps_multi": "({n} steps)",
+    "quest_tag_story_day": " [Story {ndk}]",
+    "quest_tag_story": " [Story]",
+    "quest_tag_chain_urgent": " [Chain: Urgent]",
+    "quest_tag_chain_failed": " [Chain: Failed]",
+    "quest_tag_chain_active": " [Chain: Active]",
+    "quest_tag_recovery": " [Recovery]"
+  },
+  "ui": {
+    "audio_panel_title": "Audio mix (dB) — saved automatically",
+    "audio_panel_hint": "F10 close · Esc close · settings: user://audio_mix.json",
+    "language_label": "Language"
   }
 }

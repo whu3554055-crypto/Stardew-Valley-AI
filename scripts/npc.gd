@@ -20,7 +20,7 @@ class_name NPC
 @onready var sprite = $Sprite2D
 @onready var name_label = $NameLabel
 @onready var interaction_area = $InteractionArea
-@onready var emotion_indicator = $EmotionIndicator  # Optional visual indicator
+@onready var emotion_indicator = get_node_or_null("EmotionIndicator")
 
 var current_dialogue_index = 0
 var is_talking = false

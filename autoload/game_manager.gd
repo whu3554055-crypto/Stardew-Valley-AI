@@ -84,3 +84,12 @@ func get_time_string() -> String:
 	var display_hours = hours if hours <= 12 else hours - 12
 	display_hours = 12 if display_hours == 0 else display_hours
 	return "%02d:%02d %s" % [display_hours, minutes, am_pm]
+
+
+## 24h clock for zh_CN; 12h AM/PM for English (`LocaleSettings.LOCALE_EN`).
+func get_time_string_localized(locale_code: String) -> String:
+	var hours = int(current_time)
+	var minutes = int((current_time - hours) * 60)
+	if locale_code == "en":
+		return get_time_string()
+	return "%02d:%02d" % [hours, minutes]
