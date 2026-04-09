@@ -42,7 +42,7 @@ func _apply_defaults() -> void:
 		},
 		"quick_tip": {
 			"farm_upgrade_stand_on_field": "Stand on the farm field to upgrade.",
-			"shop_open_near_pierre": "Open the shop near Pierre.",
+			"shop_open_near_pierre": "Stand in the store entrance area to open the shop (same zone as B).",
 			"sell_nothing_selected": "Nothing selected to sell.",
 			"sell_item_cannot": "This item can't be sold.",
 			"sell_success_gold": "Sold for {gold}g.",
