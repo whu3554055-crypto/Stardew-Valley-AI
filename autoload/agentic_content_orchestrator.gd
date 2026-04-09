@@ -46,6 +46,7 @@ var _last_block_reason: String = ""
 var _continuity_hint: String = ""
 var _chain_primary_type_by_id: Dictionary = {}
 var _player_pref_scores: Dictionary = {}
+var _recent_theme_history: Array = []
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -105,6 +106,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 				_record_recent_signature(manual_take)
 				_record_reward_profile(manual_take)
 				_chain_primary_type_by_id[manual_chain_id] = _chain_primary_objective_type(manual_take)
+				_record_theme_usage(_chain_primary_theme(manual_take))
 				_emit_runtime_status()
 				return
 		_on_generation_failure("manual_chain_invalid")
@@ -178,6 +180,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	_record_recent_signature(chain_data)
 	_record_reward_profile(chain_data)
 	_chain_primary_type_by_id[chain_id] = _chain_primary_objective_type(chain_data)
+	_record_theme_usage(_chain_primary_theme(chain_data))
 	if mode == "safe_fallback":
 		_safe_fallback_history.append({
 			"day_key": _day_key(),
@@ -295,7 +298,12 @@ func _count_chains_for_theme(theme: String) -> int:
 func _pick_theme_from_narrative(narrative: Dictionary) -> String:
 	var theme: String = str(narrative.get("theme", "joyful")).to_lower().strip_edges()
 	if theme.is_empty():
-		return "joyful"
+		theme = "joyful"
+	if _is_theme_stale(theme):
+		for fallback_theme in ["cozy", "rainy", "sunny", "market", "joyful"]:
+			var t: String = str(fallback_theme)
+			if not _is_theme_stale(t):
+				return t
 	return theme
 
 func _generate_chain_via_ai(theme: String, preferred_objective: String) -> Dictionary:
@@ -746,6 +754,9 @@ func _load_runtime_store() -> void:
 	var sfh: Array = root.get("safe_fallback_history", [])
 	if sfh is Array:
 		_safe_fallback_history = sfh.duplicate(true)
+	var rth: Array = root.get("recent_theme_history", [])
+	if rth is Array:
+		_recent_theme_history = rth.duplicate(true)
 
 func _save_runtime_store() -> void:
 	var rows: Array = []
@@ -762,6 +773,7 @@ func _save_runtime_store() -> void:
 		"recent_reward_profiles": _recent_reward_profiles.duplicate(),
 		"daily_rejects": _daily_rejects.duplicate(),
 		"safe_fallback_history": _safe_fallback_history.duplicate(),
+		"recent_theme_history": _recent_theme_history.duplicate(),
 		"reject_reason_counts": _reject_reason_counts.duplicate(true),
 		"last_block_reason": _last_block_reason,
 		"continuity_hint": _continuity_hint,
@@ -1640,6 +1652,14 @@ func _chain_primary_objective_type(chain_data: Dictionary) -> String:
 				return ot
 	return "harvest"
 
+func _chain_primary_theme(chain_data: Dictionary) -> String:
+	var themes: Array = chain_data.get("preferred_themes", [])
+	for t in themes:
+		var ts: String = str(t).to_lower().strip_edges()
+		if not ts.is_empty():
+			return ts
+	return "joyful"
+
 func _preferred_objective_type() -> String:
 	var best_type: String = "harvest"
 	var best_score: float = -99999.0
@@ -1649,6 +1669,30 @@ func _preferred_objective_type() -> String:
 			best_score = s
 			best_type = t
 	return best_type
+
+func _is_theme_stale(theme: String) -> bool:
+	if theme.is_empty():
+		return false
+	var now: int = _current_day_index()
+	var recent_hits: int = 0
+	for row in _recent_theme_history:
+		if not (row is Dictionary):
+			continue
+		var d: int = int((row as Dictionary).get("day_index", -9999))
+		var t: String = str((row as Dictionary).get("theme", ""))
+		if t == theme and now - d <= 4:
+			recent_hits += 1
+	return recent_hits >= 2
+
+func _record_theme_usage(theme: String) -> void:
+	if theme.is_empty():
+		return
+	_recent_theme_history.append({
+		"day_index": _current_day_index(),
+		"theme": theme
+	})
+	while _recent_theme_history.size() > 28:
+		_recent_theme_history.pop_front()
 
 func _safe_fallback_count_today() -> int:
 	var dk: String = _day_key()
