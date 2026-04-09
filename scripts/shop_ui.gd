@@ -94,6 +94,7 @@ func populate_shop_items():
 		child.queue_free()
 
 	var shop_stock: Dictionary = ShopSystem.get_display_stock(show_unavailable_seasonal_items) if ShopSystem else {}
+	var chain_focus_items: Array = QuestSystem.get_chain_focus_items() if QuestSystem and QuestSystem.has_method("get_chain_focus_items") else []
 
 	for item_id in shop_stock:
 		var item_data = shop_stock[item_id]
@@ -103,8 +104,10 @@ func populate_shop_items():
 		var live_price: int = ShopSystem.get_buy_price(item_id)
 		var available: bool = bool(item_data.get("available", true))
 		var market_note: String = ""
+		var market_tag: String = ""
 		if AIEconomySystem:
 			market_note = str(AIEconomySystem.get_market_brief(item_id))
+			market_tag = str(AIEconomySystem.get_market_tag(item_id))
 
 		var item_button = Button.new()
 		item_button.text = "%s - %dg (Stock: %d)%s%s" % [
@@ -112,8 +115,10 @@ func populate_shop_items():
 			live_price,
 			item_data.stock,
 			"" if available else " [Out of season]",
-			("  [%s]" % market_note) if not market_note.is_empty() else ""
+			("  [%s%s%s]" % [market_note, " | " if not market_note.is_empty() and not market_tag.is_empty() else "", market_tag]) if (not market_note.is_empty() or not market_tag.is_empty()) else ""
 		]
+		if chain_focus_items.has(item_id):
+			item_button.text += " [Chain Focus]"
 		item_button.custom_minimum_size = Vector2(200, 40)
 		item_button.flat = true
 		item_button.disabled = not available
@@ -140,7 +145,8 @@ func _update_season_header() -> void:
 	if not season_label or not GameManager:
 		return
 	var season: String = str(GameManager.player_data.get("season", "spring")).capitalize()
-	season_label.text = "Season: %s" % season
+	var strategy: String = ShopSystem.get_weekly_strategy_label() if ShopSystem and ShopSystem.has_method("get_weekly_strategy_label") else "balanced"
+	season_label.text = "Season: %s | Weekly: %s" % [season, strategy]
 
 func _unhandled_input(event):
 	if event.is_action_pressed("ui_cancel") and visible:

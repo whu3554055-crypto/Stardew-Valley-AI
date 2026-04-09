@@ -670,6 +670,17 @@ func get_market_brief(item_id: String) -> String:
 		return "↓%+d%%" % pct
 	return "~%+d%%" % pct
 
+func get_market_tag(item_id: String) -> String:
+	"""Short player-facing market heat tag for shop rows."""
+	if not market_state.items.has(item_id):
+		return ""
+	var m: Dictionary = market_state.items[item_id]
+	var demand: float = float(m.get("demand", 50.0))
+	var trend: String = str(m.get("trend", "stable"))
+	var heat: String = "HOT" if demand >= 95.0 else ("COLD" if demand <= 35.0 else "STEADY")
+	var arrow: String = "↑" if trend == "rising" else ("↓" if trend == "falling" else "→")
+	return "%s %s" % [heat, arrow]
+
 func get_daily_shop_brief() -> String:
 	"""Compact one-line market status for HUD/event feed."""
 	var tops: Array = get_top_demanded_items(1)
@@ -767,3 +778,18 @@ func _boost_town_commerce_from_quest_reward(gold: int) -> void:
 func _pulse_village_interest_in_farming() -> void:
 	for item_id in ["parsnip_seeds", "parsnip", "corn_seeds", "corn", "basic_fertilizer", "hoe", "watering_can"]:
 		_bump_item_demand(item_id, 1.03)
+
+func pulse_story_completion(pace: String, bonus_gold: int, pulse_factor: float = 1.04, pulse_items: Array = []) -> void:
+	"""Explicit market pulse when the managed village chain is fully resolved."""
+	var factor: float = clampf(pulse_factor, 0.5, 1.5)
+	var targets: Array = pulse_items
+	if targets.is_empty():
+		targets = ["parsnip", "parsnip_seeds", "bread", "basic_fertilizer", "worm_bait"]
+	for item_id in targets:
+		_bump_item_demand(item_id, factor)
+	record_ai_decision("story_chain_market_pulse", {
+		"pace": pace,
+		"bonus_gold": bonus_gold,
+		"factor": factor,
+		"items": targets
+	})

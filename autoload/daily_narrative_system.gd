@@ -13,6 +13,7 @@ signal narrative_started(narrative_id, cast_list)
 signal narrative_ended(narrative_id, outcome)
 signal scene_transition_started(transition_type, theme)
 signal scene_transition_ended(transition_type)
+signal backend_generation_fallback(reason)
 
 # Narrative themes and genres
 const NARRATIVE_THEMES = {
@@ -398,11 +399,12 @@ func generate_daily_narrative_playable(force_theme: String = "") -> Dictionary:
 		last_generated_day_key = get_current_day_key()
 		narrative_generated.emit(ai_narrative.id, ai_narrative)
 		return ai_narrative
-	
+	backend_generation_fallback.emit("backend_unavailable_or_invalid")
 	return generate_daily_narrative(force_theme)
 
 func _generate_daily_narrative_from_backend() -> Dictionary:
 	if not AIAgentManager or not AIAgentManager._backend_available or not AIAgentManager.has_method("request_text_generation"):
+		backend_generation_fallback.emit("backend_offline")
 		return {}
 	
 	var season = GameManager.player_data.season if GameManager else "spring"
@@ -428,10 +430,12 @@ func _generate_daily_narrative_from_backend() -> Dictionary:
 		"timeout_sec": backend_api_timeout_seconds
 	})
 	if not bool(gen.get("ok", false)):
+		backend_generation_fallback.emit(str(gen.get("error", "backend_request_failed")))
 		return {}
 
 	var parsed: Dictionary = gen.get("raw", {})
 	if parsed.is_empty():
+		backend_generation_fallback.emit("empty_backend_payload")
 		return {}
 	
 	var events = parsed.get("events", [])

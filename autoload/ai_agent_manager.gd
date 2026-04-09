@@ -474,10 +474,6 @@ func generate_quest(
 		dialogue_generated.emit(npc_id, JSON.stringify(response.get("result", {})))
 	
 	http.queue_free()
->>>>+++ REPLACE
-
-
-
 # ============================================================================
 # Phase 1 & 2 Features - Agent Control and WebSocket Integration
 # ============================================================================

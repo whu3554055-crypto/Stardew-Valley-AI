@@ -5,6 +5,9 @@ class_name ShopSystem
 # Shop inventory
 var shop_stock = {}
 const STOCK_CONFIG_PATH := "res://data/shop/stock.json"
+const WEEKLY_STRATEGIES := ["balanced", "promotion", "tight_margin"]
+var weekly_strategy: String = "balanced"
+var _last_strategy_week_key: int = -1
 
 signal shop_opened
 signal item_purchased(item_id, quantity)
@@ -14,11 +17,13 @@ func _ready():
 	initialize_shop()
 	if GameManager:
 		GameManager.season_changed.connect(_on_season_changed)
+		GameManager.day_changed.connect(_on_day_changed)
 
 func initialize_shop():
 	shop_stock = _load_stock_from_json()
 
 func open_shop():
+	_update_weekly_strategy()
 	shop_opened.emit()
 	return get_display_stock(false)
 
@@ -38,6 +43,7 @@ func get_buy_price(item_id: String) -> int:
 	if not shop_stock.has(item_id):
 		return 0
 	var catalog: int = int(shop_stock[item_id].price)
+	catalog = _apply_weekly_buy_strategy(catalog)
 	if AIEconomySystem:
 		return AIEconomySystem.get_shop_buy_price(item_id, catalog)
 	return catalog
@@ -80,9 +86,56 @@ func get_sell_price_per_unit(item_id: String) -> int:
 	var base: int = int(item_template.get("sell_price", 0))
 	if base <= 0:
 		return 0
+	base = _apply_weekly_sell_strategy(base)
 	if AIEconomySystem:
 		return AIEconomySystem.get_shop_sell_price(item_id, base)
 	return base
+
+func get_weekly_strategy_label() -> String:
+	return weekly_strategy
+
+func _on_day_changed(_new_day: int) -> void:
+	_update_weekly_strategy()
+
+func _update_weekly_strategy() -> void:
+	var wkey: int = _current_week_key()
+	if wkey == _last_strategy_week_key:
+		return
+	_last_strategy_week_key = wkey
+	if WEEKLY_STRATEGIES.is_empty():
+		weekly_strategy = "balanced"
+		return
+	weekly_strategy = WEEKLY_STRATEGIES[wkey % WEEKLY_STRATEGIES.size()]
+
+func _current_week_key() -> int:
+	if not GameManager:
+		return 0
+	var year: int = int(GameManager.player_data.get("year", 1))
+	var day: int = int(GameManager.player_data.get("day", 1))
+	var season: String = str(GameManager.player_data.get("season", "spring"))
+	var season_idx: int = ["spring", "summer", "fall", "winter"].find(season)
+	if season_idx < 0:
+		season_idx = 0
+	var day_index: int = (year - 1) * 112 + season_idx * 28 + day
+	return int(day_index / 7)
+
+func _apply_weekly_buy_strategy(base_price: int) -> int:
+	match weekly_strategy:
+		"promotion":
+			return int(round(base_price * 0.92))
+		"tight_margin":
+			return int(round(base_price * 1.08))
+		_:
+			return base_price
+
+func _apply_weekly_sell_strategy(base_price: int) -> int:
+	match weekly_strategy:
+		"promotion":
+			return int(round(base_price * 1.04))
+		"tight_margin":
+			return int(round(base_price * 0.94))
+		_:
+			return base_price
 
 func sell_item(item_id: String, quantity: int = 1) -> bool:
 	var item_template = ItemDatabase.get_item(item_id)

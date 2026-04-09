@@ -680,9 +680,6 @@ func _parse_ai_quest_json(raw_text: String) -> Dictionary:
 			if not str(normalized.get("title", "")).is_empty() and not str(normalized.get("description", "")).is_empty():
 				return normalized
 	return {}
->>>>+++ REPLACE
-
-
 func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: Dictionary) -> Dictionary:
 	"""Fill in quest template with specific data"""
 	var npc_id = opportunity.get("npc", "unknown")
