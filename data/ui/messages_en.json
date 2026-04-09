@@ -74,6 +74,28 @@
     "audio_panel_hint": "F10 close · Esc close · settings: user://audio_mix.json",
     "language_label": "Language"
   },
+  "ai_config": {
+    "title": "AI Agent Configuration",
+    "provider_label": "LLM provider:",
+    "base_url_label": "API Base URL:",
+    "api_key_label": "API Key (OpenAI-compatible only):",
+    "model_label": "Model Name:",
+    "max_tokens_label": "Max Tokens:",
+    "temperature_line": "Temperature: {value}",
+    "status_disconnected": "Status: Not connected",
+    "status_testing": "Testing connection…",
+    "status_test_done": "Connection test completed",
+    "status_saved": "Configuration saved!",
+    "test_button": "Test Connection",
+    "save_button": "Save Configuration",
+    "close_button": "Close",
+    "provider_ollama": "Ollama (local /api/generate)",
+    "provider_openai": "OpenAI-compatible (e.g. Aliyun DashScope /chat/completions)",
+    "base_url_placeholder": "Ollama: http://localhost:11434 | Aliyun: https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "api_key_placeholder": "sk-… (saved to user://ai_agent_config.json)",
+    "model_placeholder": "e.g. qwen-plus, llama2",
+    "info_help": "Ollama: base URL without path, uses /api/generate.\nOpenAI-compatible (Aliyun): base URL ends at …/v1; uses /chat/completions + Bearer.\nKeys are stored only under user:// — do not commit."
+  },
   "building": {
     "hud_line_upgradable": "house · L{level} {name} · +{stamina_bonus} max stamina · regen +{regen_pct}% · H upgrade",
     "hud_line_max": "house · L{level} {name} · +{stamina_bonus} max stamina · regen +{regen_pct}% · max",

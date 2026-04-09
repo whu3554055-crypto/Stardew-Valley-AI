@@ -74,6 +74,28 @@
     "audio_panel_hint": "F10 关闭 · Esc 关闭 · 配置：user://audio_mix.json",
     "language_label": "界面语言"
   },
+  "ai_config": {
+    "title": "AI 智能体配置",
+    "provider_label": "LLM 提供商：",
+    "base_url_label": "API 基础地址：",
+    "api_key_label": "API 密钥（仅 OpenAI 兼容）：",
+    "model_label": "模型名称：",
+    "max_tokens_label": "最大 Token：",
+    "temperature_line": "温度：{value}",
+    "status_disconnected": "状态：未连接",
+    "status_testing": "正在测试连接…",
+    "status_test_done": "连接测试完成",
+    "status_saved": "配置已保存！",
+    "test_button": "测试连接",
+    "save_button": "保存配置",
+    "close_button": "关闭",
+    "provider_ollama": "Ollama（本地 /api/generate）",
+    "provider_openai": "OpenAI 兼容（如阿里云通义 /chat/completions）",
+    "base_url_placeholder": "Ollama: http://localhost:11434 | 阿里云: https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "api_key_placeholder": "sk-…（保存到 user://ai_agent_config.json）",
+    "model_placeholder": "如 qwen-plus、llama2",
+    "info_help": "Ollama：填基础地址，不含路径，使用 /api/generate。\nOpenAI 兼容（阿里云）：地址到 …/v1，再请求 /chat/completions + Bearer。\n密钥仅存 user://，勿提交仓库。"
+  },
   "building": {
     "hud_line_upgradable": "房屋 · L{level} {name} · 体力上限 +{stamina_bonus} · 回复 +{regen_pct}% · H 升级",
     "hud_line_max": "房屋 · L{level} {name} · 体力上限 +{stamina_bonus} · 回复 +{regen_pct}% · 已满级",

@@ -217,6 +217,8 @@ func _on_locale_changed(_code: String) -> void:
 		audio_mix_panel.refresh_locale_text()
 	if recipe_picker and recipe_picker.has_method("refresh_locale"):
 		recipe_picker.refresh_locale()
+	if ai_config_instance and ai_config_instance.has_method("refresh_locale_text"):
+		ai_config_instance.refresh_locale_text()
 
 
 func _process(_delta: float) -> void:
