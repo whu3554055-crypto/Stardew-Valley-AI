@@ -28,7 +28,8 @@ var move_timer = 0
 var wander_direction = Vector2.ZERO
 var is_waiting_for_ai = false
 
-const SPEED = 50.0
+const BASE_SPEED := 50.0
+var _move_speed: float = BASE_SPEED
 
 # Current conversation state
 var last_player_message = ""
@@ -87,7 +88,8 @@ func _physics_process(delta):
 	if move_timer <= 0:
 		randomize_wander()
 
-	var velocity_input = wander_direction * SPEED
+	update_behavior_from_emotion(delta)
+	var velocity_input = wander_direction * _move_speed
 	velocity = velocity_input
 	move_and_slide()
 
@@ -96,9 +98,6 @@ func _physics_process(delta):
 		sprite.flip_h = false
 	elif velocity.x < 0:
 		sprite.flip_h = true
-	
-	# Update emotion-based behavior
-	update_behavior_from_emotion(delta)
 
 func randomize_wander():
 	move_timer = randf_range(2.0, 5.0)
@@ -340,16 +339,16 @@ func update_behavior_from_emotion(delta: float):
 	var modifier = NPCEmotionSystem.get_dialogue_modifier(npc_id)
 	
 	# Modify movement speed based on energy/emotion
-	var base_speed = SPEED
+	var base_s: float = BASE_SPEED
 	match NPCEmotionSystem.npc_emotions[npc_id].current_emotion if NPCEmotionSystem.npc_emotions.has(npc_id) else 0:
 		NPCEmotionSystem.BasicEmotion.EXCITED:
-			SPEED = base_speed * 1.3
+			_move_speed = base_s * 1.3
 		NPCEmotionSystem.BasicEmotion.SAD, NPCEmotionSystem.BasicEmotion.LONELY:
-			SPEED = base_speed * 0.7
+			_move_speed = base_s * 0.7
 		NPCEmotionSystem.BasicEmotion.ANGRY:
-			SPEED = base_speed * 1.1
+			_move_speed = base_s * 1.1
 		_:
-			SPEED = base_speed
+			_move_speed = base_s
 
 func set_schedule(new_schedule: Dictionary):
 	schedule = new_schedule
