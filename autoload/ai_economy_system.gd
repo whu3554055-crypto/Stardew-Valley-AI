@@ -12,6 +12,8 @@ signal price_changed(item_id, old_price, new_price, reason)
 signal market_trend_updated(trend_data)
 signal npc_trade_executed(trader_id, item_id, quantity, price)
 signal economic_event_triggered(event_type, impact_data)
+## Player-facing line for WorldEventFeed / QuickTip (significant pulses only; callers throttle in UI).
+signal player_visible_market_note(line: String)
 
 # Market data
 var market_state = {
@@ -802,6 +804,9 @@ func on_day_passed() -> void:
 		"factor": factor,
 		"items": pulse_items
 	})
+	var note1: String = _format_player_visible_quest_pressure_line(quest_count, total_gold, pulse_items, factor)
+	if not note1.is_empty():
+		player_visible_market_note.emit(note1)
 	_daily_quest_pressure.erase(prev_day)
 
 func _bump_item_demand(item_id: String, factor: float) -> void:
@@ -839,6 +844,54 @@ func pulse_story_completion(pace: String, bonus_gold: int, pulse_factor: float =
 		"factor": factor,
 		"items": targets
 	})
+	var note2: String = _format_player_visible_story_pulse_line(pace, bonus_gold, targets, factor)
+	if not note2.is_empty():
+		player_visible_market_note.emit(note2)
+
+func _player_visible_item_label(item_id: String) -> String:
+	var id: String = str(item_id).strip_edges()
+	if id.is_empty():
+		return ""
+	if ItemDatabase and ItemDatabase.has_method("get_item"):
+		var tpl: Dictionary = ItemDatabase.get_item(id)
+		if not tpl.is_empty():
+			return str(tpl.get("name", id))
+	return id
+
+func _format_player_visible_story_pulse_line(pace: String, bonus_gold: int, pulse_items: Array, factor: float) -> String:
+	if pulse_items.is_empty():
+		return ""
+	var labels: PackedStringArray = []
+	for i in range(mini(3, pulse_items.size())):
+		var lab: String = _player_visible_item_label(str(pulse_items[i]))
+		if not lab.is_empty():
+			labels.append(lab)
+	if labels.is_empty():
+		return ""
+	var pct: int = clampi(int(round((factor - 1.0) * 100.0)), -40, 40)
+	var joined: String = ", ".join(labels)
+	return "Market: %s chain closed — demand leans toward %s (~%+d%%)." % [pace, joined, pct]
+
+func _format_player_visible_quest_pressure_line(quest_count: int, total_gold: int, pulse_items: Array, factor: float) -> String:
+	if quest_count <= 0 and total_gold <= 0:
+		return ""
+	if pulse_items.is_empty():
+		return ""
+	var labels: PackedStringArray = []
+	for i in range(mini(3, pulse_items.size())):
+		var lab: String = _player_visible_item_label(str(pulse_items[i]))
+		if not lab.is_empty():
+			labels.append(lab)
+	if labels.is_empty():
+		return ""
+	var pct: int = clampi(int(round((factor - 1.0) * 100.0)), -40, 40)
+	var joined: String = ", ".join(labels)
+	return "Market: yesterday's quests (%d tasks, %dg rewards) shifted focus to %s (~%+d%% demand)." % [
+		quest_count,
+		total_gold,
+		joined,
+		pct
+	]
 
 func _current_day_index() -> int:
 	if not GameManager or not GameManager.player_data:

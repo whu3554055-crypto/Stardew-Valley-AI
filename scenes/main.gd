@@ -36,6 +36,8 @@ const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
 const SAVE_BUNDLE_VERSION := 3
 const PIERRE_SHOP_RADIUS_PX := 140.0
 const BASE_STAMINA_MAX := 100.0
+## Throttle keys: "memory", "market", "em_<npc_id>"
+var _visible_feed_last: Dictionary = {}
 
 func _ready():
 	# Connect signals
@@ -64,6 +66,12 @@ func _ready():
 			QuestSystem.quest_impact_applied.connect(_on_quest_impact_applied)
 		if QuestSystem.has_signal("managed_chain_resolved"):
 			QuestSystem.managed_chain_resolved.connect(_on_managed_chain_resolved)
+	if NPCMemorySystem and NPCMemorySystem.has_signal("memory_added"):
+		NPCMemorySystem.memory_added.connect(_on_visible_memory_added)
+	if NPCEmotionSystem and NPCEmotionSystem.has_signal("emotion_changed"):
+		NPCEmotionSystem.emotion_changed.connect(_on_visible_emotion_changed)
+	if AIEconomySystem and AIEconomySystem.has_signal("player_visible_market_note"):
+		AIEconomySystem.player_visible_market_note.connect(_on_player_visible_market_note)
 	if DailyNarrativeSystem:
 		DailyNarrativeSystem.narrative_generated.connect(_on_daily_narrative_generated)
 		if DailyNarrativeSystem.has_signal("backend_generation_fallback"):
@@ -1086,6 +1094,102 @@ func _on_quest_impact_applied(quest_id: String, impact: Dictionary) -> void:
 	var line: String = "Quest impact [%s]: %s" % [quest_id, ", ".join(parts)]
 	record_world_event(line)
 	show_quick_tip(line, 1.9)
+
+func _on_player_visible_market_note(line: String) -> void:
+	if line.is_empty():
+		return
+	var now: float = float(Time.get_unix_time_from_system())
+	var last: float = float(_visible_feed_last.get("market", 0.0))
+	if now - last < 1.8:
+		return
+	_visible_feed_last["market"] = now
+	record_world_event(line)
+	show_quick_tip(line, 2.0)
+
+func _on_visible_memory_added(npc_id: String, memory: Variant) -> void:
+	if memory == null:
+		return
+	var importance: float = 0.5
+	var content: String = ""
+	if memory is NPCMemorySystem.Memory:
+		var mem: NPCMemorySystem.Memory = memory
+		importance = float(mem.importance)
+		content = str(mem.content)
+	else:
+		return
+	if importance < 0.62:
+		return
+	var now2: float = float(Time.get_unix_time_from_system())
+	var last2: float = float(_visible_feed_last.get("memory", 0.0))
+	if now2 - last2 < 5.0:
+		return
+	_visible_feed_last["memory"] = now2
+	if content.length() > 96:
+		content = content.substr(0, 93) + "..."
+	var who: String = _resolve_npc_display_name(npc_id)
+	var mem_line: String = "Memory · %s: %s" % [who, content]
+	record_world_event(mem_line)
+	show_quick_tip(mem_line, 1.85)
+
+func _on_visible_emotion_changed(npc_id: String, new_emotion: int, intensity: float) -> void:
+	var key: String = "em_%s" % npc_id
+	var now3: float = float(Time.get_unix_time_from_system())
+	var last3: float = float(_visible_feed_last.get(key, 0.0))
+	if now3 - last3 < 6.0:
+		return
+	_visible_feed_last[key] = now3
+	var label: String = _basic_emotion_label(new_emotion)
+	var who2: String = _resolve_npc_display_name(npc_id)
+	var pct: int = clampi(int(round(intensity * 100.0)), 0, 100)
+	var em_line: String = "Mood · %s feels %s (%d%%)." % [who2, label, pct]
+	record_world_event(em_line)
+	show_quick_tip(em_line, 1.75)
+
+func _resolve_npc_display_name(npc_id: String) -> String:
+	var nid: String = str(npc_id).strip_edges()
+	if nid.is_empty():
+		return "Someone"
+	if EnhancedPersonalitySystem and EnhancedPersonalitySystem.has_method("get_npc_complete_profile"):
+		var profile: Dictionary = EnhancedPersonalitySystem.get_npc_complete_profile(nid)
+		if profile.has("basic_info"):
+			var nm: String = str((profile["basic_info"] as Dictionary).get("name", "")).strip_edges()
+			if not nm.is_empty():
+				return nm
+	return nid.capitalize()
+
+func _basic_emotion_label(emotion: int) -> String:
+	match emotion:
+		NPCEmotionSystem.BasicEmotion.NEUTRAL:
+			return "neutral"
+		NPCEmotionSystem.BasicEmotion.HAPPY:
+			return "happier"
+		NPCEmotionSystem.BasicEmotion.SAD:
+			return "sadder"
+		NPCEmotionSystem.BasicEmotion.ANGRY:
+			return "tense"
+		NPCEmotionSystem.BasicEmotion.EXCITED:
+			return "excited"
+		NPCEmotionSystem.BasicEmotion.CALM:
+			return "calm"
+		NPCEmotionSystem.BasicEmotion.ANXIOUS:
+			return "anxious"
+		NPCEmotionSystem.BasicEmotion.GRATEFUL:
+			return "grateful"
+		NPCEmotionSystem.BasicEmotion.LONELY:
+			return "lonely"
+		NPCEmotionSystem.BasicEmotion.CONFIDENT:
+			return "confident"
+		NPCEmotionSystem.BasicEmotion.SHY:
+			return "shy"
+		NPCEmotionSystem.BasicEmotion.PLAYFUL:
+			return "playful"
+		NPCEmotionSystem.BasicEmotion.SERIOUS:
+			return "serious"
+		NPCEmotionSystem.BasicEmotion.ROMANTIC:
+			return "warm"
+		NPCEmotionSystem.BasicEmotion.NOSTALGIC:
+			return "nostalgic"
+	return "different"
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
