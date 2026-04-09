@@ -68,6 +68,9 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 			t["junk_boot"] *= 1.05
 		if "junk_seaweed" in t:
 			t["junk_seaweed"] *= 1.08
+		# Bottom fish — slightly easier bite in stirred ocean when it rains
+		if zone == "ocean" and "fish_halibut" in t:
+			t["fish_halibut"] *= 1.08
 
 	if morning and "fish_carp" in t:
 		t["fish_carp"] *= 1.08
@@ -93,7 +96,7 @@ static func get_fish_table(zone: String, season: String, hour: int, raining: boo
 
 
 ## Short label for mining UI / messages (Y-band depth in MineArea).
-## Depth tiers use global Y vs `MiningSystem.MINE_GLOBAL_DEPTH_BREAK_*` (same as `main.tscn` MineLayer* bands).
+## Depth tiers use global Y vs `zones.mine.depth_break_*` in `immersion_config.json` (`GameZones.mine_depth_from_global_y`; align `main.tscn` MineArea).
 static func mining_layer_prefix(depth: int) -> String:
 	match depth:
 		0:
