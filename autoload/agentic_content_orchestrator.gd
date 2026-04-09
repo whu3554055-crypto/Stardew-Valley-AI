@@ -35,6 +35,7 @@ var _performance: Dictionary = {}
 var _crop_seasons_by_id: Dictionary = {}
 var _recent_signatures: Array = []
 var _failure_pressure: Dictionary = {"streak": 0, "last_day": -1}
+var _recent_reward_profiles: Array = []
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -92,6 +93,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 				_breaker_state = "open"
 				_record_today_objective_signature(manual_take)
 				_record_recent_signature(manual_take)
+				_record_reward_profile(manual_take)
 				_emit_runtime_status()
 				return
 		_on_generation_failure("manual_chain_invalid")
@@ -143,6 +145,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	_breaker_state = "open"
 	_record_today_objective_signature(chain_data)
 	_record_recent_signature(chain_data)
+	_record_reward_profile(chain_data)
 	_check_rollout_promotions_and_offline()
 	_emit_runtime_status()
 
@@ -434,6 +437,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var spiral: Dictionary = _check_failure_spiral_protection(steps)
 	if not bool(spiral.get("ok", false)):
 		return spiral
+	var reward_mix: Dictionary = _check_reward_structure_diversity(steps)
+	if not bool(reward_mix.get("ok", false)):
+		return reward_mix
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -624,6 +630,9 @@ func _load_runtime_store() -> void:
 	var fp: Dictionary = root.get("failure_pressure", {})
 	if fp is Dictionary:
 		_failure_pressure = fp.duplicate(true)
+	var reward_profiles: Array = root.get("recent_reward_profiles", [])
+	if reward_profiles is Array:
+		_recent_reward_profiles = reward_profiles.duplicate()
 
 func _save_runtime_store() -> void:
 	var rows: Array = []
@@ -637,6 +646,7 @@ func _save_runtime_store() -> void:
 		"performance": _performance.duplicate(true),
 		"recent_signatures": _recent_signatures.duplicate(),
 		"failure_pressure": _failure_pressure.duplicate(),
+		"recent_reward_profiles": _recent_reward_profiles.duplicate(),
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1184,6 +1194,76 @@ func _has_recovery_supply_reward(steps: Array) -> bool:
 			if recovery_items.has(item_id):
 				return true
 	return false
+
+func _check_reward_structure_diversity(steps: Array) -> Dictionary:
+	var gold_total: int = 0
+	var item_value_total: int = 0
+	var type_set: Dictionary = {}
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var reward: Dictionary = (s as Dictionary).get("reward", {})
+		gold_total += int(reward.get("gold", 0))
+		for item_spec in reward.get("items", []):
+			item_value_total += _estimate_item_spec_sell_value(str(item_spec))
+			var item_id: String = str(item_spec).split(":")[0]
+			var item_type: String = _item_type(item_id)
+			if not item_type.is_empty():
+				type_set[item_type] = true
+		var pool: Dictionary = reward.get("pool", {})
+		for e in pool.get("entries", []):
+			if e is Dictionary:
+				var item_id2: String = str((e as Dictionary).get("item", "")).split(":")[0]
+				var item_type2: String = _item_type(item_id2)
+				if not item_type2.is_empty():
+					type_set[item_type2] = true
+	var total_value: int = maxi(1, gold_total + item_value_total)
+	var gold_ratio: float = float(gold_total) / float(total_value)
+	var type_diversity: int = type_set.size()
+	if gold_ratio > 0.88 and type_diversity < 2:
+		return {"ok": false, "error": "reward_structure_too_gold_heavy"}
+	if _recent_gold_heavy_run(3) and gold_ratio > 0.82:
+		return {"ok": false, "error": "reward_structure_monotony_streak"}
+	return {"ok": true}
+
+func _recent_gold_heavy_run(k: int) -> bool:
+	if _recent_reward_profiles.size() < k:
+		return false
+	for i in range(_recent_reward_profiles.size() - k, _recent_reward_profiles.size()):
+		var row: Dictionary = _recent_reward_profiles[i] if _recent_reward_profiles[i] is Dictionary else {}
+		if float(row.get("gold_ratio", 0.0)) <= 0.8:
+			return false
+	return true
+
+func _record_reward_profile(chain_data: Dictionary) -> void:
+	var steps: Array = chain_data.get("steps", [])
+	var gold_total: int = 0
+	var item_value_total: int = 0
+	var type_set: Dictionary = {}
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var reward: Dictionary = (s as Dictionary).get("reward", {})
+		gold_total += int(reward.get("gold", 0))
+		for item_spec in reward.get("items", []):
+			item_value_total += _estimate_item_spec_sell_value(str(item_spec))
+			var item_id: String = str(item_spec).split(":")[0]
+			var t: String = _item_type(item_id)
+			if not t.is_empty():
+				type_set[t] = true
+	var total_value: int = maxi(1, gold_total + item_value_total)
+	_recent_reward_profiles.append({
+		"gold_ratio": float(gold_total) / float(total_value),
+		"type_diversity": type_set.size()
+	})
+	while _recent_reward_profiles.size() > 12:
+		_recent_reward_profiles.pop_front()
+
+func _item_type(item_id: String) -> String:
+	if ItemDatabase and ItemDatabase.has_method("get_item"):
+		var tpl: Dictionary = ItemDatabase.get_item(item_id)
+		return str(tpl.get("type", "")).strip_edges()
+	return ""
 
 func _estimate_free_inventory_slots() -> int:
 	if InventoryManager == null:
