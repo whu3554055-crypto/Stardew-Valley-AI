@@ -36,6 +36,7 @@ var _crop_seasons_by_id: Dictionary = {}
 var _recent_signatures: Array = []
 var _failure_pressure: Dictionary = {"streak": 0, "last_day": -1}
 var _recent_reward_profiles: Array = []
+var _daily_rejects: Dictionary = {}
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -110,20 +111,39 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 		mode = "fallback"
 	if chain_data.is_empty():
 		_on_generation_failure("empty_chain_data")
-		return
+		chain_data = _try_safe_fallback_chain(theme)
+		mode = "safe_fallback"
+		if chain_data.is_empty():
+			return
 	if _is_near_duplicate_chain(chain_data):
 		_on_generation_failure("near_duplicate_chain")
-		return
+		chain_data = _try_safe_fallback_chain(theme)
+		mode = "safe_fallback"
+		if chain_data.is_empty():
+			return
 	if _is_short_window_repetition(chain_data):
 		_on_generation_failure("short_window_repetition")
-		return
+		chain_data = _try_safe_fallback_chain(theme)
+		mode = "safe_fallback"
+		if chain_data.is_empty():
+			return
 	var v: Dictionary = _validate_chain_template(chain_data)
 	if not bool(v.get("ok", false)):
 		_on_generation_failure(str(v.get("error", "validation_failed")))
-		return
+		chain_data = _try_safe_fallback_chain(theme)
+		mode = "safe_fallback"
+		if chain_data.is_empty():
+			return
+		v = _validate_chain_template(chain_data)
+		if not bool(v.get("ok", false)):
+			_on_generation_failure(str(v.get("error", "safe_fallback_invalid")))
+			return
 	if _conflicts_with_today_objective_mix(chain_data):
 		_on_generation_failure("daily_objective_mix_conflict")
-		return
+		chain_data = _try_safe_fallback_chain(theme)
+		mode = "safe_fallback"
+		if chain_data.is_empty():
+			return
 	_apply_canary_rollout(chain_data)
 	var reg: Dictionary = QuestSystem.register_runtime_chain_template(chain_data, "runtime_agentic")
 	if not bool(reg.get("ok", false)):
@@ -527,6 +547,7 @@ func _take_manual_chain() -> Dictionary:
 func _on_generation_failure(reason: String) -> void:
 	_consecutive_failures += 1
 	_stats["failed"] = int(_stats.get("failed", 0)) + 1
+	_record_daily_reject(reason)
 	generation_failed.emit(reason)
 	if _consecutive_failures >= int(config.get("max_consecutive_failures", 3)):
 		_breaker_state = "closed"
@@ -642,6 +663,9 @@ func _load_runtime_store() -> void:
 	var reward_profiles: Array = root.get("recent_reward_profiles", [])
 	if reward_profiles is Array:
 		_recent_reward_profiles = reward_profiles.duplicate()
+	var daily_rejects: Dictionary = root.get("daily_rejects", {})
+	if daily_rejects is Dictionary:
+		_daily_rejects = daily_rejects.duplicate(true)
 
 func _save_runtime_store() -> void:
 	var rows: Array = []
@@ -656,6 +680,7 @@ func _save_runtime_store() -> void:
 		"recent_signatures": _recent_signatures.duplicate(),
 		"failure_pressure": _failure_pressure.duplicate(),
 		"recent_reward_profiles": _recent_reward_profiles.duplicate(),
+		"daily_rejects": _daily_rejects.duplicate(),
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1383,6 +1408,51 @@ func _count_objective_type(steps: Array, objective_type: String) -> int:
 		if ot == objective_type:
 			n += 1
 	return n
+
+func _record_daily_reject(_reason: String) -> void:
+	var key: String = _day_key()
+	_daily_rejects[key] = int(_daily_rejects.get(key, 0)) + 1
+
+func _today_reject_count() -> int:
+	return int(_daily_rejects.get(_day_key(), 0))
+
+func _try_safe_fallback_chain(theme: String) -> Dictionary:
+	if _today_reject_count() < 3:
+		return {}
+	return _build_safe_recovery_chain(theme)
+
+func _build_safe_recovery_chain(theme: String) -> Dictionary:
+	var stamp: int = int(Time.get_unix_time_from_system())
+	var cid: String = "%srecovery_%s_%d" % [CHAIN_ID_PREFIX, theme, stamp]
+	return {
+		"id": cid,
+		"display_name": "Recovery Relief Chain",
+		"cooldown_days": 1,
+		"preferred_themes": [theme, "joyful"],
+		"steps": [
+			{
+				"id": "%s_s1" % cid,
+				"title": "Recovery I: Check In",
+				"description": "Talk to Pierre to receive a practical recovery plan.",
+				"objective": {"type": "talk", "npc_id": "pierre", "count": 1},
+				"reward": {"gold": 52, "items": ["bread:1", "worm_bait:2"]}
+			},
+			{
+				"id": "%s_s2" % cid,
+				"title": "Recovery II: Gather Basics",
+				"description": "Harvest 2 crops to stabilize today's supplies.",
+				"objective": {"type": "harvest", "count": 2},
+				"reward": {"gold": 64, "items": ["basic_fertilizer:1"]}
+			},
+			{
+				"id": "%s_s3" % cid,
+				"title": "Recovery III: Light Trade",
+				"description": "Sell goods worth 90g to close the recovery loop.",
+				"objective": {"type": "earn_gold", "count": 90},
+				"reward": {"gold": 86, "items": ["parsnip_seeds:2"]}
+			}
+		]
+	}
 
 func _estimate_free_inventory_slots() -> int:
 	if InventoryManager == null:
