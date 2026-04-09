@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCTraitSystem
-
 # ============================================
 # Rich NPC Trait System
 # Manages dynamic traits: mood, relationships, skills, memories, goals, fears
@@ -342,7 +340,7 @@ func recall_memories(npc_id: String, topic: String = "", limit: int = 5) -> Arra
 	
 	return relevant.slice(0, limit)
 
-def get_emotional_bias(npc_id: String) -> Dictionary:
+func get_emotional_bias(npc_id: String) -> Dictionary:
 	"""Get NPC's emotional bias based on memories"""
 	if not npc_traits.has(npc_id):
 		return {"positive": 0.5, "negative": 0.5, "neutral": 0.5}
