@@ -13,6 +13,7 @@ import aiosqlite
 import logging
 import shutil
 import json
+import sqlite3
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Callable, TypeVar
 from datetime import datetime
@@ -119,9 +120,24 @@ class DatabaseRepository(GameDatabase):
         async with aiosqlite.connect(self.db_path) as db:
             try:
                 await db.execute("BEGIN IMMEDIATE")
-                for sql, params in operations:
+                for op in operations:
+                    sql: str = ""
+                    params: tuple = ()
+                    if isinstance(op, dict):
+                        sql = str(op.get("sql", ""))
+                        raw_params = op.get("params", ())
+                        params = tuple(raw_params) if isinstance(raw_params, (list, tuple)) else (raw_params,)
+                    elif isinstance(op, tuple) and len(op) >= 2:
+                        sql = str(op[0])
+                        raw_params2 = op[1]
+                        params = tuple(raw_params2) if isinstance(raw_params2, (list, tuple)) else (raw_params2,)
+                    else:
+                        raise ValueError(f"Unsupported transactional operation: {op}")
+                    if not sql.strip():
+                        raise ValueError("Transactional SQL must not be empty")
                     await db.execute(sql, params)
                 await db.commit()
+                logger.debug("transactional_update committed %d operations", len(operations))
             except Exception:
                 await db.rollback()
                 raise
@@ -410,8 +426,14 @@ class DatabaseRepository(GameDatabase):
             # Ensure backup directory exists
             Path(backup_path).parent.mkdir(parents=True, exist_ok=True)
             
-            # Copy database file
-            shutil.copy2(self.db_path, backup_path)
+            # Use sqlite online backup API for consistency under concurrent access.
+            src = sqlite3.connect(self.db_path)
+            dst = sqlite3.connect(backup_path)
+            try:
+                src.backup(dst)
+            finally:
+                dst.close()
+                src.close()
             
             # Also copy WAL and SHM files if they exist
             for ext in ['-wal', '-shm']:
@@ -419,6 +441,7 @@ class DatabaseRepository(GameDatabase):
                 if Path(wal_path).exists():
                     shutil.copy2(wal_path, backup_path + ext)
             
+            await self._write_backup_manifest(backup_path)
             logger.info(f"Database backed up to: {backup_path}")
             return backup_path
             
@@ -456,12 +479,40 @@ class DatabaseRepository(GameDatabase):
                 if Path(backup_wal).exists():
                     shutil.copy2(backup_wal, self.db_path + ext)
             
+            if not await self.verify_integrity():
+                logger.error("Restore completed but integrity check failed")
+                return False
             logger.info(f"Database restored from: {backup_path}")
             return True
             
         except Exception as e:
             logger.error(f"Restore failed: {e}")
             return False
+
+    async def verify_integrity(self) -> bool:
+        """Run SQLite integrity check and return boolean result."""
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                async with db.execute("PRAGMA integrity_check") as cursor:
+                    row = await cursor.fetchone()
+                    if not row:
+                        return False
+                    return str(row[0]).lower() == "ok"
+        except Exception as e:
+            logger.error(f"Integrity check failed: {e}")
+            return False
+
+    async def _write_backup_manifest(self, backup_path: str) -> None:
+        """Write sidecar metadata for traceability/recovery operations."""
+        p = Path(backup_path)
+        payload = {
+            "backup_file": str(p),
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "size_bytes": p.stat().st_size if p.exists() else 0,
+            "source_db": str(Path(self.db_path)),
+        }
+        manifest_path = p.with_suffix(p.suffix + ".meta.json")
+        manifest_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     
     async def list_backups(self) -> List[Dict[str, Any]]:
         """List all available backups"""
