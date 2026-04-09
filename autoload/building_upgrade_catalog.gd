@@ -77,7 +77,21 @@ func get_house_rect() -> Rect2:
 
 
 func format_message(key: String, vars: Dictionary = {}) -> String:
-	var msg: String = str(_interaction.get(key, ""))
+	var msg: String = ""
+	if UITextCatalog:
+		msg = UITextCatalog.get_text("building", key)
+	if msg.is_empty():
+		msg = str(_interaction.get(key, ""))
 	for k in vars.keys():
 		msg = msg.replace("{%s}" % str(k), str(vars[k]))
 	return msg
+
+
+func localized_level_name(level: int) -> String:
+	var k: String = "level_name_%d" % level
+	if UITextCatalog:
+		var t: String = UITextCatalog.get_text("building", k)
+		if not t.is_empty():
+			return t
+	var d: Dictionary = level_def(level)
+	return str(d.get("name", "?"))

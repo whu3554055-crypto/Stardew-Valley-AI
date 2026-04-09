@@ -74,6 +74,18 @@
     "audio_panel_hint": "F10 close · Esc close · settings: user://audio_mix.json",
     "language_label": "Language"
   },
+  "building": {
+    "hud_line_upgradable": "house · L{level} {name} · +{stamina_bonus} max stamina · regen +{regen_pct}% · H upgrade",
+    "hud_line_max": "house · L{level} {name} · +{stamina_bonus} max stamina · regen +{regen_pct}% · max",
+    "tip_outside": "Stand near the farmhouse to upgrade.",
+    "tip_not_enough_gold": "Not enough gold ({gold}g needed).",
+    "tip_missing_materials": "Missing materials for house upgrade.",
+    "tip_upgraded": "House upgraded to {name}! Max stamina +{stamina_bonus}, regen +{regen_pct}%.",
+    "tip_max": "House is already at max level.",
+    "level_name_1": "Cabin",
+    "level_name_2": "Cozy House",
+    "level_name_3": "Family House"
+  },
   "farm_tier": {
     "farm_upgrade_hint": "Stand on the field · U = upgrade farm tier",
     "unavailable": "Farm tiers unavailable.",

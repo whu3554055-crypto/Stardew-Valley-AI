@@ -558,7 +558,7 @@ func _update_activity_zone_label() -> void:
 		if hr.has_point(player.global_position):
 			var lv: int = int(GameManager.player_data.get("house_level", 1))
 			var cur: Dictionary = BuildingUpgradeCatalog.level_def(lv)
-			var nm: String = str(cur.get("name", "Cabin"))
+			var nm: String = BuildingUpgradeCatalog.localized_level_name(lv)
 			var bonus: int = int(cur.get("stamina_max_bonus", 0))
 			var regen_pct: int = int(round((float(cur.get("stamina_regen_multiplier", 1.0)) - 1.0) * 100.0))
 			var next: Dictionary = BuildingUpgradeCatalog.next_level_def(lv)
@@ -1170,7 +1170,7 @@ func _try_house_upgrade() -> void:
 	GameManager.player_data["house_level"] = lv + 1
 	_apply_house_stamina_bonus()
 	var now_def: Dictionary = BuildingUpgradeCatalog.level_def(lv + 1)
-	var nm: String = str(now_def.get("name", "House"))
+	var nm: String = BuildingUpgradeCatalog.localized_level_name(lv + 1)
 	var bonus: int = int(now_def.get("stamina_max_bonus", 0))
 	var regen_pct: int = int(round((float(now_def.get("stamina_regen_multiplier", 1.0)) - 1.0) * 100.0))
 	var msg: String = BuildingUpgradeCatalog.format_message("tip_upgraded", {"name": nm, "stamina_bonus": bonus, "regen_pct": regen_pct})

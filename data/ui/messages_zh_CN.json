@@ -74,6 +74,18 @@
     "audio_panel_hint": "F10 关闭 · Esc 关闭 · 配置：user://audio_mix.json",
     "language_label": "界面语言"
   },
+  "building": {
+    "hud_line_upgradable": "房屋 · L{level} {name} · 体力上限 +{stamina_bonus} · 回复 +{regen_pct}% · H 升级",
+    "hud_line_max": "房屋 · L{level} {name} · 体力上限 +{stamina_bonus} · 回复 +{regen_pct}% · 已满级",
+    "tip_outside": "靠近农舍即可升级。",
+    "tip_not_enough_gold": "金币不足（需要 {gold}g）。",
+    "tip_missing_materials": "房屋升级材料不足。",
+    "tip_upgraded": "房屋已升级为 {name}！体力上限 +{stamina_bonus}，回复 +{regen_pct}%。",
+    "tip_max": "房屋已是最高等级。",
+    "level_name_1": "小屋",
+    "level_name_2": "温馨小屋",
+    "level_name_3": "家庭房"
+  },
   "farm_tier": {
     "farm_upgrade_hint": "站在农田上 · U 升级农场等级",
     "unavailable": "农场等级不可用。",
