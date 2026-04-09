@@ -472,6 +472,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var action_semantic: Dictionary = _check_objective_action_semantics(steps)
 	if not bool(action_semantic.get("ok", false)):
 		return action_semantic
+	var reward_timing: Dictionary = _check_reward_timing_alignment(steps)
+	if not bool(reward_timing.get("ok", false)):
+		return reward_timing
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -1445,6 +1448,42 @@ func _check_objective_action_semantics(steps: Array) -> Dictionary:
 			for ow in (hint_words[other_type] as Array):
 				if blob.find(str(ow)) >= 0:
 					return {"ok": false, "error": "semantic_drift_cross_action_hint"}
+	return {"ok": true}
+
+func _check_reward_timing_alignment(steps: Array) -> Dictionary:
+	# If later steps demand higher effort, earlier steps should grant at least one practical supply/tool reward.
+	var supportive_item_types: Dictionary = {
+		"bait": true,
+		"fertilizer": true,
+		"seed": true,
+		"food": true,
+		"resource": true
+	}
+	var early_support: bool = false
+	for i in range(mini(2, steps.size())):
+		if not (steps[i] is Dictionary):
+			continue
+		var reward: Dictionary = (steps[i] as Dictionary).get("reward", {})
+		for item_spec in reward.get("items", []):
+			var item_id: String = str(item_spec).split(":")[0]
+			var t: String = _item_type(item_id)
+			if supportive_item_types.has(t):
+				early_support = true
+				break
+		if early_support:
+			break
+	var late_heavy: bool = false
+	for i in range(1, steps.size()):
+		if not (steps[i] is Dictionary):
+			continue
+		var objective: Dictionary = (steps[i] as Dictionary).get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		var cnt: int = int(objective.get("count", 1))
+		if (ot == "mine_ore" and cnt >= 3) or (ot == "fish_caught" and cnt >= 3) or (ot == "earn_gold" and cnt >= 120):
+			late_heavy = true
+			break
+	if late_heavy and not early_support:
+		return {"ok": false, "error": "reward_timing_missing_early_support"}
 	return {"ok": true}
 
 func _record_daily_reject(_reason: String) -> void:
