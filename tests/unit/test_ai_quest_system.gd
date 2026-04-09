@@ -46,3 +46,21 @@ func test_parse_ai_quest_json_handles_markdown_fence_and_objective_mapping() -> 
 	assert_eq(String(parsed.get("title", "")), "Parcel Rush")
 	assert_eq(String(parsed.get("objective_type", "")), AIQuestSystem.OBJECTIVE_TALK, "objective text should map to talk objective")
 	assert_eq(int(parsed.get("target_count", 0)), 2)
+
+func test_apply_objective_type_maps_to_runtime_verifiable_type() -> void:
+	var quest := {
+		"type": "fetch",
+		"objective_type": AIQuestSystem.OBJECTIVE_TALK,
+		"target_npc": "pierre"
+	}
+	ai_quest_system._apply_objective_type_to_quest(quest)
+	assert_eq(String(quest.get("type", "")), "talk", "talk objective should map quest.type to talk")
+
+func test_completion_hint_for_talk_quest_not_empty() -> void:
+	var quest := {
+		"type": "talk",
+		"description": "Please check in with Pierre.",
+		"target_npc": "pierre"
+	}
+	var text: String = ai_quest_system._append_completion_hint(quest)
+	assert_true(text.find("Completion:") >= 0, "talk quest should include explicit completion hint")

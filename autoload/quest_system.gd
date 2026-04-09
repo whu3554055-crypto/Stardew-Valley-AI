@@ -963,10 +963,15 @@ func add_quest_from_ai(ai_quest: Dictionary) -> void:
 	var reward_gold: int = int(ai_quest.get("rewards", {}).get("gold", 0))
 	var target_count: int = int(ai_quest.get("target_count", 1))
 	var qtype: String = str(ai_quest.get("type", "fetch"))
-	var objective_type: String = "collect_item" if qtype == "fetch" else "delivery"
+	var objective_type: String = "collect_item"
+	if qtype == "delivery":
+		objective_type = "delivery"
+	elif qtype == "problem_solving" or qtype == "talk":
+		objective_type = "talk"
 	var objective: Dictionary = {
 		"type": objective_type,
 		"item_id": str(ai_quest.get("target_item", "")),
+		"npc_id": str(ai_quest.get("target_npc", ai_quest.get("quest_giver", ""))),
 		"count": maxi(1, target_count),
 		"current": 0
 	}
@@ -982,6 +987,25 @@ func add_quest_from_ai(ai_quest: Dictionary) -> void:
 	if not active_quests.has(quest_id):
 		active_quests.append(quest_id)
 	quest_started.emit(quest_id)
+
+func sync_ai_quest_status(quest_id: String, success: bool) -> void:
+	if not quests.has(quest_id):
+		return
+	var q: Dictionary = quests[quest_id]
+	if str(q.get("source", "")) != "ai_quest_system":
+		return
+	var current_status: int = int(q.get("status", QuestStatus.NOT_STARTED))
+	if current_status == QuestStatus.COMPLETED or current_status == QuestStatus.TURNED_IN:
+		return
+	if active_quests.has(quest_id):
+		active_quests.erase(quest_id)
+	if success:
+		q["status"] = QuestStatus.COMPLETED
+		if not completed_quests.has(quest_id):
+			completed_quests.append(quest_id)
+		quest_completed.emit(quest_id)
+	else:
+		q["status"] = QuestStatus.NOT_STARTED
 
 
 func save_snapshot() -> Dictionary:

@@ -496,7 +496,8 @@ func generate_procedural_quest(opportunity: Dictionary) -> Dictionary:
 		"created_at": Time.get_unix_time_from_system(),
 		"opportunity_source": opportunity.type,
 		"difficulty": template.difficulty,
-		"narrative_context": {}
+		"narrative_context": {},
+		"opportunity_source_npc": str(opportunity.get("npc", ""))
 	}
 	
 	# Fill in template variables
@@ -599,6 +600,7 @@ func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_
 		quest.target_count = maxi(1, int(ai_data.get("target_count", quest.get("target_count", 1))))
 	if ai_data.has("objective_type"):
 		quest.objective_type = str(ai_data.get("objective_type", quest.get("objective_type", "")))
+		_apply_objective_type_to_quest(quest)
 	quest.description = _append_completion_hint(quest)
 	
 	ai_quest_request_completed.emit(npc_id, quest)
@@ -656,11 +658,29 @@ func _append_completion_hint(quest: Dictionary) -> String:
 			]
 	elif qtype == "problem_solving":
 		hint = "Completion: Talk to %s." % str(quest.get("quest_giver", "the quest giver"))
+	elif qtype == "talk":
+		hint = "Completion: Talk to %s." % str(quest.get("target_npc", quest.get("quest_giver", "the contact")))
 	if hint.is_empty():
 		return desc
 	if desc.find("Completion:") >= 0:
 		return desc
 	return "%s\n%s" % [desc, hint]
+
+func _apply_objective_type_to_quest(quest: Dictionary) -> void:
+	var otype: String = str(quest.get("objective_type", "")).strip_edges()
+	match otype:
+		OBJECTIVE_FETCH:
+			quest["type"] = "fetch"
+		OBJECTIVE_DELIVERY:
+			quest["type"] = "delivery"
+		OBJECTIVE_SOLVE:
+			quest["type"] = "problem_solving"
+			if str(quest.get("quest_giver", "")).is_empty():
+				quest["quest_giver"] = str(quest.get("opportunity_source_npc", quest.get("target_npc", "pierre")))
+		OBJECTIVE_TALK:
+			quest["type"] = "talk"
+		_:
+			pass
 
 func _parse_ai_quest_json(raw_text: String) -> Dictionary:
 	var text: String = raw_text.strip_edges()
@@ -837,6 +857,17 @@ func verify_active_objectives() -> void:
 				if str(ed.get("npc_id", "")) == giver:
 					complete_quest(str(qid), true, {"verified_by": "talk_problem_solving", "npc_id": giver})
 					break
+		elif qtype == "talk":
+			var talk_npc: String = str(quest.get("target_npc", quest.get("quest_giver", "")))
+			if talk_npc.is_empty():
+				talk_npc = "pierre"
+			for ev in _recent_events:
+				if str(ev.get("type", "")) != "talk":
+					continue
+				var ed: Dictionary = ev.get("data", {})
+				if str(ed.get("npc_id", "")) == talk_npc:
+					complete_quest(str(qid), true, {"verified_by": "talk_to_npc", "npc_id": talk_npc})
+					break
 
 func assign_quest_to_player(quest: Dictionary):
 	"""Assign generated quest to player"""
@@ -880,6 +911,8 @@ func complete_quest(quest_id: String, success: bool = true, extra_data: Dictiona
 		_emit_structured_completion_feedback(quest_id, quest)
 	else:
 		quest_failed.emit(quest_id, extra_data.get("reason", "Unknown"))
+	if QuestSystem and QuestSystem.has_method("sync_ai_quest_status"):
+		QuestSystem.sync_ai_quest_status(quest_id, quest.status == "completed")
 	
 	# Update narrative threads
 	update_narrative_from_quest(quest, success)
