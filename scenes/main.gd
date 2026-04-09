@@ -36,7 +36,7 @@ const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
 const SAVE_BUNDLE_VERSION := 3
 const PIERRE_SHOP_RADIUS_PX := 140.0
 const BASE_STAMINA_MAX := 100.0
-## Throttle keys: "memory", "market", "em_<npc_id>"
+## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
 var _visible_feed_last: Dictionary = {}
 
 func _ready():
@@ -72,6 +72,12 @@ func _ready():
 		NPCEmotionSystem.emotion_changed.connect(_on_visible_emotion_changed)
 	if AIEconomySystem and AIEconomySystem.has_signal("player_visible_market_note"):
 		AIEconomySystem.player_visible_market_note.connect(_on_player_visible_market_note)
+	if NPCTraitSystem and NPCTraitSystem.has_signal("relationship_evolved"):
+		NPCTraitSystem.relationship_evolved.connect(_on_relationship_evolved)
+	if NPCMemorySystem and NPCMemorySystem.has_signal("preference_learned"):
+		NPCMemorySystem.preference_learned.connect(_on_preference_learned_memory)
+	if NPCPersonalitySystem and NPCPersonalitySystem.has_signal("preference_learned"):
+		NPCPersonalitySystem.preference_learned.connect(_on_preference_learned_personality)
 	if DailyNarrativeSystem:
 		DailyNarrativeSystem.narrative_generated.connect(_on_daily_narrative_generated)
 		if DailyNarrativeSystem.has_signal("backend_generation_fallback"):
@@ -1072,6 +1078,10 @@ func _on_quest_completed(quest_id: String):
 		var quest_data: Dictionary = QuestSystem.quests[quest_id]
 		var title = quest_data.get("title", quest_id)
 		show_dialogue("Quest completed: " + str(title))
+		var reward_line: String = _format_quest_material_rewards_line(quest_id, quest_data)
+		if not reward_line.is_empty():
+			record_world_event(reward_line)
+			show_quick_tip(reward_line, 1.75)
 		_apply_story_completion_feedback(quest_data)
 	_refresh_quest_log()
 
@@ -1094,6 +1104,82 @@ func _on_quest_impact_applied(quest_id: String, impact: Dictionary) -> void:
 	var line: String = "Quest impact [%s]: %s" % [quest_id, ", ".join(parts)]
 	record_world_event(line)
 	show_quick_tip(line, 1.9)
+
+func _format_quest_material_rewards_line(quest_id: String, quest_data: Dictionary) -> String:
+	var reward_data: Variant = quest_data.get("reward", {})
+	if not (reward_data is Dictionary):
+		return ""
+	var rd: Dictionary = reward_data as Dictionary
+	var parts: Array[String] = []
+	if rd.has("gold"):
+		var g: int = int(rd.get("gold", 0))
+		if g > 0:
+			parts.append("+%dg" % g)
+	if rd.has("items"):
+		var raw_items: Variant = rd.get("items", [])
+		if raw_items is Array:
+			for item_str in raw_items:
+				var ps: PackedStringArray = str(item_str).split(":")
+				var item_id: String = str(ps[0]).strip_edges()
+				if item_id.is_empty():
+					continue
+				var count: int = int(ps[1]) if ps.size() > 1 else 1
+				var nm: String = item_id
+				if ItemDatabase:
+					var tpl: Dictionary = ItemDatabase.get_item(item_id)
+					if not tpl.is_empty():
+						nm = str(tpl.get("name", item_id))
+				parts.append("%s x%d" % [nm, count])
+	if parts.is_empty():
+		return ""
+	return "Quest loot [%s]: %s" % [str(quest_data.get("id", quest_id)), ", ".join(parts)]
+
+func _on_relationship_evolved(npc_id: String, other_id: String, new_level: int) -> void:
+	if str(other_id) != "player":
+		return
+	var now: float = float(Time.get_unix_time_from_system())
+	var last: float = float(_visible_feed_last.get("rel", 0.0))
+	if now - last < 4.0:
+		return
+	_visible_feed_last["rel"] = now
+	var who: String = _resolve_npc_display_name(npc_id)
+	var line: String = "Bond · %s → tier %d." % [who, clampi(int(new_level), 0, 10)]
+	record_world_event(line)
+	show_quick_tip(line, 1.8)
+
+func _on_preference_learned_memory(npc_id: String, preference_key: String) -> void:
+	var now: float = float(Time.get_unix_time_from_system())
+	var last: float = float(_visible_feed_last.get("pref", 0.0))
+	if now - last < 5.0:
+		return
+	_visible_feed_last["pref"] = now
+	var who: String = _resolve_npc_display_name(npc_id)
+	var pk: String = str(preference_key).replace("_", " ").strip_edges()
+	if pk.is_empty():
+		pk = "something about you"
+	var line: String = "Noted · %s picked up: %s." % [who, pk]
+	record_world_event(line)
+	show_quick_tip(line, 1.7)
+
+func _on_preference_learned_personality(npc_id: String, category: String, item: String) -> void:
+	var now: float = float(Time.get_unix_time_from_system())
+	var last: float = float(_visible_feed_last.get("pref", 0.0))
+	if now - last < 5.0:
+		return
+	_visible_feed_last["pref"] = now
+	var who: String = _resolve_npc_display_name(npc_id)
+	var item_id: String = str(item).strip_edges()
+	var label: String = item_id
+	if ItemDatabase and not item_id.is_empty():
+		var tpl: Dictionary = ItemDatabase.get_item(item_id)
+		if not tpl.is_empty():
+			label = str(tpl.get("name", item_id))
+	var cat: String = str(category).strip_edges()
+	if cat.is_empty():
+		cat = "gift"
+	var line: String = "Preference · %s favors %s (%s)." % [who, label, cat]
+	record_world_event(line)
+	show_quick_tip(line, 1.7)
 
 func _on_player_visible_market_note(line: String) -> void:
 	if line.is_empty():
