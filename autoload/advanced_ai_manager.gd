@@ -1,6 +1,6 @@
 extends Node
 
-class_name AdvancedAIAgentManager
+# Autoload singleton: AdvancedAIAgentManager (see project.godot)
 
 # ============================================
 # 高级多智能体 AI 管理系统
@@ -329,58 +329,46 @@ Example:
 ## RESPONSE
 Now respond as {name}:"""
 
-	# 填充模板
-	prompt = prompt.format(
-		name=profile.get("name", "Unknown"),
-		age=profile.get("age", "Adult"),
-		occupation=profile.get("occupation", "Villager"),
-		current_location=context.get("location", "Town"),
-		
-		traits=format_list(profile.get("personality", {}).get("traits", ["friendly"])),
-		values=format_list(profile.get("personality", {}).get("values", ["community"])),
-		fears=format_list(profile.get("personality", {}).get("fears", ["loneliness"])),
-		dreams=format_list(profile.get("personality", {}).get("dreams", ["prosperity"])),
-		quirks=format_list(profile.get("personality", {}).get("quirks", [])),
-		
-		backstory=profile.get("backstory", "A villager living in the town."),
-		life_context=profile.get("life_context", "Living daily life in the valley."),
-		
-		emotion=state.current_emotion.capitalize(),
-		emotion_intensity=int(state.get("emotion_intensity", 0.5) * 100),
-		energy=int(state.energy_level * 100),
-		social_battery=int(state.social_battery * 100),
-		current_action=state.current_action,
-		
-		time_of_day=get_time_period(context.get("time", 10.0)),
-		specific_time=format_game_time(context.get("time", 10.0)),
-		weather=context.get("weather", "sunny"),
-		season=context.get("season", "spring").capitalize(),
-		day=context.get("day", 1),
-		year=context.get("year", 1),
-		
-		relationships=format_relationships(relationships),
-		social_history=format_social_history(memories.get("recent_interactions", [])),
-		social_situation=context.get("social_situation", "No special social context."),
-		
-		location_description=get_location_description(context.get("location", "town")),
-		nearby_characters=format_nearby_chars(context.get("nearby_npcs", [])),
-		environmental_events=format_events(context.get("events", [])),
-		
-		memories=format_memories(memories.get("relevant", [])),
-		player_interactions=format_player_history(memories.get("player_interactions", [])),
-		important_facts=format_important_facts(memories.get("facts", [])),
-		
-		schedule_info=format_schedule(agent.daily_schedule, context.get("time", 10.0)),
-		schedule_expectation=get_schedule_expectation(schedule_context),
-		
-		speech_style_description=get_speech_style_guide(profile.get("speech_style", "casual")),
-		
-		current_situation=context.get("situation", "Normal conversation."),
-		recent_events=context.get("recent_events", "Nothing unusual."),
-		response_type=context.get("response_type", "General conversation"),
-		
-		name=profile.get("name", "Villager")
-	)
+	# 填充模板（Godot String.format 使用单字典，不支持 Python 风格关键字参数）
+	prompt = prompt.format({
+		"name": profile.get("name", "Unknown"),
+		"age": profile.get("age", "Adult"),
+		"occupation": profile.get("occupation", "Villager"),
+		"current_location": context.get("location", "Town"),
+		"traits": format_list(profile.get("personality", {}).get("traits", ["friendly"])),
+		"values": format_list(profile.get("personality", {}).get("values", ["community"])),
+		"fears": format_list(profile.get("personality", {}).get("fears", ["loneliness"])),
+		"dreams": format_list(profile.get("personality", {}).get("dreams", ["prosperity"])),
+		"quirks": format_list(profile.get("personality", {}).get("quirks", [])),
+		"backstory": profile.get("backstory", "A villager living in the town."),
+		"life_context": profile.get("life_context", "Living daily life in the valley."),
+		"emotion": state.current_emotion.capitalize(),
+		"emotion_intensity": int(state.get("emotion_intensity", 0.5) * 100),
+		"energy": int(state.energy_level * 100),
+		"social_battery": int(state.social_battery * 100),
+		"current_action": state.current_action,
+		"time_of_day": get_time_period(context.get("time", 10.0)),
+		"specific_time": format_game_time(context.get("time", 10.0)),
+		"weather": context.get("weather", "sunny"),
+		"season": context.get("season", "spring").capitalize(),
+		"day": context.get("day", 1),
+		"year": context.get("year", 1),
+		"relationships": format_relationships(relationships),
+		"social_history": format_social_history(memories.get("recent_interactions", [])),
+		"social_situation": context.get("social_situation", "No special social context."),
+		"location_description": get_location_description(context.get("location", "town")),
+		"nearby_characters": format_nearby_chars(context.get("nearby_npcs", [])),
+		"environmental_events": format_events(context.get("events", [])),
+		"memories": format_memories(memories.get("relevant", [])),
+		"player_interactions": format_player_history(memories.get("player_interactions", [])),
+		"important_facts": format_important_facts(memories.get("facts", [])),
+		"schedule_info": format_schedule(agent.daily_schedule, context.get("time", 10.0)),
+		"schedule_expectation": get_schedule_expectation(schedule_context),
+		"speech_style_description": get_speech_style_guide(profile.get("speech_style", "casual")),
+		"current_situation": context.get("situation", "Normal conversation."),
+		"recent_events": context.get("recent_events", "Nothing unusual."),
+		"response_type": context.get("response_type", "General conversation"),
+	})
 	
 	return prompt
 
@@ -581,6 +569,16 @@ func get_current_activity(schedule: Dictionary, current_time: float) -> Dictiona
 			break
 	
 	return current if current else {"action": "idle"}
+
+func get_schedule_context(agent: Dictionary, current_time: float) -> Dictionary:
+	var schedule: Dictionary = agent.get("daily_schedule", {})
+	if schedule.is_empty():
+		return {}
+	var activity: Variant = get_current_activity(schedule, current_time)
+	if activity is Dictionary:
+		var d: Dictionary = activity
+		return {"expected_action": str(d.get("action", "idle"))}
+	return {"expected_action": str(activity)}
 
 # ============================================
 # 辅助函数
@@ -888,9 +886,6 @@ func get_social_context(agent_id: String) -> Dictionary:
 		"active_conversations": agent.get("active_conversations", []),
 		"social_battery": agent.get("state", {}).get("social_battery", 1.0)
 	}
-
-func get_location_description(location: String) -> String:
-	return "A familiar place."
 
 func trigger_schedule_thought(agent: Dictionary, activity: Dictionary):
 	"""触发日程相关的思考"""
