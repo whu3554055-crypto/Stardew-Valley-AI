@@ -31,3 +31,6 @@ static func contains_smelter(pos: Vector2) -> bool:
 
 static func contains_forest(pos: Vector2) -> bool:
 	return rect_forest().has_point(pos)
+
+static func is_indoor_station(pos: Vector2) -> bool:
+	return contains_kitchen(pos) or contains_smelter(pos) or contains_workbench(pos)

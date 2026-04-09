@@ -25,6 +25,24 @@
 
 ---
 
+## 🎧 沉浸与反馈迭代（按性价比排序，做完勾一项）
+
+> 以下为「体感明显、改动集中」的连续优化；与 `WorldAmbientController`、`WorldWeatherVisuals`、`GameZones`、`GatheringSfx` 等相关。
+
+- [x] **商店开门铃**：在 Pierre 附近成功打开商店时播放 `shop_bell`（`GatheringSfx.play_shop_bell()`）。  
+- [x] **昼夜×天气画面**：`WorldWeatherVisuals` 在天气色调上叠加昼夜时间（`GameManager.time_changed` 即时刷新；换天气仍 tween）。  
+- [x] **区域环境音轮询**：移动超过约 48px 或每 0.5s 才重算区域，减少站立不动时的开销。  
+- [x] **室内环境压低**：站在厨房/熔炉/工作台矩形（`GameZones.is_indoor_station`）时压低区域与天气层音量。  
+- [x] **工具动作短暂压低环境**：挖矿成功 / 砍树成功 / 咬钩提示 / 钓鱼成功时 `WorldAmbientController.request_activity_duck(…)`。  
+- [x] **雨雪粒子风向**：暴雨更斜、更强侧风；雪略调 `gravity`/`direction`。  
+- [x] **工具失败进简报**：矿/林/鱼失败时 `record_world_event` 一行（与对话一致）。  
+- [ ] **音频与天气常量外置**：`PATH_*`、色调、`dB` 偏移收到单份 JSON / Resource，便于策划调参。  
+- [ ] **区域检测统一入口**：钓鱼/砍树/农场/商店等矩形逐步收敛到 `GameZones` + 少量专用 API，避免改一处漏一处。  
+- [ ] **UI 与天气**：面板/边框在现有季节 accent 下，可按天气只做轻量 `modulate` 或透明度（不动布局）。  
+- [ ] **Ambience 总线效果（可选）**：雨天为 Ambience 加轻量低通或音量曲线（需 `AudioEffect` 与资源）。  
+
+---
+
 ## 📋 分阶段迭代顺序（约定：先玩法，后 AI）
 
 > 与下方「进行中」列表互补：这里按**推荐完成顺序**排列，做完一项勾一项；AI 段在玩法阶段未收尾前默认不插队（紧急 Bug 除外）。

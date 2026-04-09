@@ -694,15 +694,20 @@ func _on_player_interact(tile_position: Vector2):
 			var catch_result: Dictionary = FishingSystem.handle_fish_input(player.global_position)
 			if str(catch_result.get("phase", "")) == "hook_prompt":
 				show_quick_tip(str(catch_result.get("message", "Press E!")))
+				if WorldAmbientController:
+					WorldAmbientController.request_activity_duck(0.85)
 				return
 			var fish_msg: String = str(catch_result.get("message", ""))
 			if catch_result.get("ok", false):
 				show_dialogue(fish_msg)
 				record_world_event(fish_msg)
+				if WorldAmbientController:
+					WorldAmbientController.request_activity_duck(1.15)
 				_play_fx_fish()
 				return
 			if not fish_msg.is_empty():
 				show_dialogue(fish_msg)
+				record_world_event("Fish: %s" % fish_msg)
 				return
 
 	# Pickaxe on farm: pick up basic sprinkler from facing tile (before mining)
@@ -732,6 +737,8 @@ func _on_player_interact(tile_position: Vector2):
 				InventoryManager.damage_tool_slot(InventoryManager.selected_slot, 1)
 				show_dialogue(mine_msg)
 				record_world_event(mine_msg)
+				if WorldAmbientController:
+					WorldAmbientController.request_activity_duck(1.0)
 				var mine_hint: String = str(mine_result.get("hint", ""))
 				if not mine_hint.is_empty():
 					show_quick_tip(mine_hint)
@@ -739,6 +746,7 @@ func _on_player_interact(tile_position: Vector2):
 				return
 			if not mine_msg.is_empty():
 				show_dialogue(mine_msg)
+				record_world_event("Mine: %s" % mine_msg)
 				return
 
 	# Chopping: axe in forest (west, below mine entrance)
@@ -750,9 +758,12 @@ func _on_player_interact(tile_position: Vector2):
 				InventoryManager.damage_tool_slot(InventoryManager.selected_slot, 1)
 				show_dialogue(ch_msg)
 				record_world_event(ch_msg)
+				if WorldAmbientController:
+					WorldAmbientController.request_activity_duck(1.0)
 				return
 			if not ch_msg.is_empty():
 				show_dialogue(ch_msg)
+				record_world_event("Chop: %s" % ch_msg)
 				return
 
 	# Basic sprinkler — place on empty tilled tile; waters 4 ortho neighbors each morning (+ once on place)
@@ -1026,6 +1037,8 @@ func _try_open_shop_near_pierre() -> void:
 		show_quick_tip(UITextCatalog.get_text("quick_tip", "shop_open_near_pierre"))
 		return
 	shop_ui.open_shop()
+	if GatheringSfx:
+		GatheringSfx.play_shop_bell()
 
 
 func _try_sell_selected_inventory() -> bool:

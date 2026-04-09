@@ -9,6 +9,7 @@ const PATH_COOK := "res://assets/audio/activities/farming_plant.wav"
 const PATH_CRAFT := "res://assets/audio/ui/notification.wav"
 const PATH_WATER := "res://assets/audio/activities/farming_water.wav"
 const PATH_WALK_GRASS := "res://assets/audio/activities/walking_grass.wav"
+const PATH_SHOP_BELL := "res://assets/audio/locations/shop_bell.wav"
 
 var _player: AudioStreamPlayer
 var _foot_player: AudioStreamPlayer
@@ -45,6 +46,9 @@ func play_craft() -> void:
 
 func play_water() -> void:
 	_play_path(PATH_WATER)
+
+func play_shop_bell() -> void:
+	_play_path(PATH_SHOP_BELL)
 
 func play_footstep_grass(pitch_scale: float = 1.0) -> void:
 	if _foot_player == null:

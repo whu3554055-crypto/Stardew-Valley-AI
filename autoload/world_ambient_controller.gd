@@ -39,9 +39,14 @@ var _night_player: AudioStreamPlayer
 var _morning_player: AudioStreamPlayer
 
 var _poll_accum: float = 0.0
-const REGION_POLL_SEC := 0.4
+const REGION_POLL_MAX := 0.5
+const REGION_MOVE_MIN := 48.0
+var _last_region_sample_pos: Vector2 = Vector2(1e12, 1e12)
 var _last_region_key: String = "__init__"
 var _last_morning_chirp_key: int = -1
+var _activity_duck_sec: float = 0.0
+const ACTIVITY_DUCK_DB := 2.5
+const INDOOR_DUCK_DB := 2.0
 
 func _ready() -> void:
 	_season_player = _make_player("SeasonBed", "Music", SEASON_DB_DAY)
@@ -67,14 +72,24 @@ func _ready() -> void:
 			GameManager.time_changed.connect(_on_game_time_changed)
 	call_deferred("_refresh_all")
 
+func request_activity_duck(duration_sec: float = 1.0) -> void:
+	_activity_duck_sec = maxf(_activity_duck_sec, duration_sec)
+
 func _process(delta: float) -> void:
+	if _activity_duck_sec > 0.0:
+		_activity_duck_sec = maxf(0.0, _activity_duck_sec - delta)
+	_apply_ambient_volume_modifiers()
+
 	_poll_accum += delta
-	if _poll_accum < REGION_POLL_SEC:
-		return
-	_poll_accum = 0.0
 	if get_tree().current_scene == null:
 		return
-	_apply_region_layer(_get_player_position())
+	var pos: Vector2 = _get_player_position()
+	var moved_far: bool = _last_region_sample_pos.distance_to(pos) >= REGION_MOVE_MIN
+	if _poll_accum < REGION_POLL_MAX and not moved_far:
+		return
+	_poll_accum = 0.0
+	_last_region_sample_pos = pos
+	_apply_region_layer(pos)
 
 func _make_player(node_name: String, bus_name: String, vol_db: float) -> AudioStreamPlayer:
 	var p: AudioStreamPlayer = AudioStreamPlayer.new()
@@ -106,7 +121,7 @@ func _on_day_changed(_day: int) -> void:
 func _on_game_time_changed(_t: float) -> void:
 	_try_morning_birds_one_shot()
 	_apply_season_volume_mix()
-	_apply_auxiliary_ambient_levels()
+	_apply_ambient_volume_modifiers()
 	_apply_day_night_layer()
 
 func _refresh_all() -> void:
@@ -116,7 +131,7 @@ func _refresh_all() -> void:
 	if pos != Vector2.ZERO:
 		_apply_region_layer(pos, true)
 	_apply_season_volume_mix()
-	_apply_auxiliary_ambient_levels()
+	_apply_ambient_volume_modifiers()
 	_apply_day_night_layer()
 
 func _apply_season_bed() -> void:
@@ -184,11 +199,25 @@ func _apply_season_volume_mix() -> void:
 	_season_player.volume_db = _compute_season_volume_db()
 	_season_player.pitch_scale = _weather_music_pitch()
 
-func _apply_auxiliary_ambient_levels() -> void:
+func _apply_ambient_volume_modifiers() -> void:
 	if not GameManager:
 		return
 	var night: bool = _is_night_hours(GameManager.current_time)
-	_region_player.volume_db = REGION_DB_NIGHT if night else REGION_DB_DAY
+	var base_r: float = REGION_DB_NIGHT if night else REGION_DB_DAY
+	var pos: Vector2 = _get_player_position()
+	if GameZones.is_indoor_station(pos):
+		base_r -= INDOOR_DUCK_DB
+	if _activity_duck_sec > 0.0:
+		base_r -= ACTIVITY_DUCK_DB
+	if _region_player.playing:
+		_region_player.volume_db = base_r
+	if _weather_player.playing:
+		var vb: float = float(_weather_player.get_meta("wa_vol_base", -14.0))
+		if GameZones.is_indoor_station(pos):
+			vb -= INDOOR_DUCK_DB
+		if _activity_duck_sec > 0.0:
+			vb -= ACTIVITY_DUCK_DB
+		_weather_player.volume_db = vb
 
 func _morning_chirp_key() -> int:
 	if not GameManager:
@@ -239,15 +268,16 @@ func _apply_weather_layer() -> void:
 	match WeatherSystem.current_weather:
 		WeatherSystem.WeatherType.RAIN:
 			_play_loop_stream(_weather_player, PATH_WEATHER["rain"])
-			_weather_player.volume_db = -13.5
+			_weather_player.set_meta("wa_vol_base", -13.5)
 		WeatherSystem.WeatherType.STORM:
 			_play_loop_stream(_weather_player, PATH_WEATHER["storm"])
-			_weather_player.volume_db = -11.5
+			_weather_player.set_meta("wa_vol_base", -11.5)
 		WeatherSystem.WeatherType.SNOW:
 			_play_loop_stream(_weather_player, PATH_WEATHER["snow_wind"])
-			_weather_player.volume_db = -14.0
+			_weather_player.set_meta("wa_vol_base", -14.0)
 		_:
 			_stop_stream(_weather_player)
+	_apply_ambient_volume_modifiers()
 
 func _apply_region_layer(pos: Vector2, force: bool = false) -> void:
 	var key: String = _resolve_region_ambient_key(pos)
@@ -262,7 +292,7 @@ func _apply_region_layer(pos: Vector2, force: bool = false) -> void:
 		_stop_stream(_region_player)
 		return
 	_play_loop_stream(_region_player, path)
-	_apply_auxiliary_ambient_levels()
+	_apply_ambient_volume_modifiers()
 
 func _resolve_region_ambient_key(pos: Vector2) -> String:
 	if GameZones.contains_forest(pos):
@@ -322,3 +352,5 @@ func _stop_stream(player: AudioStreamPlayer) -> void:
 	player.stop()
 	if player.has_meta("wa_path"):
 		player.remove_meta("wa_path")
+	if player == _weather_player and player.has_meta("wa_vol_base"):
+		player.remove_meta("wa_vol_base")

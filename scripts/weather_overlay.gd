@@ -43,10 +43,15 @@ func _sync_weather() -> void:
 			_rain.amount = 920 if storm else 560
 			_rain.initial_velocity_min = 420.0 if storm else 300.0
 			_rain.initial_velocity_max = 680.0 if storm else 520.0
+			_rain.direction = Vector2(0.32, 1.0) if storm else Vector2(0.15, 1.0)
+			_rain.gravity = Vector2(220.0, 0.0) if storm else Vector2(140.0, 0.0)
+			_rain.spread = 18.0 if storm else 12.0
 			_snow.emitting = false
 		WeatherSystem.WeatherType.SNOW:
 			_rain.emitting = false
 			_snow.emitting = true
+			_snow.gravity = Vector2(22.0, 14.0)
+			_snow.direction = Vector2(0.12, 1.0)
 		_:
 			_rain.emitting = false
 			_snow.emitting = false
