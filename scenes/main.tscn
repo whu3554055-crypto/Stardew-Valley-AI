@@ -38,6 +38,10 @@ shape = SubResource("RectangleShape2D_player")
 
 [node name="InteractionArea" type="Area2D" parent="Player"]
 
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 10.0
+
 [node name="FarmManager" type="Node2D" parent="."]
 script = ExtResource("5_farm")
 
@@ -275,6 +279,19 @@ lifetime = 0.35
 color = Color(1, 0.62, 0.22, 1)
 direction = Vector2(0, -1)
 spread = 180.0
+
+[node name="ChopLeaves" type="CPUParticles2D" parent="FXLayer"]
+emitting = false
+one_shot = true
+explosiveness = 0.75
+amount = 26
+lifetime = 0.55
+color = Color(0.38, 0.62, 0.28, 0.92)
+direction = Vector2(0, -1)
+spread = 125.0
+initial_velocity_min = 25.0
+initial_velocity_max = 95.0
+gravity = Vector2(0, 120)
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 

@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "audio": {
+    "paths": {
+      "season": {
+        "spring": "res://assets/audio/ambience/spring.ogg",
+        "summer": "res://assets/audio/ambience/summer.ogg",
+        "fall": "res://assets/audio/ambience/fall.ogg",
+        "winter": "res://assets/audio/ambience/winter.ogg"
+      },
+      "weather": {
+        "rain": "res://assets/audio/ambience/rain.ogg",
+        "storm": "res://assets/audio/ambience/storm.ogg",
+        "snow_wind": "res://assets/audio/ambience_extended/wind_trees.wav",
+        "windy": "res://assets/audio/ambience_extended/leaves_rustle.wav"
+      },
+      "region": {
+        "forest": "res://assets/audio/locations/forest_birds.ogg",
+        "beach": "res://assets/audio/locations/beach_waves.ogg",
+        "river": "res://assets/audio/ambience_extended/river_flow.wav",
+        "town": "res://assets/audio/locations/town_crowd.ogg",
+        "farm": "res://assets/audio/ambience_extended/stream_gentle.wav"
+      },
+      "night_crickets": "res://assets/audio/ambience_extended/crickets_night.wav",
+      "morning_birds": "res://assets/audio/ambience_extended/birds_morning.wav",
+      "shop_bell": "res://assets/audio/locations/shop_bell.wav",
+      "shop_door": "res://assets/audio/locations/shop_enter.wav",
+      "shop_exit": "res://assets/audio/ui/cancel.wav",
+      "footsteps": {
+        "grass": "res://assets/audio/activities/walking_grass.wav",
+        "wood": "res://assets/audio/ui/hover.wav",
+        "mine": "res://assets/audio/ui/click.wav"
+      },
+      "season_change": "res://assets/audio/ui/level_up.wav"
+    },
+    "storm": {
+      "thunder_path": "res://assets/audio/ambience_extended/rain_heavy.wav",
+      "thunder_delay_min_sec": 0.08,
+      "thunder_delay_max_sec": 0.42,
+      "thunder_volume_db": -8.0,
+      "thunder_pitch_min": 0.82,
+      "thunder_pitch_max": 1.05
+    },
+    "levels": {
+      "season_db_day": -10.0,
+      "season_db_night": -13.0,
+      "region_db_day": -16.0,
+      "region_db_night": -17.5,
+      "activity_duck_db": 2.5,
+      "indoor_duck_db": 2.0,
+      "shop_bell_after_door_sec": 0.18,
+      "weather_vol_base": {
+        "rain": -13.5,
+        "storm": -11.5,
+        "snow": -14.0,
+        "windy": -14.5
+      },
+      "music_offset_db": {
+        "sunny": 0.0,
+        "overcast": -1.5,
+        "windy": -1.5,
+        "rain": -2.5,
+        "storm": -3.5,
+        "snow": -2.0
+      },
+      "music_pitch": {
+        "sunny": 1.0,
+        "overcast": 0.993,
+        "windy": 0.993,
+        "rain": 0.982,
+        "storm": 0.971,
+        "snow": 0.986
+      },
+      "region_poll_max_sec": 0.5,
+      "region_move_min_px": 48.0
+    },
+    "ambience_bus_lowpass": {
+      "enabled_for_precipitation": true,
+      "bus_name": "Ambience",
+      "effect_slot_index": 0,
+      "cutoff_hz_dry": 20500.0,
+      "cutoff_hz_wet": 4800.0
+    },
+    "season_crossfade": {
+      "fade_out_sec": 0.28,
+      "fade_in_sec": 0.42,
+      "duck_db_during": -38.0
+    },
+    "sfx_mine_reverb": {
+      "enabled": true,
+      "effect_slot_index": 0
+    },
+    "forest_presence": {
+      "enabled": true,
+      "cooldown_min_sec": 22.0,
+      "cooldown_max_sec": 46.0,
+      "chirp_path": "res://assets/audio/ambience_extended/birds_forest.wav",
+      "pitch_min": 0.9,
+      "pitch_max": 1.06
+    },
+    "stamina_low": {
+      "ratio_threshold": 0.22,
+      "ratio_reset_above": 0.38,
+      "tip_duration_sec": 2.4,
+      "sound_path": "res://assets/audio/ui/error.wav"
+    }
+  },
+  "visual": {
+    "weather_tints": {
+      "sunny": [1.0, 1.0, 1.0, 1.0],
+      "overcast": [0.92, 0.92, 0.94, 1.0],
+      "windy": [0.88, 0.9, 0.92, 1.0],
+      "rain": [0.76, 0.81, 0.9, 1.0],
+      "storm": [0.58, 0.63, 0.76, 1.0],
+      "snow": [0.93, 0.96, 1.0, 1.0]
+    },
+    "time_tint": {
+      "night": [0.86, 0.88, 0.96, 1.0],
+      "dawn_start": 5.0,
+      "dawn_end": 7.0,
+      "dusk_start": 17.0,
+      "dusk_end": 20.0,
+      "dusk_target": [0.9, 0.9, 0.97, 1.0]
+    },
+    "tween_sec": 1.15,
+    "screen_shake": {
+      "strength_px": 5.5
+    },
+    "ui_weather_accent_mult": {
+      "sunny": [1.0, 1.0, 1.0, 1.0],
+      "overcast": [0.96, 0.96, 0.98, 1.0],
+      "windy": [0.95, 0.96, 0.98, 1.0],
+      "rain": [0.9, 0.93, 1.0, 1.0],
+      "storm": [0.85, 0.88, 0.95, 1.0],
+      "snow": [0.94, 0.96, 1.0, 1.0]
+    }
+  },
+  "particles": {
+    "rain": {
+      "amount_normal": 560,
+      "amount_storm": 920,
+      "vel_min_normal": 300.0,
+      "vel_max_normal": 520.0,
+      "vel_min_storm": 420.0,
+      "vel_max_storm": 680.0,
+      "dir_x_normal": 0.15,
+      "dir_x_storm": 0.32,
+      "grav_x_normal": 140.0,
+      "grav_x_storm": 220.0,
+      "spread_normal": 12.0,
+      "spread_storm": 18.0
+    },
+    "snow": {
+      "grav_x": 22.0,
+      "grav_y": 14.0,
+      "dir_x": 0.12
+    }
+  },
+  "zones": {
+    "fish_river": [1000.0, 220.0, 3200.0, 300.0],
+    "fish_ocean": [-500.0, 480.0, 4000.0, 2000.0],
+    "stations": {
+      "kitchen": [600.0, 260.0, 220.0, 170.0],
+      "workbench": [825.0, 275.0, 215.0, 155.0],
+      "smelter": [380.0, 70.0, 200.0, 190.0],
+      "forest": [40.0, 95.0, 280.0, 180.0],
+      "near_pierre": [560.0, 260.0, 280.0, 280.0]
+    },
+    "mine": {
+      "x_min": 70.0,
+      "x_max": 310.0,
+      "y_min": 300.0,
+      "y_max": 520.0,
+      "depth_break_1": 380.0,
+      "depth_break_2": 460.0
+    }
+  }
+}
