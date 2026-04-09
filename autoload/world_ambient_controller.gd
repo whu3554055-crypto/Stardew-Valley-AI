@@ -145,10 +145,11 @@ func _resolve_region_ambient_key(pos: Vector2) -> String:
 			return "beach"
 		if fz == "river":
 			return "river"
-	if FarmTierCatalog and FarmTierCatalog.get_farm_upgrade_rect().has_point(pos):
-		return "farm"
+	## Shop / plaza before farm rect — farm upgrade area overlaps Pierre's usual spot.
 	if GameZones.rect_near_pierre().has_point(pos):
 		return "town"
+	if FarmTierCatalog and FarmTierCatalog.get_farm_upgrade_rect().has_point(pos):
+		return "farm"
 	return "default"
 
 func _is_night_hours(t: float) -> bool:
