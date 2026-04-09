@@ -6,10 +6,12 @@ signal generation_started(reason)
 signal generation_published(chain_id, mode)
 signal generation_failed(reason)
 signal generation_degraded(reason)
+signal runtime_status_updated(snapshot)
 
 const RUNTIME_STORE_PATH := "user://runtime_chain_templates.json"
 const MANUAL_INBOX_PATH := "user://manual_chain_inbox.json"
 const MANUAL_OVERRIDE_RES_PATH := "res://data/quests/manual_chain_overrides.json"
+const CROP_DATA_PATH := "res://data/farm/crops.json"
 const CHAIN_ID_PREFIX := "runtime_chain_"
 
 var config: Dictionary = {
@@ -18,6 +20,7 @@ var config: Dictionary = {
 	"target_total_chains_min": 24,
 	"max_generations_per_day": 1,
 	"max_consecutive_failures": 3,
+	"breaker_reopen_days": 2,
 	"default_cooldown_days": 1,
 	"use_ai_first": true,
 	"allow_procedural_fallback": true
@@ -27,8 +30,17 @@ var _runtime_chain_ids: Array = []
 var _consecutive_failures: int = 0
 var _manual_queue: Array = []
 var _performance: Dictionary = {}
+var _crop_seasons_by_id: Dictionary = {}
+var _breaker_state: String = "open" # open | half_open | closed
+var _breaker_last_closed_day: int = -1
+var _stats: Dictionary = {
+	"attempted": 0,
+	"published": 0,
+	"failed": 0
+}
 
 func _ready() -> void:
+	_load_crop_catalog()
 	_load_runtime_store()
 	_load_manual_inbox()
 	if QuestSystem and QuestSystem.has_signal("managed_chain_resolved"):
@@ -38,6 +50,10 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	if not bool(config.get("enabled", true)):
 		return
 	if QuestSystem == null:
+		return
+	_maybe_reopen_breaker()
+	if _breaker_state == "closed":
+		_emit_runtime_status()
 		return
 	var today_key: String = _day_key()
 	var generated_key: String = "agentic_runtime_generated_%s" % today_key
@@ -50,6 +66,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	var daily_count: int = int(GameManager.player_data.get(daily_count_key, 0)) if GameManager and GameManager.player_data else 0
 	if daily_count >= int(config.get("max_generations_per_day", 1)):
 		return
+	_stats["attempted"] = int(_stats.get("attempted", 0)) + 1
 	generation_started.emit(str(reason.get("reason", "unknown")))
 	var manual_take: Dictionary = _take_manual_chain()
 	if not manual_take.is_empty():
@@ -67,6 +84,9 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 					GameManager.player_data[generated_key] = true
 					GameManager.player_data[daily_count_key] = daily_count + 1
 				generation_published.emit(manual_chain_id, "manual")
+				_stats["published"] = int(_stats.get("published", 0)) + 1
+				_breaker_state = "open"
+				_emit_runtime_status()
 				return
 		_on_generation_failure("manual_chain_invalid")
 		_save_manual_inbox()
@@ -107,7 +127,10 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 		GameManager.player_data[generated_key] = true
 		GameManager.player_data[daily_count_key] = daily_count + 1
 	generation_published.emit(chain_id, mode)
+	_stats["published"] = int(_stats.get("published", 0)) + 1
+	_breaker_state = "open"
 	_check_rollout_promotions_and_offline()
+	_emit_runtime_status()
 
 func enqueue_manual_chain(chain_data: Dictionary) -> Dictionary:
 	# Minimal manual intervention API: queue one curated chain for next auto publish window.
@@ -129,6 +152,27 @@ func get_manual_queue_size() -> int:
 
 func get_chain_performance(chain_id: String) -> Dictionary:
 	return (_performance.get(chain_id, {}) as Dictionary).duplicate(true)
+
+func get_runtime_status() -> Dictionary:
+	return {
+		"breaker_state": _breaker_state,
+		"consecutive_failures": _consecutive_failures,
+		"manual_queue_size": _manual_queue.size(),
+		"runtime_chain_count": _runtime_chain_ids.size(),
+		"attempted": int(_stats.get("attempted", 0)),
+		"published": int(_stats.get("published", 0)),
+		"failed": int(_stats.get("failed", 0))
+	}
+
+func get_runtime_status_line() -> String:
+	var s: Dictionary = get_runtime_status()
+	return "Agentic runtime | breaker=%s | queued=%d | chains=%d | ok=%d fail=%d" % [
+		str(s.get("breaker_state", "open")),
+		int(s.get("manual_queue_size", 0)),
+		int(s.get("runtime_chain_count", 0)),
+		int(s.get("published", 0)),
+		int(s.get("failed", 0))
+	]
 
 func _compute_generation_reason(narrative: Dictionary) -> Dictionary:
 	var total: int = int(QuestSystem.chain_templates.size()) if QuestSystem else 0
@@ -298,6 +342,10 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 		if not (s is Dictionary):
 			return {"ok": false, "error": "step_not_dict"}
 		var sd: Dictionary = s
+		if str(sd.get("title", "")).strip_edges().is_empty():
+			return {"ok": false, "error": "missing_step_title"}
+		if str(sd.get("description", "")).strip_edges().is_empty():
+			return {"ok": false, "error": "missing_step_description"}
 		var sid: String = str(sd.get("id", "")).strip_edges()
 		if sid.is_empty():
 			return {"ok": false, "error": "missing_step_id"}
@@ -311,10 +359,27 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 		var cnt: int = int(objective.get("count", 1))
 		if cnt <= 0:
 			return {"ok": false, "error": "invalid_count"}
+		if ot == "earn_gold" and (cnt < 60 or cnt > 280):
+			return {"ok": false, "error": "earn_gold_out_of_range"}
+		if ot == "talk":
+			var npc_id: String = str(objective.get("npc_id", "")).strip_edges()
+			if npc_id.is_empty() or not _is_known_npc(npc_id):
+				return {"ok": false, "error": "unknown_talk_npc"}
+		if ot == "harvest":
+			var crop_id: String = str(objective.get("crop_id", "")).strip_edges()
+			if not crop_id.is_empty() and not _is_crop_in_current_season(crop_id):
+				return {"ok": false, "error": "crop_out_of_season"}
 		var reward: Dictionary = sd.get("reward", {})
+		if not (reward.get("items", []) is Array):
+			return {"ok": false, "error": "reward_items_not_array"}
+		for item_spec in reward.get("items", []):
+			if not _is_valid_item_spec(str(item_spec)):
+				return {"ok": false, "error": "invalid_reward_item"}
 		total_gold += int(reward.get("gold", 0))
 	if total_gold < 150 or total_gold > 520:
 		return {"ok": false, "error": "gold_out_of_range"}
+	if not _has_sellable_economy_route(steps):
+		return {"ok": false, "error": "economy_route_unreachable"}
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -392,10 +457,25 @@ func _take_manual_chain() -> Dictionary:
 
 func _on_generation_failure(reason: String) -> void:
 	_consecutive_failures += 1
+	_stats["failed"] = int(_stats.get("failed", 0)) + 1
 	generation_failed.emit(reason)
 	if _consecutive_failures >= int(config.get("max_consecutive_failures", 3)):
-		config["enabled"] = false
-		generation_degraded.emit("too_many_failures_disable_runtime")
+		_breaker_state = "closed"
+		_breaker_last_closed_day = _current_day_index()
+		generation_degraded.emit("too_many_failures_breaker_closed")
+	_emit_runtime_status()
+
+func _maybe_reopen_breaker() -> void:
+	if _breaker_state != "closed":
+		return
+	var now_day: int = _current_day_index()
+	var reopen_after: int = int(config.get("breaker_reopen_days", 2))
+	if now_day - _breaker_last_closed_day >= reopen_after:
+		_breaker_state = "half_open"
+		_consecutive_failures = 0
+
+func _emit_runtime_status() -> void:
+	runtime_status_updated.emit(get_runtime_status())
 
 func _ensure_perf_row(chain_id: String) -> Dictionary:
 	var row: Dictionary = _performance.get(chain_id, {})
@@ -475,6 +555,11 @@ func _load_runtime_store() -> void:
 	var perf: Dictionary = root.get("performance", {})
 	if perf is Dictionary:
 		_performance = perf.duplicate(true)
+	_breaker_state = str(root.get("breaker_state", _breaker_state))
+	_breaker_last_closed_day = int(root.get("breaker_last_closed_day", _breaker_last_closed_day))
+	var stats: Dictionary = root.get("stats", {})
+	if stats is Dictionary:
+		_stats = stats.duplicate(true)
 
 func _save_runtime_store() -> void:
 	var rows: Array = []
@@ -485,7 +570,10 @@ func _save_runtime_store() -> void:
 	var root: Dictionary = {
 		"version": 1,
 		"chains": rows,
-		"performance": _performance.duplicate(true)
+		"performance": _performance.duplicate(true),
+		"breaker_state": _breaker_state,
+		"breaker_last_closed_day": _breaker_last_closed_day,
+		"stats": _stats.duplicate(true)
 	}
 	var f: FileAccess = FileAccess.open(RUNTIME_STORE_PATH, FileAccess.WRITE)
 	if f == null:
@@ -544,3 +632,117 @@ func _day_key() -> String:
 		str(GameManager.player_data.get("season", "spring")),
 		int(GameManager.player_data.get("day", 1))
 	]
+
+func _current_day_index() -> int:
+	if not GameManager or not GameManager.player_data:
+		return 0
+	var season: String = str(GameManager.player_data.get("season", "spring"))
+	var season_idx: int = 0
+	match season:
+		"spring":
+			season_idx = 0
+		"summer":
+			season_idx = 1
+		"fall":
+			season_idx = 2
+		"winter":
+			season_idx = 3
+		_:
+			season_idx = 0
+	var year: int = int(GameManager.player_data.get("year", 1))
+	var day: int = int(GameManager.player_data.get("day", 1))
+	return (year - 1) * 112 + season_idx * 28 + day
+
+func _is_known_npc(npc_id: String) -> bool:
+	var id: String = npc_id.strip_edges().to_lower()
+	if id.is_empty():
+		return false
+	if NPCBehaviorController and NPCBehaviorController.has_method("get_all_npc_ids"):
+		var ids: Array = NPCBehaviorController.get_all_npc_ids()
+		for row in ids:
+			if str(row).to_lower() == id:
+				return true
+	# Safe fallback for current playable roster.
+	return id in ["pierre", "abigail", "lewis"]
+
+func _is_valid_item_spec(spec: String) -> bool:
+	var s: String = spec.strip_edges()
+	if s.is_empty():
+		return false
+	var parts: PackedStringArray = s.split(":")
+	var item_id: String = str(parts[0]).strip_edges()
+	if item_id.is_empty():
+		return false
+	var count: int = int(parts[1]) if parts.size() > 1 else 1
+	if count <= 0:
+		return false
+	if ItemDatabase and ItemDatabase.has_method("get_item"):
+		var tpl: Dictionary = ItemDatabase.get_item(item_id)
+		return not tpl.is_empty()
+	return true
+
+func _load_crop_catalog() -> void:
+	_crop_seasons_by_id.clear()
+	var f: FileAccess = FileAccess.open(CROP_DATA_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var txt: String = f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(txt) != OK or not (json.data is Array):
+		return
+	for row in (json.data as Array):
+		if not (row is Dictionary):
+			continue
+		var d: Dictionary = row
+		var cid: String = str(d.get("id", "")).strip_edges()
+		if cid.is_empty():
+			continue
+		var seasons: Array = d.get("seasons", [])
+		_crop_seasons_by_id[cid] = seasons.duplicate()
+
+func _is_crop_in_current_season(crop_id: String) -> bool:
+	if _crop_seasons_by_id.is_empty():
+		return true
+	var cid: String = crop_id.strip_edges()
+	if cid.is_empty():
+		return true
+	if not _crop_seasons_by_id.has(cid):
+		return false
+	var seasons: Array = _crop_seasons_by_id[cid]
+	if seasons.is_empty():
+		return true
+	var cur: String = "spring"
+	if GameManager and GameManager.player_data:
+		cur = str(GameManager.player_data.get("season", "spring"))
+	return seasons.has(cur)
+
+func _has_sellable_economy_route(steps: Array) -> bool:
+	var earn_gold_steps: int = 0
+	var sum_target_gold: int = 0
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var sd: Dictionary = s
+		var obj: Dictionary = sd.get("objective", {})
+		if str(obj.get("type", "")) == "earn_gold":
+			earn_gold_steps += 1
+			sum_target_gold += int(obj.get("count", 0))
+	if earn_gold_steps <= 0:
+		return true
+	# Minimal economy feasibility: enough sellable catalog and no unrealistic target.
+	var sellable_items: int = 0
+	var best_sell_price: int = 0
+	if ItemDatabase and ItemDatabase.has_method("get_all_item_ids") and ItemDatabase.has_method("get_item"):
+		for item_id in ItemDatabase.get_all_item_ids():
+			var tpl: Dictionary = ItemDatabase.get_item(str(item_id))
+			var sp: int = int(tpl.get("sell_price", 0))
+			if sp > 0:
+				sellable_items += 1
+				if sp > best_sell_price:
+					best_sell_price = sp
+	if sellable_items < 8:
+		return false
+	# One chain should not demand extreme liquidation.
+	var hard_cap: int = maxi(220, best_sell_price * 4)
+	return sum_target_gold <= hard_cap

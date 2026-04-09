@@ -70,6 +70,8 @@ func _ready():
 		AgenticContentOrchestrator.generation_published.connect(_on_agentic_chain_generation_published)
 		AgenticContentOrchestrator.generation_failed.connect(_on_agentic_chain_generation_failed)
 		AgenticContentOrchestrator.generation_degraded.connect(_on_agentic_chain_generation_degraded)
+		if AgenticContentOrchestrator.has_signal("runtime_status_updated"):
+			AgenticContentOrchestrator.runtime_status_updated.connect(_on_agentic_runtime_status_updated)
 	if shop_ui:
 		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
 	update_ui()
@@ -521,6 +523,8 @@ func initialize_playable_first_loop():
 				QuestSystem.activate_chain_for_narrative(narrative)
 			if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
 				await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
+				if AgenticContentOrchestrator.has_method("get_runtime_status_line"):
+					record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
 
 func give_starter_items():
 	var hoe_item = ItemDatabase.get_item("hoe")
@@ -827,6 +831,8 @@ func _on_day_changed(new_day):
 			QuestSystem.activate_chain_for_narrative(narrative)
 		if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
 			await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
+			if AgenticContentOrchestrator.has_method("get_runtime_status_line"):
+				record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
 	_refresh_quest_log()
@@ -1239,6 +1245,13 @@ func _on_agentic_chain_generation_failed(reason: String) -> void:
 
 func _on_agentic_chain_generation_degraded(reason: String) -> void:
 	_record_ai_fallback_event("agentic_runtime", reason, "static_chain_templates")
+
+func _on_agentic_runtime_status_updated(snapshot: Dictionary) -> void:
+	var breaker: String = str(snapshot.get("breaker_state", "open"))
+	if breaker == "closed":
+		show_quick_tip("Agentic runtime paused (breaker closed)", 1.8)
+	elif breaker == "half_open":
+		show_quick_tip("Agentic runtime retrying (half-open)", 1.6)
 
 func _reset_daily_event_budget() -> void:
 	daily_event_budget["narrative"] = 1
