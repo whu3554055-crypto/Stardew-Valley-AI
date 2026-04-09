@@ -66,6 +66,7 @@ signal quest_updated(quest_id, objective)
 signal quest_completed(quest_id)
 signal managed_chain_resolved(outcome)
 signal managed_chain_state_changed(quest_id, state)
+signal quest_impact_applied(quest_id, impact)
 
 func _ready():
 	_load_managed_chain_config()
@@ -491,6 +492,7 @@ func complete_quest(quest_id: String):
 			for i in range(count):
 				InventoryManager.add_item(item_template.duplicate(true))
 	_apply_reward_pool(reward_data)
+	_apply_quest_outcome_impacts(quest_id, quest, true)
 
 	# Move from active to completed
 	active_quests.erase(quest_id)
@@ -501,6 +503,95 @@ func complete_quest(quest_id: String):
 	if str(quest.get("source", "")) == "managed_recovery":
 		_on_recovery_quest_completed(quest)
 	quest_completed.emit(quest_id)
+
+func _apply_quest_outcome_impacts(quest_id: String, quest: Dictionary, success: bool) -> void:
+	if bool(quest.get("impact_applied", false)):
+		return
+	var reward_data: Dictionary = quest.get("reward", {}) if quest.get("reward") is Dictionary else {}
+	var impact: Dictionary = {
+		"social_delta": _apply_quest_social_impact(quest, reward_data, success),
+		"growth_xp": _apply_quest_growth(quest, reward_data, success),
+		"success": success
+	}
+	quest["impact_applied"] = true
+	quest_impact_applied.emit(quest_id, impact)
+
+func _apply_quest_social_impact(quest: Dictionary, reward_data: Dictionary, success: bool) -> int:
+	var npc_id: String = _resolve_quest_npc(quest)
+	if npc_id.is_empty():
+		return 0
+	var base: int = int(reward_data.get("friendship", 0))
+	if base == 0:
+		base = 2 + int(reward_data.get("gold", 0)) / 120
+	base = clampi(base, 1, 12)
+	var delta: int = base if success else -maxi(1, base / 2)
+	if NPCTraitSystem and NPCTraitSystem.has_method("update_relationship"):
+		NPCTraitSystem.update_relationship(npc_id, "player", delta, "quest_outcome")
+	if NPCMemorySystem and NPCMemorySystem.has_method("record_event"):
+		var tone: String = "positive" if delta >= 0 else "negative"
+		NPCMemorySystem.record_event(
+			npc_id,
+			"Quest outcome with player: %s (%d)." % ["success" if success else "failed", delta],
+			0.6,
+			tone,
+			["quest", "relationship", str(quest.get("id", ""))]
+		)
+	return delta
+
+func _resolve_quest_npc(quest: Dictionary) -> String:
+	var sid: String = str(quest.get("story_npc_id", "")).strip_edges()
+	if not sid.is_empty():
+		return sid
+	if quest.has("npc_id"):
+		var nid: String = str(quest.get("npc_id", "")).strip_edges()
+		if not nid.is_empty():
+			return nid
+	var objectives: Array = quest.get("objectives", [])
+	for o in objectives:
+		if o is Dictionary:
+			var npc: String = str((o as Dictionary).get("npc_id", "")).strip_edges()
+			if not npc.is_empty():
+				return npc
+	return "pierre"
+
+func _apply_quest_growth(quest: Dictionary, reward_data: Dictionary, success: bool) -> int:
+	if not GameManager or not GameManager.player_data:
+		return 0
+	var growth: Dictionary = GameManager.player_data.get("quest_growth", {
+		"xp": 0,
+		"level": 1,
+		"total_completed": 0,
+		"streak": 0,
+		"last_day_index": -1
+	})
+	var objective_count: int = 0
+	if quest.get("objectives") is Array:
+		objective_count = (quest.get("objectives") as Array).size()
+	var xp_gain: int = 4 + objective_count * 3 + int(reward_data.get("gold", 0)) / 80
+	if not success:
+		xp_gain = maxi(1, xp_gain / 3)
+	xp_gain = clampi(xp_gain, 1, 30)
+	var today: int = _current_day_index()
+	if success:
+		var last_day: int = int(growth.get("last_day_index", -1))
+		if last_day == today - 1:
+			growth["streak"] = int(growth.get("streak", 0)) + 1
+		elif last_day != today:
+			growth["streak"] = 1
+		growth["last_day_index"] = today
+		growth["total_completed"] = int(growth.get("total_completed", 0)) + 1
+	else:
+		growth["streak"] = 0
+	growth["xp"] = int(growth.get("xp", 0)) + xp_gain
+	var level: int = int(growth.get("level", 1))
+	var threshold: int = level * 100
+	while int(growth.get("xp", 0)) >= threshold:
+		growth["xp"] = int(growth.get("xp", 0)) - threshold
+		level += 1
+		threshold = level * 100
+	growth["level"] = level
+	GameManager.player_data["quest_growth"] = growth
+	return xp_gain
 
 func _apply_reward_pool(reward_data: Dictionary) -> void:
 	if not reward_data.has("pool"):
@@ -979,6 +1070,7 @@ func add_quest_from_ai(ai_quest: Dictionary) -> void:
 		"id": quest_id,
 		"title": str(ai_quest.get("name", "AI Quest")),
 		"description": str(ai_quest.get("description", "")),
+		"npc_id": str(ai_quest.get("target_npc", ai_quest.get("quest_giver", ""))),
 		"objectives": [objective],
 		"status": QuestStatus.IN_PROGRESS,
 		"reward": {"gold": reward_gold, "items": []},
@@ -1001,6 +1093,7 @@ func sync_ai_quest_status(quest_id: String, success: bool) -> void:
 		active_quests.erase(quest_id)
 	if success:
 		q["status"] = QuestStatus.COMPLETED
+		_apply_quest_outcome_impacts(quest_id, q, true)
 		if not completed_quests.has(quest_id):
 			completed_quests.append(quest_id)
 		quest_completed.emit(quest_id)
