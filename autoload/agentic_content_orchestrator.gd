@@ -47,6 +47,7 @@ var _continuity_hint: String = ""
 var _chain_primary_type_by_id: Dictionary = {}
 var _player_pref_scores: Dictionary = {}
 var _recent_theme_history: Array = []
+var _abnormal_events: Array = []
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -182,6 +183,7 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	_chain_primary_type_by_id[chain_id] = _chain_primary_objective_type(chain_data)
 	_record_theme_usage(_chain_primary_theme(chain_data))
 	if mode == "safe_fallback":
+		_record_abnormal_event("safe_fallback", "runtime_chain_substituted")
 		_safe_fallback_history.append({
 			"day_key": _day_key(),
 			"day_index": _current_day_index(),
@@ -215,6 +217,7 @@ func get_chain_performance(chain_id: String) -> Dictionary:
 
 func get_runtime_status() -> Dictionary:
 	var top_block: Dictionary = _top_block_reason()
+	var abnormal_rollup: Dictionary = _abnormal_rollup()
 	return {
 		"breaker_state": _breaker_state,
 		"consecutive_failures": _consecutive_failures,
@@ -225,7 +228,10 @@ func get_runtime_status() -> Dictionary:
 		"failed": int(_stats.get("failed", 0)),
 		"last_block_reason": _last_block_reason,
 		"top_block_reason": str(top_block.get("reason", "")),
-		"top_block_count": int(top_block.get("count", 0))
+		"top_block_count": int(top_block.get("count", 0)),
+		"abnormal_recent_total": int(abnormal_rollup.get("recent_total", 0)),
+		"abnormal_guardrail_blocks": int(abnormal_rollup.get("guardrail_block", 0)),
+		"abnormal_safe_fallbacks": int(abnormal_rollup.get("safe_fallback", 0))
 	}
 
 func get_runtime_status_line() -> String:
@@ -604,12 +610,14 @@ func _on_generation_failure(reason: String) -> void:
 	_stats["failed"] = int(_stats.get("failed", 0)) + 1
 	_last_block_reason = reason
 	_reject_reason_counts[reason] = int(_reject_reason_counts.get(reason, 0)) + 1
+	_record_abnormal_event("guardrail_block", reason)
 	_record_daily_reject(reason)
 	generation_failed.emit(reason)
 	guardrail_blocked.emit(reason, get_runtime_status())
 	if _consecutive_failures >= int(config.get("max_consecutive_failures", 3)):
 		_breaker_state = "closed"
 		_breaker_last_closed_day = _current_day_index()
+		_record_abnormal_event("breaker_closed", "too_many_failures")
 		generation_degraded.emit("too_many_failures_breaker_closed")
 	_emit_runtime_status()
 
@@ -621,6 +629,7 @@ func _maybe_reopen_breaker() -> void:
 	if now_day - _breaker_last_closed_day >= reopen_after:
 		_breaker_state = "half_open"
 		_consecutive_failures = 0
+		_record_abnormal_event("breaker_half_open", "cooldown_elapsed")
 
 func _emit_runtime_status() -> void:
 	runtime_status_updated.emit(get_runtime_status())
@@ -754,6 +763,9 @@ func _load_runtime_store() -> void:
 	var sfh: Array = root.get("safe_fallback_history", [])
 	if sfh is Array:
 		_safe_fallback_history = sfh.duplicate(true)
+	var abnormal_rows: Array = root.get("abnormal_events", [])
+	if abnormal_rows is Array:
+		_abnormal_events = abnormal_rows.duplicate(true)
 	var rth: Array = root.get("recent_theme_history", [])
 	if rth is Array:
 		_recent_theme_history = rth.duplicate(true)
@@ -773,6 +785,7 @@ func _save_runtime_store() -> void:
 		"recent_reward_profiles": _recent_reward_profiles.duplicate(),
 		"daily_rejects": _daily_rejects.duplicate(),
 		"safe_fallback_history": _safe_fallback_history.duplicate(),
+		"abnormal_events": _abnormal_events.duplicate(true),
 		"recent_theme_history": _recent_theme_history.duplicate(),
 		"reject_reason_counts": _reject_reason_counts.duplicate(true),
 		"last_block_reason": _last_block_reason,
@@ -1693,6 +1706,36 @@ func _record_theme_usage(theme: String) -> void:
 	})
 	while _recent_theme_history.size() > 28:
 		_recent_theme_history.pop_front()
+
+func _record_abnormal_event(kind: String, detail: String) -> void:
+	_abnormal_events.append({
+		"day_index": _current_day_index(),
+		"kind": kind,
+		"detail": detail
+	})
+	while _abnormal_events.size() > 240:
+		_abnormal_events.pop_front()
+
+func _abnormal_rollup() -> Dictionary:
+	var now: int = _current_day_index()
+	var out: Dictionary = {
+		"recent_total": 0,
+		"guardrail_block": 0,
+		"safe_fallback": 0
+	}
+	for row in _abnormal_events:
+		if not (row is Dictionary):
+			continue
+		var d: int = int((row as Dictionary).get("day_index", -9999))
+		if now - d > 7:
+			continue
+		out["recent_total"] = int(out.get("recent_total", 0)) + 1
+		var kind: String = str((row as Dictionary).get("kind", ""))
+		if kind == "guardrail_block":
+			out["guardrail_block"] = int(out.get("guardrail_block", 0)) + 1
+		elif kind == "safe_fallback":
+			out["safe_fallback"] = int(out.get("safe_fallback", 0)) + 1
+	return out
 
 func _safe_fallback_count_today() -> int:
 	var dk: String = _day_key()
