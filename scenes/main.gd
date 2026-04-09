@@ -1242,9 +1242,18 @@ func _on_agentic_chain_generation_published(chain_id: String, mode: String) -> v
 
 func _on_agentic_chain_generation_failed(reason: String) -> void:
 	record_world_event("Agentic runtime generation failed: %s" % reason)
+	if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("get_recovery_guidance"):
+		var hint: String = str(AgenticContentOrchestrator.get_recovery_guidance(reason))
+		if not hint.is_empty():
+			record_world_event("Recovery hint: %s" % hint)
+			show_quick_tip("Recovery: " + hint, 2.1)
 
 func _on_agentic_chain_generation_degraded(reason: String) -> void:
 	_record_ai_fallback_event("agentic_runtime", reason, "static_chain_templates")
+	if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("get_recovery_guidance"):
+		var hint2: String = str(AgenticContentOrchestrator.get_recovery_guidance(reason))
+		if not hint2.is_empty():
+			record_world_event("Recovery hint: %s" % hint2)
 
 func _on_agentic_runtime_status_updated(snapshot: Dictionary) -> void:
 	var breaker: String = str(snapshot.get("breaker_state", "open"))

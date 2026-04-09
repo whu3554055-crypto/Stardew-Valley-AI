@@ -181,6 +181,25 @@ func get_runtime_status_line() -> String:
 		int(s.get("failed", 0))
 	]
 
+func get_recovery_guidance(reason: String) -> String:
+	match reason:
+		"daily_objective_mix_conflict":
+			return "Try a different objective theme tomorrow (e.g., harvest -> talk/fish)."
+		"near_duplicate_chain":
+			return "Adjust chain theme and step text to increase novelty."
+		"duration_over_timeout_budget":
+			return "Lower step counts or increase timeout budget before publishing."
+		"economy_route_unreachable":
+			return "Add supply-gathering steps before earn-gold objectives."
+		"missing_basic_tool:fishing_rod":
+			return "Grant fishing rod first or avoid fish objectives this day."
+		"missing_basic_tool:pickaxe":
+			return "Grant pickaxe first or avoid mining objectives this day."
+		"too_many_failures_breaker_closed":
+			return "Runtime is paused; wait for half-open retry window or enqueue a curated manual chain."
+		_:
+			return "Use manual override chain for today and keep runtime in canary mode."
+
 func _compute_generation_reason(narrative: Dictionary) -> Dictionary:
 	var total: int = int(QuestSystem.chain_templates.size()) if QuestSystem else 0
 	var max_runtime: int = int(config.get("max_runtime_chains", 12))
