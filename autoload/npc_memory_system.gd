@@ -287,6 +287,9 @@ func save_memories():
 			})
 	
 	var file = FileAccess.open("user://npc_memories.json", FileAccess.WRITE)
+	if file == null:
+		push_warning("NPCMemorySystem: cannot write user://npc_memories.json")
+		return
 	file.store_string(JSON.stringify(save_data))
 	file.close()
 
@@ -296,6 +299,9 @@ func load_memories():
 		return
 	
 	var file = FileAccess.open("user://npc_memories.json", FileAccess.READ)
+	if file == null:
+		push_warning("NPCMemorySystem: cannot read user://npc_memories.json")
+		return
 	var data = JSON.parse_string(file.get_as_text())
 	file.close()
 	
