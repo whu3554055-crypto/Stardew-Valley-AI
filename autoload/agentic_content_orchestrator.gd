@@ -24,6 +24,8 @@ var config: Dictionary = {
 	"default_cooldown_days": 1,
 	"max_chain_expected_value": 760,
 	"max_runtime_value_budget": 2200,
+	"safe_fallback_daily_cap": 1,
+	"safe_fallback_weekly_cap": 3,
 	"use_ai_first": true,
 	"allow_procedural_fallback": true
 }
@@ -37,6 +39,7 @@ var _recent_signatures: Array = []
 var _failure_pressure: Dictionary = {"streak": 0, "last_day": -1}
 var _recent_reward_profiles: Array = []
 var _daily_rejects: Dictionary = {}
+var _safe_fallback_history: Array = []
 var _breaker_state: String = "open" # open | half_open | closed
 var _breaker_last_closed_day: int = -1
 var _stats: Dictionary = {
@@ -166,6 +169,14 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	_record_today_objective_signature(chain_data)
 	_record_recent_signature(chain_data)
 	_record_reward_profile(chain_data)
+	if mode == "safe_fallback":
+		_safe_fallback_history.append({
+			"day_key": _day_key(),
+			"day_index": _current_day_index(),
+			"chain_id": chain_id
+		})
+		while _safe_fallback_history.size() > 24:
+			_safe_fallback_history.pop_front()
 	_check_rollout_promotions_and_offline()
 	_emit_runtime_status()
 
@@ -672,6 +683,9 @@ func _load_runtime_store() -> void:
 	var daily_rejects: Dictionary = root.get("daily_rejects", {})
 	if daily_rejects is Dictionary:
 		_daily_rejects = daily_rejects.duplicate(true)
+	var sfh: Array = root.get("safe_fallback_history", [])
+	if sfh is Array:
+		_safe_fallback_history = sfh.duplicate(true)
 
 func _save_runtime_store() -> void:
 	var rows: Array = []
@@ -687,6 +701,7 @@ func _save_runtime_store() -> void:
 		"failure_pressure": _failure_pressure.duplicate(),
 		"recent_reward_profiles": _recent_reward_profiles.duplicate(),
 		"daily_rejects": _daily_rejects.duplicate(),
+		"safe_fallback_history": _safe_fallback_history.duplicate(),
 		"breaker_state": _breaker_state,
 		"breaker_last_closed_day": _breaker_last_closed_day,
 		"stats": _stats.duplicate(true)
@@ -1496,6 +1511,10 @@ func _today_reject_count() -> int:
 func _try_safe_fallback_chain(theme: String) -> Dictionary:
 	if _today_reject_count() < 3:
 		return {}
+	if _safe_fallback_count_today() >= int(config.get("safe_fallback_daily_cap", 1)):
+		return {}
+	if _safe_fallback_count_recent_week() >= int(config.get("safe_fallback_weekly_cap", 3)):
+		return {}
 	return _build_safe_recovery_chain(theme)
 
 func _build_safe_recovery_chain(theme: String) -> Dictionary:
@@ -1530,6 +1549,26 @@ func _build_safe_recovery_chain(theme: String) -> Dictionary:
 			}
 		]
 	}
+
+func _safe_fallback_count_today() -> int:
+	var dk: String = _day_key()
+	var n: int = 0
+	for row in _safe_fallback_history:
+		if row is Dictionary and str((row as Dictionary).get("day_key", "")) == dk:
+			n += 1
+	return n
+
+func _safe_fallback_count_recent_week() -> int:
+	var now_idx: int = _current_day_index()
+	var n: int = 0
+	for row in _safe_fallback_history:
+		if not (row is Dictionary):
+			continue
+		var d: Dictionary = row
+		var idx: int = int(d.get("day_index", -9999))
+		if now_idx - idx <= 6:
+			n += 1
+	return n
 
 func _estimate_free_inventory_slots() -> int:
 	if InventoryManager == null:
