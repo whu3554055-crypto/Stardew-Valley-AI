@@ -1,6 +1,7 @@
 extends Node
 
 ## Season (Music) + weather / region / night crickets (Ambience). Region follows player position.
+## Dawn one-shot birds + gentle day/night volume on the season bed.
 
 const PATH_SEASON := {
 	"spring": "res://assets/audio/ambience/spring.ogg",
@@ -15,7 +16,6 @@ const PATH_WEATHER := {
 	"snow_wind": "res://assets/audio/ambience_extended/wind_trees.wav",
 }
 
-## Location loops (farm uses gentle stream — farm_animals asset not shipped).
 const PATH_REGION := {
 	"forest": "res://assets/audio/locations/forest_birds.ogg",
 	"beach": "res://assets/audio/locations/beach_waves.ogg",
@@ -25,25 +25,36 @@ const PATH_REGION := {
 }
 
 const PATH_NIGHT_CRICKETS := "res://assets/audio/ambience_extended/crickets_night.wav"
+const PATH_MORNING_BIRDS := "res://assets/audio/ambience_extended/birds_morning.wav"
+
+const SEASON_DB_DAY := -10.0
+const SEASON_DB_NIGHT := -13.0
+const REGION_DB_DAY := -16.0
+const REGION_DB_NIGHT := -17.5
 
 var _season_player: AudioStreamPlayer
 var _weather_player: AudioStreamPlayer
 var _region_player: AudioStreamPlayer
 var _night_player: AudioStreamPlayer
+var _morning_player: AudioStreamPlayer
 
 var _poll_accum: float = 0.0
 const REGION_POLL_SEC := 0.4
 var _last_region_key: String = "__init__"
+var _last_morning_chirp_key: int = -1
 
 func _ready() -> void:
-	_season_player = _make_player("SeasonBed", "Music", -10.0)
+	_season_player = _make_player("SeasonBed", "Music", SEASON_DB_DAY)
 	_weather_player = _make_player("WeatherLayer", "Ambience", -14.0)
-	_region_player = _make_player("RegionLayer", "Ambience", -16.0)
+	_region_player = _make_player("RegionLayer", "Ambience", REGION_DB_DAY)
 	_night_player = _make_player("NightCrickets", "Ambience", -18.0)
+	_morning_player = _make_player("MorningBirds", "Ambience", -14.0)
+	_morning_player.volume_db = -14.0
 	add_child(_season_player)
 	add_child(_weather_player)
 	add_child(_region_player)
 	add_child(_night_player)
+	add_child(_morning_player)
 	if WeatherSystem:
 		if not WeatherSystem.weather_changed.is_connected(_on_weather_changed):
 			WeatherSystem.weather_changed.connect(_on_weather_changed)
@@ -92,6 +103,9 @@ func _on_day_changed(_day: int) -> void:
 	_apply_season_bed()
 
 func _on_game_time_changed(_t: float) -> void:
+	_try_morning_birds_one_shot()
+	_apply_season_volume_mix()
+	_apply_auxiliary_ambient_levels()
 	_apply_day_night_layer()
 
 func _refresh_all() -> void:
@@ -100,6 +114,8 @@ func _refresh_all() -> void:
 	var pos: Vector2 = _get_player_position()
 	if pos != Vector2.ZERO:
 		_apply_region_layer(pos, true)
+	_apply_season_volume_mix()
+	_apply_auxiliary_ambient_levels()
 	_apply_day_night_layer()
 
 func _apply_season_bed() -> void:
@@ -108,6 +124,77 @@ func _apply_season_bed() -> void:
 	var s: String = str(GameManager.player_data.get("season", "spring")).to_lower()
 	var path: String = PATH_SEASON.get(s, PATH_SEASON["spring"])
 	_play_loop_stream(_season_player, path)
+	_apply_season_volume_mix()
+
+func _compute_season_volume_db() -> float:
+	if not GameManager:
+		return SEASON_DB_DAY
+	var t: float = GameManager.current_time
+	if _is_night_hours(t):
+		return SEASON_DB_NIGHT
+	if t >= 6.0 and t < 7.5:
+		var k: float = clampf((t - 6.0) / 1.5, 0.0, 1.0)
+		return lerpf(SEASON_DB_NIGHT, SEASON_DB_DAY, k)
+	if t >= 19.0 and t < 20.0:
+		var k2: float = clampf((t - 19.0) / 1.0, 0.0, 1.0)
+		return lerpf(SEASON_DB_DAY, SEASON_DB_NIGHT, k2)
+	return SEASON_DB_DAY
+
+func _apply_season_volume_mix() -> void:
+	if not _season_player:
+		return
+	if _season_player.stream == null:
+		return
+	_season_player.volume_db = _compute_season_volume_db()
+
+func _apply_auxiliary_ambient_levels() -> void:
+	if not GameManager:
+		return
+	var night: bool = _is_night_hours(GameManager.current_time)
+	_region_player.volume_db = REGION_DB_NIGHT if night else REGION_DB_DAY
+
+func _morning_chirp_key() -> int:
+	if not GameManager:
+		return 0
+	var y: int = int(GameManager.player_data.get("year", 1))
+	var d: int = int(GameManager.player_data.get("day", 1))
+	return y * 10000 + d
+
+func _should_skip_morning_birds() -> bool:
+	if not WeatherSystem:
+		return false
+	if WeatherSystem.is_raining():
+		return true
+	match WeatherSystem.current_weather:
+		WeatherSystem.WeatherType.STORM, WeatherSystem.WeatherType.SNOW:
+			return true
+		_:
+			return false
+
+func _try_morning_birds_one_shot() -> void:
+	if not GameManager:
+		return
+	var t: float = GameManager.current_time
+	if t < 6.0 or t >= 6.5:
+		return
+	var k: int = _morning_chirp_key()
+	if k == _last_morning_chirp_key:
+		return
+	if _should_skip_morning_birds():
+		return
+	if not ResourceLoader.exists(PATH_MORNING_BIRDS):
+		return
+	if _morning_player.playing:
+		return
+	var stream: AudioStream = load(PATH_MORNING_BIRDS) as AudioStream
+	if stream == null:
+		return
+	if stream is AudioStreamWAV:
+		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_DISABLED
+	_last_morning_chirp_key = k
+	_morning_player.stream = stream
+	_morning_player.volume_db = -13.5
+	_morning_player.play()
 
 func _apply_weather_layer() -> void:
 	if not WeatherSystem:
@@ -135,6 +222,7 @@ func _apply_region_layer(pos: Vector2, force: bool = false) -> void:
 		_stop_stream(_region_player)
 		return
 	_play_loop_stream(_region_player, path)
+	_apply_auxiliary_ambient_levels()
 
 func _resolve_region_ambient_key(pos: Vector2) -> String:
 	if GameZones.contains_forest(pos):
@@ -145,7 +233,6 @@ func _resolve_region_ambient_key(pos: Vector2) -> String:
 			return "beach"
 		if fz == "river":
 			return "river"
-	## Shop / plaza before farm rect — farm upgrade area overlaps Pierre's usual spot.
 	if GameZones.rect_near_pierre().has_point(pos):
 		return "town"
 	if FarmTierCatalog and FarmTierCatalog.get_farm_upgrade_rect().has_point(pos):

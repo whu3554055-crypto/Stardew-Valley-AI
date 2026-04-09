@@ -1,13 +1,25 @@
 extends CanvasLayer
 
-## Full-screen rain / snow driven by WeatherSystem (visual layer only).
+## Full-screen rain / snow + optional lightning flash during storms.
 
 var _rain: CPUParticles2D
 var _snow: CPUParticles2D
+var _flash: ColorRect
+var _storm_timer: Timer
 
 func _ready() -> void:
 	layer = 85
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash = ColorRect.new()
+	_flash.color = Color(1, 1, 1, 0)
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash.z_index = 12
+	add_child(_flash)
+	_storm_timer = Timer.new()
+	_storm_timer.one_shot = true
+	_storm_timer.timeout.connect(_on_storm_lightning_tick)
+	add_child(_storm_timer)
 	_rain = _make_rain()
 	_snow = _make_snow()
 	add_child(_rain)
@@ -38,6 +50,30 @@ func _sync_weather() -> void:
 		_:
 			_rain.emitting = false
 			_snow.emitting = false
+	if w == WeatherSystem.WeatherType.STORM:
+		_start_storm_lightning()
+	else:
+		_stop_storm_lightning()
+
+func _start_storm_lightning() -> void:
+	if not _storm_timer.is_stopped():
+		return
+	_storm_timer.start(randf_range(1.4, 3.2))
+
+func _stop_storm_lightning() -> void:
+	_storm_timer.stop()
+	if _flash:
+		_flash.color = Color(1, 1, 1, 0)
+
+func _on_storm_lightning_tick() -> void:
+	if not WeatherSystem or WeatherSystem.current_weather != WeatherSystem.WeatherType.STORM:
+		return
+	_flash.color = Color(0.82, 0.88, 1.0, 0.22)
+	var tw: Tween = create_tween()
+	tw.set_ease(Tween.EASE_OUT)
+	tw.tween_property(_flash, "color", Color(1, 1, 1, 0), 0.11)
+	if WeatherSystem and WeatherSystem.current_weather == WeatherSystem.WeatherType.STORM:
+		_storm_timer.start(randf_range(1.2, 4.0))
 
 func _make_rain() -> CPUParticles2D:
 	var p: CPUParticles2D = CPUParticles2D.new()

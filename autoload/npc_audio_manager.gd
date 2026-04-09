@@ -366,6 +366,7 @@ func play_npc_sound(
 			return false
 	
 	# Configure and play
+	player.bus = "SFX"
 	player.stream = audio_stream
 	player.volume_db = volume_db + calculate_volume_adjustment(sound_type)
 	player.pitch_scale = pitch_scale
@@ -950,6 +951,7 @@ func play_npc_stream(npc_id: String, sound_type: String, stream: AudioStream, pr
 			player = stop_lowest_priority_sound()
 		else:
 			return false
+	player.bus = "Voice" if sound_type == "tts_backend" else "SFX"
 	player.stream = stream
 	player.volume_db = calculate_volume_adjustment("greeting")
 	player.pitch_scale = 1.0
