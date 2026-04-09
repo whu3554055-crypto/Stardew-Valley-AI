@@ -13,6 +13,9 @@ signal quest_assigned(npc_id, quest_id)
 signal quest_completed(quest_id, outcome, rewards)
 signal quest_failed(quest_id, reason)
 signal quest_chain_completed(chain_id, quests_completed)
+signal ai_quest_request_started(npc_id)
+signal ai_quest_request_completed(npc_id, quest_data)
+signal ai_quest_request_failed(npc_id, reason)
 
 # Quest database
 var quest_templates = {}
@@ -519,17 +522,40 @@ Output ONLY in JSON format:
 	]
 	
 	# Use AIAgentManager to make the request
-	# We'll need to handle the response via a custom signal or callback
-	# For simplicity, we'll use a direct HTTP request to the backend if possible
-	# Or extend AIAgentManager
-	
-	# Mocking the AI response for now as an example of the flow
-	_on_ai_quest_response_received(npc_id, opportunity, {
-		"title": "The Secret Ingredient",
-		"description": "I'm working on a special project and I need some high-quality parsnips.",
-		"objective": "Bring 3 Parsnips to " + get_npc_name(npc_id),
-		"motivation": "It's for a secret recipe my grandmother taught me."
+	if not AIAgentManager or not AIAgentManager.has_method("request_text_generation"):
+		ai_quest_request_failed.emit(npc_id, "AIAgentManager unavailable")
+		var fallback_quest: Dictionary = generate_procedural_quest(opportunity)
+		if fallback_quest.is_empty():
+			return
+		ai_quest_request_completed.emit(npc_id, fallback_quest)
+		assign_quest_to_player(fallback_quest)
+		return
+
+	var gen: Dictionary = await AIAgentManager.request_text_generation({
+		"prompt": prompt,
+		"temperature": 0.72,
+		"max_tokens": 280
 	})
+	if not bool(gen.get("ok", false)):
+		ai_quest_request_failed.emit(npc_id, str(gen.get("error", "quest generation failed")))
+		var fallback_quest2: Dictionary = generate_procedural_quest(opportunity)
+		if fallback_quest2.is_empty():
+			return
+		ai_quest_request_completed.emit(npc_id, fallback_quest2)
+		assign_quest_to_player(fallback_quest2)
+		return
+
+	var ai_data: Dictionary = _parse_ai_quest_json(str(gen.get("text", "")))
+	if ai_data.is_empty():
+		ai_quest_request_failed.emit(npc_id, "invalid ai quest json")
+		var fallback_quest3: Dictionary = generate_procedural_quest(opportunity)
+		if fallback_quest3.is_empty():
+			return
+		ai_quest_request_completed.emit(npc_id, fallback_quest3)
+		assign_quest_to_player(fallback_quest3)
+		return
+
+	_on_ai_quest_response_received(npc_id, opportunity, ai_data)
 
 func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_data: Dictionary):
 	"""Process LLM response and create the quest"""
@@ -543,6 +569,23 @@ func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_
 	
 	ai_quest_request_completed.emit(npc_id, quest)
 	assign_quest_to_player(quest)
+
+func _parse_ai_quest_json(raw_text: String) -> Dictionary:
+	var text: String = raw_text.strip_edges()
+	if text.is_empty():
+		return {}
+	# Support fenced output from models, keep only JSON body when possible.
+	if text.begins_with("```"):
+		var first_brace: int = text.find("{")
+		var last_brace: int = text.rfind("}")
+		if first_brace >= 0 and last_brace > first_brace:
+			text = text.substr(first_brace, last_brace - first_brace + 1)
+	var parsed = JSON.parse_string(text)
+	if parsed is Dictionary:
+		var d: Dictionary = parsed
+		if d.has("title") and d.has("description"):
+			return d
+	return {}
 >>>>+++ REPLACE
 
 
