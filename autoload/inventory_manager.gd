@@ -66,7 +66,7 @@ func remove_item(slot: int, amount: int = 1) -> bool:
 		return true
 	return false
 
-func get_item(slot: int) -> Dictionary:
+func get_item(slot: int) -> Variant:
 	if slot >= 0 and slot < INVENTORY_SIZE:
 		return inventory[slot]
 	return null
@@ -76,7 +76,7 @@ func set_selected_slot(slot: int):
 		selected_slot = slot
 		selected_slot_changed.emit(slot)
 
-func get_selected_item() -> Dictionary:
+func get_selected_item() -> Variant:
 	return get_item(selected_slot)
 
 func count_item(item_id: String) -> int:
