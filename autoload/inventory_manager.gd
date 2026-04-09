@@ -152,6 +152,12 @@ func load_snapshot(data: Variant) -> void:
 					if st <= 0:
 						inventory[i] = null
 					else:
+						var iid: String = str(it.get("id", ""))
+						if not iid.is_empty() and ItemDatabase:
+							var tpl: Dictionary = ItemDatabase.get_item(iid)
+							if not tpl.is_empty():
+								var mx: int = maxi(1, int(tpl.get("max_stack", 99)))
+								st = mini(st, mx)
 						it["stack"] = st
 						inventory[i] = it
 				else:
