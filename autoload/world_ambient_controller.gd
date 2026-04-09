@@ -94,6 +94,7 @@ func _get_player_position() -> Vector2:
 
 func _on_weather_changed(_new_weather: int) -> void:
 	_apply_weather_layer()
+	_apply_season_volume_mix()
 	_apply_day_night_layer()
 
 func _on_season_changed(_season: String) -> void:
@@ -128,17 +129,52 @@ func _apply_season_bed() -> void:
 
 func _compute_season_volume_db() -> float:
 	if not GameManager:
-		return SEASON_DB_DAY
+		return SEASON_DB_DAY + _weather_music_offset_db()
 	var t: float = GameManager.current_time
+	var base: float
 	if _is_night_hours(t):
-		return SEASON_DB_NIGHT
-	if t >= 6.0 and t < 7.5:
+		base = SEASON_DB_NIGHT
+	elif t >= 6.0 and t < 7.5:
 		var k: float = clampf((t - 6.0) / 1.5, 0.0, 1.0)
-		return lerpf(SEASON_DB_NIGHT, SEASON_DB_DAY, k)
-	if t >= 19.0 and t < 20.0:
+		base = lerpf(SEASON_DB_NIGHT, SEASON_DB_DAY, k)
+	elif t >= 19.0 and t < 20.0:
 		var k2: float = clampf((t - 19.0) / 1.0, 0.0, 1.0)
-		return lerpf(SEASON_DB_DAY, SEASON_DB_NIGHT, k2)
-	return SEASON_DB_DAY
+		base = lerpf(SEASON_DB_DAY, SEASON_DB_NIGHT, k2)
+	else:
+		base = SEASON_DB_DAY
+	return base + _weather_music_offset_db()
+
+func _weather_music_offset_db() -> float:
+	if not WeatherSystem:
+		return 0.0
+	match WeatherSystem.current_weather:
+		WeatherSystem.WeatherType.SUNNY:
+			return 0.0
+		WeatherSystem.WeatherType.OVERCAST, WeatherSystem.WeatherType.WINDY:
+			return -1.5
+		WeatherSystem.WeatherType.RAIN:
+			return -2.5
+		WeatherSystem.WeatherType.STORM:
+			return -3.5
+		WeatherSystem.WeatherType.SNOW:
+			return -2.0
+	return 0.0
+
+func _weather_music_pitch() -> float:
+	if not WeatherSystem:
+		return 1.0
+	match WeatherSystem.current_weather:
+		WeatherSystem.WeatherType.SUNNY:
+			return 1.0
+		WeatherSystem.WeatherType.OVERCAST, WeatherSystem.WeatherType.WINDY:
+			return 0.993
+		WeatherSystem.WeatherType.RAIN:
+			return 0.982
+		WeatherSystem.WeatherType.STORM:
+			return 0.971
+		WeatherSystem.WeatherType.SNOW:
+			return 0.986
+	return 1.0
 
 func _apply_season_volume_mix() -> void:
 	if not _season_player:
@@ -146,6 +182,7 @@ func _apply_season_volume_mix() -> void:
 	if _season_player.stream == null:
 		return
 	_season_player.volume_db = _compute_season_volume_db()
+	_season_player.pitch_scale = _weather_music_pitch()
 
 func _apply_auxiliary_ambient_levels() -> void:
 	if not GameManager:
@@ -202,10 +239,13 @@ func _apply_weather_layer() -> void:
 	match WeatherSystem.current_weather:
 		WeatherSystem.WeatherType.RAIN:
 			_play_loop_stream(_weather_player, PATH_WEATHER["rain"])
+			_weather_player.volume_db = -13.5
 		WeatherSystem.WeatherType.STORM:
 			_play_loop_stream(_weather_player, PATH_WEATHER["storm"])
+			_weather_player.volume_db = -11.5
 		WeatherSystem.WeatherType.SNOW:
 			_play_loop_stream(_weather_player, PATH_WEATHER["snow_wind"])
+			_weather_player.volume_db = -14.0
 		_:
 			_stop_stream(_weather_player)
 
