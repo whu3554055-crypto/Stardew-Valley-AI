@@ -48,7 +48,7 @@
 
 - [ ] **B1 — AI 任务落地**  
   补全动态任务奖励与状态：**好感 / 技能经验 / 物品** 等到 `GameManager` 或现有系统；**任务完成条件**与玩家背包、对话记录等一致可验（含后端 `verify` 路径时保证上报字段对齐）。
-  *进度：客户端 `AIQuestSystem` 的 AI 增强链路已从占位改为真实调用统一入口 `AIAgentManager.request_text_generation()`，并加入 JSON 校验与失败降级；最小目标验证已覆盖 `fetch` / `delivery`（含 `target_npc` 时需与目标 NPC 对话后交付）并扩展 `problem_solving`（与任务发起 NPC 对话后可完成）；奖励写回统一到 `player_data.gold`（修正 `money` 漂移），并补 AI 任务桥接 `QuestSystem.add_quest_from_ai()` 以保持任务 UI/事件一致。*
+  *进度：客户端 `AIQuestSystem` 的 AI 增强链路已从占位改为真实调用统一入口 `AIAgentManager.request_text_generation()`，并加入 JSON 校验与失败降级；新增 `_normalize_ai_quest_payload()` 做字段收口（长度裁剪、默认值、显式目标字段）；最小目标验证已覆盖 `fetch` / `delivery`（含 `target_npc` 时需与目标 NPC 对话后交付）并扩展 `problem_solving`（与任务发起 NPC 对话后可完成）；奖励写回统一到 `player_data.gold`（修正 `money` 漂移），并补 AI 任务桥接 `QuestSystem.add_quest_from_ai()` 以保持任务 UI/事件一致。*
 
 - [ ] **B2 — AI 经济闭环**  
   **任务完成 / 出售行为 / 天气等** → 写入经济状态 → **次日（或刷新点）商店买卖价可见变化**（先简单公式 + 一句 UI 说明即可）。

@@ -584,11 +584,34 @@ func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_
 	# Override with AI generated content
 	quest.name = ai_data.get("title", quest.name)
 	quest.description = ai_data.get("description", quest.description)
-	quest.ai_objective = ai_data.get("objective", "")
+	quest.ai_objective = ai_data.get("objective_text", ai_data.get("objective", ""))
 	quest.ai_motivation = ai_data.get("motivation", "")
+	if ai_data.has("target_item"):
+		quest.target_item = str(ai_data.get("target_item", quest.get("target_item", "")))
+	if ai_data.has("target_npc"):
+		quest.target_npc = str(ai_data.get("target_npc", quest.get("target_npc", "")))
+	if ai_data.has("target_count"):
+		quest.target_count = maxi(1, int(ai_data.get("target_count", quest.get("target_count", 1))))
 	
 	ai_quest_request_completed.emit(npc_id, quest)
 	assign_quest_to_player(quest)
+
+func _clip_text(v: String, max_len: int) -> String:
+	var t: String = v.strip_edges()
+	if t.length() <= max_len:
+		return t
+	return t.substr(0, max_len)
+
+func _normalize_ai_quest_payload(ai_data: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	out["title"] = _clip_text(str(ai_data.get("title", "")), 72)
+	out["description"] = _clip_text(str(ai_data.get("description", "")), 240)
+	out["objective_text"] = _clip_text(str(ai_data.get("objective", "")), 120)
+	out["motivation"] = _clip_text(str(ai_data.get("motivation", "")), 140)
+	out["target_item"] = _clip_text(str(ai_data.get("target_item", "")), 64)
+	out["target_npc"] = _clip_text(str(ai_data.get("target_npc", "")), 64)
+	out["target_count"] = maxi(1, int(ai_data.get("target_count", 1)))
+	return out
 
 func _parse_ai_quest_json(raw_text: String) -> Dictionary:
 	var text: String = raw_text.strip_edges()
@@ -604,7 +627,9 @@ func _parse_ai_quest_json(raw_text: String) -> Dictionary:
 	if parsed is Dictionary:
 		var d: Dictionary = parsed
 		if d.has("title") and d.has("description"):
-			return d
+			var normalized: Dictionary = _normalize_ai_quest_payload(d)
+			if not str(normalized.get("title", "")).is_empty() and not str(normalized.get("description", "")).is_empty():
+				return normalized
 	return {}
 >>>>+++ REPLACE
 
