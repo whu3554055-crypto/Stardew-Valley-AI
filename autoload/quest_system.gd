@@ -287,20 +287,26 @@ func add_story_daily_quest(event_data: Dictionary):
 	Playable-first: simple talk objective with clear reward.
 	"""
 	var day_key = "%d-%s-%d" % [GameManager.player_data.year, GameManager.player_data.season, GameManager.player_data.day]
-	if day_key == last_story_quest_day_key:
-		return
+	var narrative_day_key: String = str(event_data.get("narrative_day_key", day_key))
+	var existing_qid: String = ""
+	for qid in quests.keys():
+		var q: Dictionary = quests[qid]
+		if str(q.get("source", "")) != "daily_narrative":
+			continue
+		if str(q.get("narrative_day_key", "")) == narrative_day_key:
+			existing_qid = str(qid)
+			break
 	
 	var npc_id = str(event_data.get("npc_id", "pierre"))
 	var title = str(event_data.get("title", "Daily Story Task"))
 	var quest_id = "story_daily_%s" % day_key
-	
-	quests[quest_id] = {
+	var quest_payload: Dictionary = {
 		"id": quest_id,
 		"title": title,
 		"description": "Talk to %s to follow today's story." % npc_id.capitalize(),
 		"story_npc_id": npc_id,
 		"narrative_id": str(event_data.get("narrative_id", "")),
-		"narrative_day_key": str(event_data.get("narrative_day_key", day_key)),
+		"narrative_day_key": narrative_day_key,
 		"narrative_source": str(event_data.get("narrative_source", "local")),
 		"source": "daily_narrative",
 		"objectives": [
@@ -309,6 +315,27 @@ func add_story_daily_quest(event_data: Dictionary):
 		"status": QuestStatus.NOT_STARTED,
 		"reward": {"gold": 80, "items": []}
 	}
+
+	# Strong dedupe: same narrative day key refreshes existing quest instead of adding duplicates.
+	if not existing_qid.is_empty():
+		quest_payload["id"] = existing_qid
+		quests[existing_qid] = quest_payload
+		if not active_quests.has(existing_qid):
+			start_quest(existing_qid)
+		else:
+			quests[existing_qid].status = QuestStatus.IN_PROGRESS
+		last_story_quest_day_key = day_key
+		return
+
+	# Cap active narrative quests at one to avoid list bloat.
+	for aqid in active_quests.duplicate():
+		var aq: Dictionary = quests.get(aqid, {})
+		if str(aq.get("source", "")) == "daily_narrative":
+			active_quests.erase(aqid)
+			if quests.has(aqid):
+				quests[aqid].status = QuestStatus.COMPLETED
+
+	quests[quest_id] = quest_payload
 	start_quest(quest_id)
 	last_story_quest_day_key = day_key
 
