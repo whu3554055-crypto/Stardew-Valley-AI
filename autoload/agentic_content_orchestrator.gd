@@ -440,6 +440,9 @@ func _validate_chain_template(chain_data: Dictionary) -> Dictionary:
 	var reward_mix: Dictionary = _check_reward_structure_diversity(steps)
 	if not bool(reward_mix.get("ok", false)):
 		return reward_mix
+	var map_guard: Dictionary = _check_map_reachability_constraints(steps)
+	if not bool(map_guard.get("ok", false)):
+		return map_guard
 	return {"ok": true}
 
 func _normalize_for_similarity(v: String) -> String:
@@ -1264,6 +1267,35 @@ func _item_type(item_id: String) -> String:
 		var tpl: Dictionary = ItemDatabase.get_item(item_id)
 		return str(tpl.get("type", "")).strip_edges()
 	return ""
+
+func _check_map_reachability_constraints(steps: Array) -> Dictionary:
+	var day: int = int(GameManager.player_data.get("day", 1)) if GameManager and GameManager.player_data else 1
+	var hour: int = int(GameManager.current_time) if GameManager else 12
+	var weather_name: String = str(WeatherSystem.get_weather_name()).to_lower() if WeatherSystem else "sunny"
+	var has_iron_pick: bool = _has_item_anywhere("pickaxe_iron")
+	for s in steps:
+		if not (s is Dictionary):
+			continue
+		var objective: Dictionary = (s as Dictionary).get("objective", {})
+		var ot: String = str(objective.get("type", ""))
+		var cnt: int = maxi(1, int(objective.get("count", 1)))
+		if ot == "mine_ore":
+			# Early days: avoid deep-mine style quotas.
+			if day <= 2 and cnt > 2:
+				return {"ok": false, "error": "map_reachability_early_mine_quota"}
+			# High ore counts imply deeper routing; require stronger pick access.
+			if cnt >= 5 and not has_iron_pick:
+				return {"ok": false, "error": "map_reachability_missing_iron_pickaxe"}
+			# Late hour: mine-trip tasks should stay light.
+			if hour >= 20 and cnt > 2:
+				return {"ok": false, "error": "map_reachability_late_hour_mining"}
+		elif ot == "fish_caught":
+			# Harsh weather + high catch quota tends to be unreliable.
+			if (weather_name == "storm" or weather_name == "snow") and cnt > 2:
+				return {"ok": false, "error": "map_reachability_weather_fishing"}
+			if hour >= 20 and cnt > 2:
+				return {"ok": false, "error": "map_reachability_late_hour_fishing"}
+	return {"ok": true}
 
 func _estimate_free_inventory_slots() -> int:
 	if InventoryManager == null:
