@@ -17,6 +17,11 @@ signal ai_quest_request_started(npc_id)
 signal ai_quest_request_completed(npc_id, quest_data)
 signal ai_quest_request_failed(npc_id, reason)
 
+const OBJECTIVE_FETCH := "fetch_item"
+const OBJECTIVE_DELIVERY := "deliver_to_npc"
+const OBJECTIVE_SOLVE := "solve_problem"
+const OBJECTIVE_TALK := "talk_to_npc"
+
 # Quest database
 var quest_templates = {}
 var active_quests = {}
@@ -592,6 +597,8 @@ func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_
 		quest.target_npc = str(ai_data.get("target_npc", quest.get("target_npc", "")))
 	if ai_data.has("target_count"):
 		quest.target_count = maxi(1, int(ai_data.get("target_count", quest.get("target_count", 1))))
+	if ai_data.has("objective_type"):
+		quest.objective_type = str(ai_data.get("objective_type", quest.get("objective_type", "")))
 	
 	ai_quest_request_completed.emit(npc_id, quest)
 	assign_quest_to_player(quest)
@@ -611,6 +618,17 @@ func _normalize_ai_quest_payload(ai_data: Dictionary) -> Dictionary:
 	out["target_item"] = _clip_text(str(ai_data.get("target_item", "")), 64)
 	out["target_npc"] = _clip_text(str(ai_data.get("target_npc", "")), 64)
 	out["target_count"] = maxi(1, int(ai_data.get("target_count", 1)))
+	var objective_hint: String = str(ai_data.get("objective_type", "")).to_lower()
+	if objective_hint.is_empty():
+		objective_hint = out["objective_text"].to_lower()
+	if objective_hint.contains("deliver") or objective_hint.contains("bring"):
+		out["objective_type"] = OBJECTIVE_DELIVERY
+	elif objective_hint.contains("solve") or objective_hint.contains("fix"):
+		out["objective_type"] = OBJECTIVE_SOLVE
+	elif objective_hint.contains("talk"):
+		out["objective_type"] = OBJECTIVE_TALK
+	else:
+		out["objective_type"] = OBJECTIVE_FETCH
 	return out
 
 func _parse_ai_quest_json(raw_text: String) -> Dictionary:
@@ -657,6 +675,7 @@ func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: D
 		"fetch":
 			quest.target_item = generate_target_item(opportunity)
 			quest.target_count = int(opportunity.get("target_count", 1))
+			quest.objective_type = OBJECTIVE_FETCH
 			quest.description = quest.description.replace("{item}", quest.target_item)
 			quest.description = quest.description.replace("{reason}", generate_item_reason(npc_id))
 		
@@ -664,12 +683,14 @@ func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: D
 			quest.target_item = generate_target_item(opportunity)
 			quest.target_npc = generate_target_npc()
 			quest.target_count = int(opportunity.get("target_count", 1))
+			quest.objective_type = OBJECTIVE_DELIVERY
 			quest.description = quest.description.replace("{item}", quest.target_item)
 			quest.description = quest.description.replace("{target_npc}", get_npc_name(quest.target_npc))
 		
 		"problem_solving":
 			quest.problem = generate_problem(npc_id)
 			quest.quest_giver = npc_id
+			quest.objective_type = OBJECTIVE_SOLVE
 			quest.description = quest.description.replace("{problem}", quest.problem)
 	
 	return quest
