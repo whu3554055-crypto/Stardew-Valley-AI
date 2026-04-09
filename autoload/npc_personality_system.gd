@@ -1,7 +1,5 @@
 extends Node
 
-class_name NPCPersonalitySystem
-
 # ============================================
 # NPC 个性化系统
 # 管理喜好、口头禅、习惯动作等细节
@@ -396,13 +394,21 @@ func loves_topic(npc_id: String, topic: String) -> bool:
 	"""检查 NPC 是否喜欢某个话题"""
 	var personality = get_npc_personality(npc_id)
 	var topics = personality.get("preferences", {}).get("topics", {}).get("loves_discussing", [])
-	return topic.to_lower() in [t.to_lower() for t in topics]
+	var tl: String = topic.to_lower()
+	for t in topics:
+		if str(t).to_lower() == tl:
+			return true
+	return false
 
 func hates_topic(npc_id: String, topic: String) -> bool:
 	"""检查 NPC 是否讨厌某个话题"""
 	var personality = get_npc_personality(npc_id)
 	var topics = personality.get("preferences", {}).get("topics", {}).get("hates_discussing", [])
-	return topic.to_lower() in [t.to_lower() for t in topics]
+	var tl: String = topic.to_lower()
+	for t in topics:
+		if str(t).to_lower() == tl:
+			return true
+	return false
 
 func get_favorite_environment(npc_id: String) -> Dictionary:
 	"""获取 NPC 最喜欢的环境"""
