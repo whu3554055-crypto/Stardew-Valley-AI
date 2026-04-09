@@ -1,7 +1,5 @@
 extends Control
 
-class_name InventoryUI
-
 const SLOT_SIZE = 48
 const SLOTS_PER_ROW = 9
 
@@ -90,8 +88,6 @@ func create_inventory_grid():
 			button.add_theme_font_size_override("font_size", 10)
 			button.flat = true
 			button.clip_text = true
-			button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-			button.horizontal_icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			button.pressed.connect(_on_slot_pressed.bind(slot_index))
 			grid_container.add_child(button)
 			slot_buttons.append(button)

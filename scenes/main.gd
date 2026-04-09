@@ -387,8 +387,8 @@ func _apply_seasonal_hud_tint() -> void:
 	var wef_title_season: Label = ui_layer.get_node_or_null("WorldEventFeed/Title") as Label
 	if wef_title_season:
 		wef_title_season.add_theme_color_override("font_color", text_col)
-	var inv_ui_accent: InventoryUI = ui_layer.get_node_or_null("InventoryUI") as InventoryUI
-	if inv_ui_accent:
+	var inv_ui_accent = ui_layer.get_node_or_null("InventoryUI")
+	if inv_ui_accent and inv_ui_accent.has_method("set_seasonal_accent"):
 		inv_ui_accent.set_seasonal_accent(accent)
 	if season_label:
 		season_label.add_theme_color_override("font_color", text_col)
