@@ -58,6 +58,8 @@ const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
 const PLAYER_ATTACK_KNOCKBACK := 220.0
 const PLAYER_ATTACK_HITSTOP_SEC := 0.04
+const PLAYER_ATTACK_CRIT_CHANCE := 0.1
+const PLAYER_ATTACK_CRIT_MULT := 1.6
 const PLAYER_RESPAWN_HEAL_RATIO := 0.65
 const MAX_MINE_ENEMIES := 5
 const MINE_SPAWN_MIN_INTERVAL_SEC := 1.2
@@ -875,13 +877,17 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var dmg: int = int(w.get("damage", PLAYER_ATTACK_DAMAGE))
 	var kb: float = float(w.get("knockback", PLAYER_ATTACK_KNOCKBACK))
 	var hitstop_sec: float = float(w.get("hitstop_sec", PLAYER_ATTACK_HITSTOP_SEC))
+	var crit_chance: float = clampf(float(w.get("crit_chance", PLAYER_ATTACK_CRIT_CHANCE)), 0.0, 1.0)
+	var crit_mult: float = maxf(1.0, float(w.get("crit_mult", PLAYER_ATTACK_CRIT_MULT)))
 	var hit_any: bool = false
+	var is_crit: bool = randf() < crit_chance
+	var final_dmg: int = maxi(1, int(round(float(dmg) * (crit_mult if is_crit else 1.0))))
 	for c in _enemy_layer.get_children():
 		if not (c is EnemyMelee):
 			continue
 		var e: EnemyMelee = c
 		if e.global_position.distance_to(center) <= range_v:
-			var killed: bool = e.take_damage(dmg)
+			var killed: bool = e.take_damage(final_dmg)
 			var dir: Vector2 = e.global_position - origin
 			if not killed:
 				e.apply_knockback(dir, kb)
@@ -891,6 +897,8 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 		if GatheringSfx:
 			GatheringSfx.play_chop()
 		_play_hitstop(hitstop_sec)
+		if is_crit:
+			show_quick_tip("Critical hit!", 0.55)
 
 
 func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
@@ -950,7 +958,9 @@ func _load_combat_weapons_config() -> void:
 			"range": PLAYER_ATTACK_RANGE,
 			"cooldown_ms": PLAYER_ATTACK_COOLDOWN_MS,
 			"knockback": PLAYER_ATTACK_KNOCKBACK,
-			"hitstop_sec": PLAYER_ATTACK_HITSTOP_SEC
+			"hitstop_sec": PLAYER_ATTACK_HITSTOP_SEC,
+			"crit_chance": PLAYER_ATTACK_CRIT_CHANCE,
+			"crit_mult": PLAYER_ATTACK_CRIT_MULT
 		}
 	}
 	var f: FileAccess = FileAccess.open(COMBAT_WEAPONS_CFG_PATH, FileAccess.READ)
@@ -1023,7 +1033,9 @@ func _weapon_profile() -> Dictionary:
 			"range": PLAYER_ATTACK_RANGE,
 			"cooldown_ms": PLAYER_ATTACK_COOLDOWN_MS,
 			"knockback": PLAYER_ATTACK_KNOCKBACK,
-			"hitstop_sec": PLAYER_ATTACK_HITSTOP_SEC
+			"hitstop_sec": PLAYER_ATTACK_HITSTOP_SEC,
+			"crit_chance": PLAYER_ATTACK_CRIT_CHANCE,
+			"crit_mult": PLAYER_ATTACK_CRIT_MULT
 		}
 	return w
 
