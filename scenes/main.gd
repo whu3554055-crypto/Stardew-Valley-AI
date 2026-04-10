@@ -882,6 +882,7 @@ func _spawn_mine_enemy() -> bool:
 	e.hp = e.max_hp
 	e.move_speed = randf_range(float(profile.get("speed_min", 40.0 + depth * 2.5)), float(profile.get("speed_max", 55.0 + depth * 3.0)))
 	e.contact_damage = randf_range(float(profile.get("damage_min", 7.0 + depth * 1.5)), float(profile.get("damage_max", 11.0 + depth * 2.0)))
+	e.contact_interval_sec = maxf(0.42, 0.9 - float(depth) * 0.08)
 	e.drop_count_min = maxi(1, int(profile.get("drop_count_min", 1)))
 	e.drop_count_max = maxi(e.drop_count_min, int(profile.get("drop_count_max", 2)))
 	e.drop_item_id = _pick_weighted_drop_item(profile.get("drop_pool", []), "stone_chunk")
