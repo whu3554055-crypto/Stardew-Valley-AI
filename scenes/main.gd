@@ -66,6 +66,10 @@ var _daily_peak_streak: int = 0
 var _crit_chain: int = 0
 var _momentum_score: int = 0
 var _no_hit_kill_streak: int = 0
+var _was_in_mine_last_frame: bool = false
+var _run_kills: int = 0
+var _run_elites: int = 0
+var _run_bonus_gold: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -856,6 +860,14 @@ func _build_save_bundle() -> Dictionary:
 func _maintain_combat_spawns() -> void:
 	if _enemy_layer == null:
 		return
+	var in_mine_now: bool = GameZones.can_mine_here(player.global_position)
+	if _was_in_mine_last_frame and not in_mine_now and (_run_kills > 0 or _run_bonus_gold > 0):
+		record_world_event("Mine run recap: kills %d, elites %d, bonus +%dg." % [_run_kills, _run_elites, _run_bonus_gold])
+		show_quick_tip("Run recap: %d kills / +%dg" % [_run_kills, _run_bonus_gold], 1.2)
+		_run_kills = 0
+		_run_elites = 0
+		_run_bonus_gold = 0
+	_was_in_mine_last_frame = in_mine_now
 	if not GameZones.can_mine_here(player.global_position):
 		if _enemy_layer.get_child_count() > 0:
 			for c in _enemy_layer.get_children():
@@ -1131,10 +1143,12 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
+	_run_kills += 1
 	_no_hit_kill_streak += 1
 	if _no_hit_kill_streak == NO_HIT_STREAK_GOAL and GameManager:
 		var no_hit_bonus: int = 45
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + no_hit_bonus
+		_run_bonus_gold += no_hit_bonus
 		record_world_event("No-hit streak achieved! +%dg." % no_hit_bonus)
 		show_quick_tip("No-hit streak x%d!" % NO_HIT_STREAK_GOAL, 1.0)
 	_momentum_score += 3 + (2 if is_elite else 0)
@@ -1144,6 +1158,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		var momentum_bonus: int = 10 * momentum_tiers
 		if GameManager:
 			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + momentum_bonus
+		_run_bonus_gold += momentum_bonus
 		show_quick_tip("Momentum surge! +%dg" % momentum_bonus, 0.8)
 		record_world_event("Momentum payout: +%dg." % momentum_bonus)
 	if GameManager:
@@ -1172,8 +1187,10 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		show_quick_tip("Enemy defeated.", 0.35)
 	if GameManager and is_elite:
 		_no_elite_kill_streak = 0
+		_run_elites += 1
 		var bounty_gold: int = ELITE_BOUNTY_GOLD_BASE + depth_now * 10
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bounty_gold
+		_run_bonus_gold += bounty_gold
 		record_world_event("Elite bounty claimed (+%dg)." % bounty_gold)
 		show_quick_tip("Elite bounty +%dg" % bounty_gold, 0.9)
 		var elite_profile: Dictionary = _find_enemy_profile_by_id(enemy.profile_id)
