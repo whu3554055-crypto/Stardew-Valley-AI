@@ -1014,11 +1014,19 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 			if e.max_hp > 0 and float(e.hp) / float(e.max_hp) <= EXECUTE_THRESHOLD_RATIO:
 				dmg_to_apply = maxi(1, int(round(float(final_dmg) * EXECUTE_BONUS_MULT)))
 				special_tag = "Execute!"
+			var hp_before: int = int(e.hp)
 			var killed: bool = e.take_damage(dmg_to_apply)
 			if not special_tag.is_empty():
 				show_quick_tip(special_tag, 0.45)
 			elif dmg_to_apply >= BIG_HIT_THRESHOLD:
 				show_quick_tip("Heavy hit %d!" % dmg_to_apply, 0.4)
+			if killed:
+				var overkill: int = maxi(0, dmg_to_apply - maxi(0, hp_before))
+				if overkill >= 10 and GameManager:
+					var overkill_bonus: int = mini(25, overkill / 2)
+					GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + overkill_bonus
+					show_quick_tip("Overkill +%dg" % overkill_bonus, 0.55)
+					record_world_event("Overkill payout: +%dg." % overkill_bonus)
 			var dir: Vector2 = e.global_position - origin
 			if not killed:
 				e.apply_knockback(dir, kb)
