@@ -8,7 +8,9 @@ var player_data = {
 	"year": 1,
 	"stamina": 100.0,
 	"stamina_max": 100.0,
-	"stamina_regen_mult": 1.0
+	"stamina_regen_mult": 1.0,
+	"hp": 100.0,
+	"hp_max": 100.0
 }
 
 # Time system
@@ -20,6 +22,7 @@ var day_length = 20.0  # Minutes per game day (real time)
 signal time_changed(new_time)
 signal day_changed(new_day)
 signal season_changed(new_season)
+signal hp_changed(cur_hp, max_hp)
 
 func _ready():
 	pass
@@ -80,6 +83,26 @@ func restore_stamina(amount: float) -> void:
 func get_stamina_ratio() -> float:
 	var smax: float = float(player_data.get("stamina_max", 100.0))
 	return float(player_data.get("stamina", 0.0)) / maxf(1.0, smax)
+
+
+func apply_damage(amount: float) -> bool:
+	if amount <= 0.0:
+		return true
+	var hp_max: float = maxf(1.0, float(player_data.get("hp_max", 100.0)))
+	var hp_cur: float = float(player_data.get("hp", hp_max))
+	hp_cur = maxf(0.0, hp_cur - amount)
+	player_data["hp"] = hp_cur
+	hp_changed.emit(hp_cur, hp_max)
+	return hp_cur > 0.0
+
+
+func heal_hp(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var hp_max: float = maxf(1.0, float(player_data.get("hp_max", 100.0)))
+	var hp_cur: float = float(player_data.get("hp", hp_max))
+	player_data["hp"] = minf(hp_max, hp_cur + amount)
+	hp_changed.emit(float(player_data.get("hp", hp_max)), hp_max)
 
 func get_time_string() -> String:
 	var hours = int(current_time)

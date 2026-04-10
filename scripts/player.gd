@@ -12,6 +12,7 @@ var _footstep_cooldown: float = 0.0
 const FOOTSTEP_INTERVAL := 0.38
 
 signal interacted(tile_position)
+signal attack_requested(origin: Vector2, facing: Vector2)
 
 func _ready():
 	add_to_group("player")
@@ -83,6 +84,8 @@ func _unhandled_input(event):
 	if event.is_action_pressed("interact"):
 		var interact_pos = global_position + facing_direction * 32
 		interacted.emit(interact_pos)
+	if event.is_action_pressed("attack"):
+		attack_requested.emit(global_position, facing_direction)
 
 	if event.is_action_pressed("inventory"):
 		# Toggle inventory UI (to be implemented)
