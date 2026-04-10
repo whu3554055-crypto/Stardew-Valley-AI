@@ -55,6 +55,8 @@ var _hitstop_active: bool = false
 var _next_mine_spawn_at: float = 0.0
 var _combo_hits: int = 0
 var _combo_expire_at: float = 0.0
+var _kill_streak: int = 0
+var _kill_streak_expire_at: float = 0.0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -70,6 +72,8 @@ const MINE_SPAWN_MIN_PLAYER_DIST := 84.0
 const COMBO_WINDOW_SEC := 1.2
 const COMBO_BONUS_PER_STACK := 0.08
 const COMBO_MAX_STACKS := 5
+const KILL_STREAK_WINDOW_SEC := 6.0
+const KILL_STREAK_STEP := 5
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -958,6 +962,17 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 			"count": 1,
 			"mine_depth": GameZones.mine_depth_from_global_y(enemy.global_position.y)
 		})
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if now_sec > _kill_streak_expire_at:
+		_kill_streak = 0
+	_kill_streak += 1
+	_kill_streak_expire_at = now_sec + KILL_STREAK_WINDOW_SEC
+	if _kill_streak > 0 and _kill_streak % KILL_STREAK_STEP == 0 and GameManager:
+		var depth_bonus: int = maxi(0, GameZones.mine_depth_from_global_y(enemy.global_position.y))
+		var bonus_gold: int = 14 + depth_bonus * 4
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
+		show_quick_tip("Kill streak %d! +%dg" % [_kill_streak, bonus_gold], 1.1)
+		record_world_event("Combat bonus: streak %d (+%dg)." % [_kill_streak, bonus_gold])
 	_play_fx_mine()
 	if GatheringSfx:
 		GatheringSfx.play_mine_swing()
