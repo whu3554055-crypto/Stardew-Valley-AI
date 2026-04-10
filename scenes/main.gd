@@ -53,6 +53,8 @@ var _combat_enemies_cfg: Dictionary = {}
 var _active_weapon_id: String = "starter_sword"
 var _hitstop_active: bool = false
 var _next_mine_spawn_at: float = 0.0
+var _combo_hits: int = 0
+var _combo_expire_at: float = 0.0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -65,6 +67,9 @@ const MAX_MINE_ENEMIES := 5
 const MINE_SPAWN_MIN_INTERVAL_SEC := 1.2
 const MINE_SPAWN_MAX_INTERVAL_SEC := 2.1
 const MINE_SPAWN_MIN_PLAYER_DIST := 84.0
+const COMBO_WINDOW_SEC := 1.2
+const COMBO_BONUS_PER_STACK := 0.08
+const COMBO_MAX_STACKS := 5
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -879,9 +884,15 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var hitstop_sec: float = float(w.get("hitstop_sec", PLAYER_ATTACK_HITSTOP_SEC))
 	var crit_chance: float = clampf(float(w.get("crit_chance", PLAYER_ATTACK_CRIT_CHANCE)), 0.0, 1.0)
 	var crit_mult: float = maxf(1.0, float(w.get("crit_mult", PLAYER_ATTACK_CRIT_MULT)))
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if now_sec > _combo_expire_at:
+		_combo_hits = 0
+	_combo_expire_at = now_sec + COMBO_WINDOW_SEC
+	var combo_stack: int = mini(_combo_hits, COMBO_MAX_STACKS)
+	var combo_mult: float = 1.0 + COMBO_BONUS_PER_STACK * float(combo_stack)
 	var hit_any: bool = false
 	var is_crit: bool = randf() < crit_chance
-	var final_dmg: int = maxi(1, int(round(float(dmg) * (crit_mult if is_crit else 1.0))))
+	var final_dmg: int = maxi(1, int(round(float(dmg) * combo_mult * (crit_mult if is_crit else 1.0))))
 	for c in _enemy_layer.get_children():
 		if not (c is EnemyMelee):
 			continue
@@ -893,12 +904,16 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 				e.apply_knockback(dir, kb)
 			hit_any = true
 	if hit_any:
+		_combo_hits = mini(COMBO_MAX_STACKS, _combo_hits + 1)
+		_combo_expire_at = now_sec + COMBO_WINDOW_SEC
 		_play_fx_chop()
 		if GatheringSfx:
 			GatheringSfx.play_chop()
 		_play_hitstop(hitstop_sec)
 		if is_crit:
 			show_quick_tip("Critical hit!", 0.55)
+	else:
+		_combo_hits = 0
 
 
 func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
