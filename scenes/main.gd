@@ -75,6 +75,8 @@ const COMBO_MAX_STACKS := 5
 const KILL_STREAK_WINDOW_SEC := 6.0
 const KILL_STREAK_STEP := 5
 const ELITE_BASE_CHANCE := 0.08
+const ATTACK_GUARD_WINDOW_SEC := 0.22
+const ATTACK_GUARD_DAMAGE_REDUCTION := 0.35
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -937,13 +939,19 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now < _combat_invuln_until:
 		return
+	var guarded: bool = (now - (float(_last_attack_ms) / 1000.0)) <= ATTACK_GUARD_WINDOW_SEC
+	var final_damage: float = damage
+	if guarded:
+		final_damage = damage * (1.0 - ATTACK_GUARD_DAMAGE_REDUCTION)
 	_combat_invuln_until = now + 0.55
 	if player and player.has_method("apply_knockback"):
 		var kb_dir: Vector2 = player.global_position - _enemy.global_position
 		player.apply_knockback(kb_dir, 240.0, 920.0)
 	if not GameManager:
 		return
-	var alive: bool = GameManager.apply_damage(damage)
+	var alive: bool = GameManager.apply_damage(final_damage)
+	if guarded:
+		show_quick_tip("Guarded hit!", 0.4)
 	update_ui()
 	if not alive:
 		_handle_player_defeat()
