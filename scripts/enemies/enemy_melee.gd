@@ -24,6 +24,8 @@ var _knockback_vel: Vector2 = Vector2.ZERO
 var _hit_stun_t: float = 0.0
 var _spawned_at_sec: float = 0.0
 var _attack_windup_t: float = 0.0
+var _base_move_speed: float = 0.0
+var _base_contact_damage: float = 0.0
 
 signal contact_hit(enemy: EnemyMelee, damage: float)
 signal enemy_killed(enemy: EnemyMelee)
@@ -31,6 +33,8 @@ signal enemy_killed(enemy: EnemyMelee)
 func _ready() -> void:
 	hp = max_hp
 	_spawned_at_sec = Time.get_ticks_msec() / 1000.0
+	_base_move_speed = move_speed
+	_base_contact_damage = contact_damage
 	add_to_group("enemy")
 	if get_node_or_null("Body") == null:
 		var body := ColorRect.new()
@@ -77,6 +81,13 @@ func _process(delta: float) -> void:
 	if _attack_windup_t <= 0.0 and d <= 24.0 and _contact_cd <= 0.0 and (now_sec - _spawned_at_sec) >= no_contact_after_spawn_sec:
 		_contact_cd = contact_interval_sec
 		contact_hit.emit(self, contact_damage)
+	var hp_ratio: float = float(hp) / maxf(1.0, float(max_hp))
+	if hp_ratio <= 0.35:
+		move_speed = _base_move_speed * 1.18
+		contact_damage = _base_contact_damage * 1.15
+	else:
+		move_speed = _base_move_speed
+		contact_damage = _base_contact_damage
 
 func take_damage(amount: int) -> bool:
 	if amount <= 0:
