@@ -86,6 +86,9 @@ const REVENGE_DAMAGE_MULT := 1.22
 const ORE_PITY_KILL_THRESHOLD := 6
 const EXECUTE_THRESHOLD_RATIO := 0.25
 const EXECUTE_BONUS_MULT := 1.35
+const PANIC_HP_RATIO := 0.2
+const PANIC_DAMAGE_REDUCTION := 0.2
+const PANIC_INVULN_SEC := 0.85
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -955,9 +958,16 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 		return
 	var guarded: bool = (now - (float(_last_attack_ms) / 1000.0)) <= ATTACK_GUARD_WINDOW_SEC
 	var final_damage: float = damage
+	var panic_mode: bool = false
+	if GameManager:
+		var hp_cur: float = float(GameManager.player_data.get("hp", 100.0))
+		var hp_max: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
+		panic_mode = (hp_cur / hp_max) <= PANIC_HP_RATIO
 	if guarded:
 		final_damage = damage * (1.0 - ATTACK_GUARD_DAMAGE_REDUCTION)
-	_combat_invuln_until = now + 0.55
+	if panic_mode:
+		final_damage *= (1.0 - PANIC_DAMAGE_REDUCTION)
+	_combat_invuln_until = now + (PANIC_INVULN_SEC if panic_mode else 0.55)
 	if player and player.has_method("apply_knockback"):
 		var kb_dir: Vector2 = player.global_position - _enemy.global_position
 		player.apply_knockback(kb_dir, 240.0, 920.0)
@@ -967,6 +977,8 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	_revenge_buff_until = now + REVENGE_BUFF_SEC
 	if guarded:
 		show_quick_tip("Guarded hit!", 0.4)
+	elif panic_mode:
+		show_quick_tip("Panic guard activated!", 0.5)
 	update_ui()
 	if not alive:
 		_handle_player_defeat()
