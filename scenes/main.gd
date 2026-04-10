@@ -941,6 +941,10 @@ func _spawn_mine_enemy() -> bool:
 		e.enemy_id = "%s_elite" % e.enemy_id
 		e.set_body_color(Color(0.78, 0.45, 0.86, 0.96))
 		record_world_event("An elite foe appears in the mine!")
+		show_quick_tip("Elite incoming!", 0.95)
+		play_screen_shake(4.2)
+		if GatheringSfx:
+			GatheringSfx.play_mine_swing()
 	var spawn_pos: Vector2 = Vector2.ZERO
 	var found_pos: bool = false
 	for _i in range(12):
