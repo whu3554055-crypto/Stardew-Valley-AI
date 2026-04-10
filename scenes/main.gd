@@ -1190,8 +1190,9 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
 		_attack_speed_buff_until = now_sec + STREAK_HASTE_SEC
 		_shield_charges = mini(SHIELD_MAX_CHARGES, _shield_charges + 1)
-		show_quick_tip("Kill streak %d! +%dg" % [_kill_streak, bonus_gold], 1.1)
-		record_world_event("Combat bonus: streak %d (+%dg)." % [_kill_streak, bonus_gold])
+		var tier: String = _streak_tier_label(_kill_streak)
+		show_quick_tip("%s streak %d! +%dg" % [tier, _kill_streak, bonus_gold], 1.1)
+		record_world_event("Combat bonus: %s streak %d (+%dg)." % [tier, _kill_streak, bonus_gold])
 		if _kill_streak >= 10 and not bool(GameManager.player_data.get("combat_badge_streak_10", false)):
 			GameManager.player_data["combat_badge_streak_10"] = true
 			record_world_event("Badge unlocked: Streak x10.")
@@ -2240,6 +2241,16 @@ func _combat_daily_rating(kills: int, elites: int, peak_streak: int, defeats: in
 	if score >= 14:
 		return "B"
 	return "C"
+
+
+func _streak_tier_label(streak: int) -> String:
+	if streak >= 20:
+		return "Legend"
+	if streak >= 15:
+		return "Gold"
+	if streak >= 10:
+		return "Silver"
+	return "Bronze"
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
