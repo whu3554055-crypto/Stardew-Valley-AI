@@ -77,6 +77,7 @@ var _hype_points: int = 0
 var _hype_rank: String = "Rookie"
 var _quest_near_done_latched: Dictionary = {}
 var _streak_medal_awarded: Dictionary = {}
+var _run_best_tag: String = "None"
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -871,8 +872,9 @@ func _maintain_combat_spawns() -> void:
 	var in_mine_now: bool = GameZones.can_mine_here(player.global_position)
 	if _was_in_mine_last_frame and not in_mine_now and (_run_kills > 0 or _run_bonus_gold > 0):
 		var run_stars: int = _run_star_rating(_run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best)
-		record_world_event("Mine run recap: %d★, kills %d, elites %d, bonus +%dg, guard chain best x%d." % [run_stars, _run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best])
-		show_quick_tip("Run recap %d★: %d kills / +%dg" % [run_stars, _run_kills, _run_bonus_gold], 1.2)
+		var mvp: String = _run_mvp_tag()
+		record_world_event("Mine run recap: %d★, kills %d, elites %d, bonus +%dg, MVP %s." % [run_stars, _run_kills, _run_elites, _run_bonus_gold, mvp])
+		show_quick_tip("Run recap %d★ · MVP %s" % [run_stars, mvp], 1.2)
 		_run_kills = 0
 		_run_elites = 0
 		_run_bonus_gold = 0
@@ -880,6 +882,7 @@ func _maintain_combat_spawns() -> void:
 		_perfect_guard_chain_best = 0
 		_hype_points = 0
 		_hype_rank = "Rookie"
+		_run_best_tag = "None"
 	_was_in_mine_last_frame = in_mine_now
 	if not GameZones.can_mine_here(player.global_position):
 		if _enemy_layer.get_child_count() > 0:
@@ -2401,6 +2404,19 @@ func _try_award_streak_medal(streak: int) -> void:
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus
 	show_quick_tip("%s unlocked! +%dg" % [str(d.get("name", "Medal")), bonus], 1.0)
 	record_world_event("Streak medal unlocked: %s (+%dg)." % [str(d.get("name", "Medal")), bonus])
+	_run_best_tag = str(d.get("name", "Medal"))
+
+
+func _run_mvp_tag() -> String:
+	if _run_elites >= 3:
+		return "Elite Hunter"
+	if _perfect_guard_chain_best >= 5:
+		return "Iron Wall"
+	if _daily_peak_streak >= 12:
+		return "Combo Master"
+	if not _run_best_tag.is_empty() and _run_best_tag != "None":
+		return _run_best_tag
+	return "Steady"
 
 
 func _hype_rank_from_points(points: int) -> String:
