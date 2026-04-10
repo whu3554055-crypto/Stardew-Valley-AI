@@ -977,6 +977,8 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var crit_mult: float = maxf(1.0, float(w.get("crit_mult", PLAYER_ATTACK_CRIT_MULT)))
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec > _combo_expire_at:
+		if _combo_hits >= 2:
+			show_quick_tip("Combo dropped.", 0.35)
 		_combo_hits = 0
 	_combo_expire_at = now_sec + COMBO_WINDOW_SEC
 	var combo_stack: int = mini(_combo_hits, COMBO_MAX_STACKS)
@@ -1036,6 +1038,8 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 		else:
 			_crit_chain = 0
 	else:
+		if _combo_hits >= 2:
+			show_quick_tip("Combo missed.", 0.35)
 		_combo_hits = 0
 		_crit_chain = 0
 
