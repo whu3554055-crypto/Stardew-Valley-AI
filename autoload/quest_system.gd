@@ -521,7 +521,8 @@ func start_quest(quest_id: String):
 			quest["deadline_day_index"] = cur_day_idx + int(managed_chain_failure.get("timeout_days", MANAGED_CHAIN_DEFAULT_TIMEOUT_DAYS))
 			quest["managed_state"] = "active"
 			managed_chain_state_changed.emit(quest_id, "active")
-		active_quests.append(quest_id)
+		if not active_quests.has(quest_id):
+			active_quests.append(quest_id)
 		quest_started.emit(quest_id)
 
 func update_quest_progress(quest_id: String, objective_index: int, amount: int = 1):
@@ -532,6 +533,8 @@ func update_quest_progress(quest_id: String, objective_index: int, amount: int =
 	if quest.status != QuestStatus.IN_PROGRESS:
 		return
 
+	if objective_index < 0 or objective_index >= quest.objectives.size():
+		return
 	var objective = quest.objectives[objective_index]
 	var goal: int = _objective_goal_max(objective)
 	objective.current += amount
@@ -555,6 +558,7 @@ func check_quest_completion(quest_id: String):
 func complete_quest(quest_id: String):
 	var quest = quests[quest_id]
 	quest.status = QuestStatus.COMPLETED
+	quest["completed_at"] = Time.get_unix_time_from_system()
 
 	# Give rewards
 	var reward_data: Dictionary = quest.reward if quest.get("reward") is Dictionary else {}
@@ -575,7 +579,8 @@ func complete_quest(quest_id: String):
 
 	# Move from active to completed
 	active_quests.erase(quest_id)
-	completed_quests.append(quest_id)
+	if not completed_quests.has(quest_id):
+		completed_quests.append(quest_id)
 	if AIEconomySystem:
 		AIEconomySystem.on_quest_completed(quest)
 	_try_advance_managed_chain(quest_id, quest)
@@ -1059,7 +1064,7 @@ func get_completed_quests() -> Array:
 	return result
 
 func track_event(event_type: String, data: Dictionary):
-	for quest_id in active_quests:
+	for quest_id in active_quests.duplicate():
 		var quest = quests[quest_id]
 		for i in range(quest.objectives.size()):
 			var objective = quest.objectives[i]
@@ -1275,6 +1280,10 @@ func _serialize_quest_entry(q: Dictionary) -> Dictionary:
 func load_snapshot(data: Variant) -> void:
 	if not data is Dictionary:
 		return
+	quests.clear()
+	active_quests.clear()
+	completed_quests.clear()
+	failed_quests.clear()
 	var d: Dictionary = data
 	if d.has("last_story_quest_day_key"):
 		last_story_quest_day_key = str(d["last_story_quest_day_key"])

@@ -324,9 +324,13 @@ func _try_morning_birds_one_shot() -> void:
 	var stream: AudioStream = load(path_m) as AudioStream
 	if stream == null:
 		return
+	# Use an uncached copy for one-shot playback to avoid lingering shared refs at shutdown.
+	stream = stream.duplicate(true)
 	if stream is AudioStreamWAV:
 		(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_DISABLED
 	_last_morning_chirp_key = k
+	_morning_player.stop()
+	_morning_player.stream = null
 	_morning_player.stream = stream
 	_morning_player.volume_db = -13.5
 	_morning_player.play()
@@ -453,6 +457,9 @@ func _play_loop_stream(player: AudioStreamPlayer, path: String) -> void:
 		var w: AudioStreamWAV = stream as AudioStreamWAV
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		w.loop_begin = 0
+	# Fully detach previous playback first to prevent lingering WAV playback refs.
+	player.stop()
+	player.stream = null
 	player.set_meta("wa_path", path)
 	player.stream = stream
 	player.play()

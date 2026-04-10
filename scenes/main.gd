@@ -869,7 +869,7 @@ func _build_save_bundle() -> Dictionary:
 
 
 func _maintain_combat_spawns() -> void:
-	if _enemy_layer == null:
+	if _enemy_layer == null or player == null:
 		return
 	var in_mine_now: bool = GameZones.can_mine_here(player.global_position)
 	if _was_in_mine_last_frame and not in_mine_now and (_run_kills > 0 or _run_bonus_gold > 0):
@@ -976,15 +976,15 @@ func _spawn_mine_enemy() -> bool:
 
 func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var w: Dictionary = _weapon_profile()
-	if GameManager and not GameManager.try_consume_stamina(ATTACK_STAMINA_COST):
-		show_quick_tip("Not enough stamina to attack.", 0.65)
-		return
 	var now_ms: int = Time.get_ticks_msec()
 	var cd_ms: int = int(w.get("cooldown_ms", PLAYER_ATTACK_COOLDOWN_MS))
 	var now_sec: float = float(now_ms) / 1000.0
 	if now_sec <= _attack_speed_buff_until:
 		cd_ms = maxi(80, int(round(float(cd_ms) * STREAK_HASTE_COOLDOWN_MULT)))
 	if now_ms - _last_attack_ms < cd_ms:
+		return
+	if GameManager and not GameManager.try_consume_stamina(ATTACK_STAMINA_COST):
+		show_quick_tip("Not enough stamina to attack.", 0.65)
 		return
 	_last_attack_ms = now_ms
 	var center: Vector2 = origin + facing.normalized() * 30.0
@@ -1043,7 +1043,7 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 		_combo_hits = mini(COMBO_MAX_STACKS, _combo_hits + 1)
 		_combo_expire_at = now_sec + COMBO_WINDOW_SEC
 		if _combo_hits >= COMBO_FEEDBACK_MIN_STACK:
-			var combo_label: String = "Combo x%d!" % (_combo_hits + 1)
+			var combo_label: String = "Combo x%d!" % _combo_hits
 			show_quick_tip(combo_label, 0.45)
 			if _combo_hits == COMBO_MAX_STACKS:
 				record_world_event("Combo peak reached!")
@@ -1143,7 +1143,9 @@ func _handle_player_defeat() -> void:
 		var heal_to: float = hpmax * PLAYER_RESPAWN_HEAL_RATIO
 		GameManager.player_data["hp"] = heal_to
 		GameManager.player_data["daily_defeats"] = int(GameManager.player_data.get("daily_defeats", 0)) + 1
-		var day_idx: int = int(GameManager.player_data.get("year", 1)) * 1000 + int(GameManager.player_data.get("day", 1))
+		var season_idx: int = _season_index_from_name(str(GameManager.player_data.get("season", "spring")))
+		var year_idx: int = int(GameManager.player_data.get("year", 1))
+		var day_idx: int = year_idx * 1000 + season_idx * 100 + int(GameManager.player_data.get("day", 1))
 		var insured_day: int = int(GameManager.player_data.get("defeat_insurance_day", -1))
 		if insured_day == day_idx:
 			var gold: int = int(GameManager.player_data.get("gold", 0))
@@ -2399,6 +2401,20 @@ func _combat_daily_rating(kills: int, elites: int, peak_streak: int, defeats: in
 	if score >= 14:
 		return "B"
 	return "C"
+
+
+func _season_index_from_name(season: String) -> int:
+	match season.strip_edges().to_lower():
+		"spring":
+			return 0
+		"summer":
+			return 1
+		"fall":
+			return 2
+		"winter":
+			return 3
+		_:
+			return 0
 
 
 func _streak_tier_label(streak: int) -> String:
