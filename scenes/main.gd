@@ -71,6 +71,7 @@ var _run_kills: int = 0
 var _run_elites: int = 0
 var _run_bonus_gold: int = 0
 var _perfect_guard_chain: int = 0
+var _last_stand_used_run: bool = false
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -868,6 +869,7 @@ func _maintain_combat_spawns() -> void:
 		_run_kills = 0
 		_run_elites = 0
 		_run_bonus_gold = 0
+		_last_stand_used_run = false
 	_was_in_mine_last_frame = in_mine_now
 	if not GameZones.can_mine_here(player.global_position):
 		if _enemy_layer.get_child_count() > 0:
@@ -1074,6 +1076,15 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	else:
 		_perfect_guard_chain = 0
 	if not GameManager:
+		return
+	var hp_cur_check: float = float(GameManager.player_data.get("hp", 100.0))
+	if hp_cur_check - final_damage <= 0.0 and not _last_stand_used_run:
+		_last_stand_used_run = true
+		GameManager.player_data["hp"] = 1.0
+		_combat_invuln_until = now + 1.35
+		record_world_event("Last Stand triggered! You survived with 1 HP.")
+		show_quick_tip("Last Stand!", 0.9)
+		update_ui()
 		return
 	var alive: bool = GameManager.apply_damage(final_damage)
 	_no_hit_kill_streak = 0
