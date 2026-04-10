@@ -8,6 +8,8 @@ class_name EnemyMelee
 @export var contact_damage: float = 8.0
 @export var contact_interval_sec: float = 0.9
 @export var detection_range: float = 300.0
+@export var leash_range: float = 520.0
+@export var despawn_range: float = 860.0
 @export var hit_stun_sec: float = 0.14
 @export var no_contact_after_spawn_sec: float = 0.6
 @export var drop_item_id: String = "stone_chunk"
@@ -53,6 +55,11 @@ func _process(delta: float) -> void:
 		return
 	var dv: Vector2 = p.global_position - global_position
 	var d: float = dv.length()
+	if d >= despawn_range:
+		queue_free()
+		return
+	if d >= leash_range:
+		return
 	if d <= detection_range and d > 1.0 and _knockback_vel.length() < 28.0:
 		global_position += dv.normalized() * move_speed * delta
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
