@@ -1041,6 +1041,7 @@ func _handle_player_defeat() -> void:
 		var hpmax: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
 		var heal_to: float = hpmax * PLAYER_RESPAWN_HEAL_RATIO
 		GameManager.player_data["hp"] = heal_to
+		GameManager.player_data["daily_defeats"] = int(GameManager.player_data.get("daily_defeats", 0)) + 1
 		var day_idx: int = int(GameManager.player_data.get("year", 1)) * 1000 + int(GameManager.player_data.get("day", 1))
 		var insured_day: int = int(GameManager.player_data.get("defeat_insurance_day", -1))
 		if insured_day == day_idx:
@@ -1087,7 +1088,8 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 			"enemy_id": enemy.enemy_id,
 			"count": 1,
 			"mine_depth": depth_now,
-			"kill_streak": _kill_streak
+				"kill_streak": _kill_streak,
+				"daily_defeats": int(GameManager.player_data.get("daily_defeats", 0)) if GameManager else 0
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
@@ -1647,6 +1649,8 @@ func _on_time_changed(new_time):
 
 func _on_day_changed(new_day):
 	_reset_daily_event_budget()
+	if GameManager:
+		GameManager.player_data["daily_defeats"] = 0
 	update_ui()
 	if QuestSystem and QuestSystem.has_method("on_day_passed"):
 		QuestSystem.on_day_passed()
@@ -1932,6 +1936,9 @@ func _on_quest_completed(quest_id: String):
 		elif quest_id == "elite_slayer_ii":
 			QuestSystem.start_quest("combat_mastery")
 			record_world_event("New combat contract unlocked: Combat Mastery.")
+		elif quest_id == "combat_mastery":
+			QuestSystem.start_quest("flawless_miner")
+			record_world_event("New combat contract unlocked: Flawless Miner.")
 	_refresh_quest_log()
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:

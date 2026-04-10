@@ -398,6 +398,17 @@ func initialize_quests():
 		"reward": {"gold": 420, "items": ["gold_ore:3"]}
 	}
 
+	quests["flawless_miner"] = {
+		"id": "flawless_miner",
+		"title": "Flawless Miner",
+		"description": "Defeat 12 mine enemies in one day without collapsing.",
+		"objectives": [
+			{"type": "enemy_kill", "count": 12, "current": 0, "max_daily_defeats": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 500, "items": ["gold_ore:2", "silver_ore:2"]}
+	}
+
 	_register_chain_quests_from_templates()
 
 func _register_chain_quests_from_templates() -> void:
@@ -1101,6 +1112,9 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "enemy_kill":
 		if objective.has("enemy_id"):
 			if str(data.get("enemy_id", "")) != str(objective.get("enemy_id", "")):
+				return false
+		if objective.has("max_daily_defeats"):
+			if int(data.get("daily_defeats", 0)) > int(objective.get("max_daily_defeats", 0)):
 				return false
 		if objective.has("min_streak"):
 			if int(data.get("kill_streak", 0)) < int(objective.get("min_streak", 0)):
