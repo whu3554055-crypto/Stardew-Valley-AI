@@ -1165,6 +1165,9 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 				"kill_streak": _kill_streak,
 				"daily_defeats": int(GameManager.player_data.get("daily_defeats", 0)) if GameManager else 0
 		})
+		var q_progress: String = _combat_quest_progress_line()
+		if not q_progress.is_empty():
+			show_quick_tip(q_progress, 0.8)
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
 	_run_kills += 1
@@ -2096,6 +2099,26 @@ func _is_combat_quest(quest_data: Dictionary) -> bool:
 		if t == "enemy_kill":
 			return true
 	return false
+
+
+func _combat_quest_progress_line() -> String:
+	if not QuestSystem:
+		return ""
+	for qid in QuestSystem.active_quests:
+		var q: Dictionary = QuestSystem.quests.get(qid, {})
+		if q.is_empty():
+			continue
+		var objectives: Array = q.get("objectives", [])
+		for o in objectives:
+			if not (o is Dictionary):
+				continue
+			var od: Dictionary = o
+			if str(od.get("type", "")) != "enemy_kill":
+				continue
+			var cur: int = int(od.get("current", 0))
+			var goal: int = int(od.get("count", 1))
+			return "Quest %s: %d/%d" % [str(q.get("title", qid)), cur, goal]
+	return ""
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
 	var rs: String = reason if not reason.is_empty() else "unknown"
