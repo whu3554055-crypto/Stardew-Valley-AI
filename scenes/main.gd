@@ -90,6 +90,7 @@ const PANIC_HP_RATIO := 0.2
 const PANIC_DAMAGE_REDUCTION := 0.2
 const PANIC_INVULN_SEC := 0.85
 const ELITE_BOUNTY_GOLD_BASE := 36
+const ATTACK_STAMINA_COST := 4.0
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -915,6 +916,9 @@ func _spawn_mine_enemy() -> bool:
 
 func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var w: Dictionary = _weapon_profile()
+	if GameManager and not GameManager.try_consume_stamina(ATTACK_STAMINA_COST):
+		show_quick_tip("Not enough stamina to attack.", 0.65)
+		return
 	var now_ms: int = Time.get_ticks_msec()
 	var cd_ms: int = int(w.get("cooldown_ms", PLAYER_ATTACK_COOLDOWN_MS))
 	if now_ms - _last_attack_ms < cd_ms:
