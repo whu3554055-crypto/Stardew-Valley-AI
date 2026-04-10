@@ -845,10 +845,19 @@ func _maintain_combat_spawns() -> void:
 			alive += 1
 	var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
 	var depth_cap: int = mini(MAX_MINE_ENEMIES + 2, MAX_MINE_ENEMIES + maxi(0, depth))
+	var hp_ratio: float = 1.0
+	if GameManager:
+		var hp_cur: float = float(GameManager.player_data.get("hp", 100.0))
+		var hp_max: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
+		hp_ratio = hp_cur / hp_max
+	if hp_ratio <= 0.35:
+		depth_cap = maxi(2, depth_cap - 2)
 	if alive >= depth_cap:
 		return
 	if _spawn_mine_enemy():
 		var interval: float = lerpf(MINE_SPAWN_MAX_INTERVAL_SEC, MINE_SPAWN_MIN_INTERVAL_SEC, clampf(float(depth) / 3.0, 0.0, 1.0))
+		if hp_ratio <= 0.35:
+			interval += 0.9
 		_next_mine_spawn_at = now + interval
 	else:
 		_next_mine_spawn_at = now + 0.25
