@@ -105,6 +105,7 @@ const BACKSTAB_DOT_MAX := -0.45
 const BACKSTAB_BONUS_MULT := 1.25
 const ELITE_PITY_KILLS := 14
 const SHIELD_MAX_CHARGES := 3
+const COMBO_FEEDBACK_MIN_STACK := 2
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -981,6 +982,11 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	if hit_any:
 		_combo_hits = mini(COMBO_MAX_STACKS, _combo_hits + 1)
 		_combo_expire_at = now_sec + COMBO_WINDOW_SEC
+		if _combo_hits >= COMBO_FEEDBACK_MIN_STACK:
+			var combo_label: String = "Combo x%d!" % (_combo_hits + 1)
+			show_quick_tip(combo_label, 0.45)
+			if _combo_hits == COMBO_MAX_STACKS:
+				record_world_event("Combo peak reached!")
 		_play_fx_chop()
 		if GatheringSfx:
 			GatheringSfx.play_chop()
