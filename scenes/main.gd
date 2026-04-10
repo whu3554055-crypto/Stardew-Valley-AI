@@ -94,6 +94,7 @@ const ELITE_BOUNTY_GOLD_BASE := 36
 const ATTACK_STAMINA_COST := 4.0
 const STREAK_HASTE_SEC := 2.2
 const STREAK_HASTE_COOLDOWN_MULT := 0.72
+const CRIT_STAMINA_REFUND := 2.0
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -969,6 +970,8 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 			GatheringSfx.play_chop()
 		_play_hitstop(hitstop_sec)
 		if is_crit:
+			if GameManager and GameManager.has_method("restore_stamina"):
+				GameManager.restore_stamina(CRIT_STAMINA_REFUND)
 			show_quick_tip("Critical hit!", 0.55)
 	else:
 		_combo_hits = 0
