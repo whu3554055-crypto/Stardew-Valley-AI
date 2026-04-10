@@ -1994,6 +1994,10 @@ func _on_quest_completed(quest_id: String):
 		if not reward_line.is_empty():
 			record_world_event(reward_line)
 			show_quick_tip(reward_line, 1.75)
+		if _is_combat_quest(quest_data):
+			play_screen_shake(4.8)
+			show_quick_tip("Combat objective complete!", 1.0)
+			record_world_event("Combat triumph: %s." % str(quest_data.get("title", quest_id)))
 		_apply_story_completion_feedback(quest_data)
 		if quest_id == "intro_combat":
 			QuestSystem.start_quest("deep_mine_hunt")
@@ -2014,6 +2018,17 @@ func _on_quest_completed(quest_id: String):
 			QuestSystem.start_quest("flawless_miner")
 			record_world_event("New combat contract unlocked: Flawless Miner.")
 	_refresh_quest_log()
+
+
+func _is_combat_quest(quest_data: Dictionary) -> bool:
+	var objectives: Array = quest_data.get("objectives", [])
+	for o in objectives:
+		if not (o is Dictionary):
+			continue
+		var t: String = str((o as Dictionary).get("type", ""))
+		if t == "enemy_kill":
+			return true
+	return false
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
 	var rs: String = reason if not reason.is_empty() else "unknown"
