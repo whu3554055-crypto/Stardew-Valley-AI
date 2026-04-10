@@ -835,10 +835,11 @@ func _maintain_combat_spawns() -> void:
 	for c in _enemy_layer.get_children():
 		if c is EnemyMelee:
 			alive += 1
-	if alive >= MAX_MINE_ENEMIES:
+	var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
+	var depth_cap: int = mini(MAX_MINE_ENEMIES + 2, MAX_MINE_ENEMIES + maxi(0, depth))
+	if alive >= depth_cap:
 		return
 	if _spawn_mine_enemy():
-		var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
 		var interval: float = lerpf(MINE_SPAWN_MAX_INTERVAL_SEC, MINE_SPAWN_MIN_INTERVAL_SEC, clampf(float(depth) / 3.0, 0.0, 1.0))
 		_next_mine_spawn_at = now + interval
 	else:
