@@ -70,6 +70,7 @@ var _was_in_mine_last_frame: bool = false
 var _run_kills: int = 0
 var _run_elites: int = 0
 var _run_bonus_gold: int = 0
+var _perfect_guard_chain: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -1062,8 +1063,16 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 		var kb_dir: Vector2 = player.global_position - _enemy.global_position
 		player.apply_knockback(kb_dir, 240.0, 920.0)
 	if guarded and _enemy and _enemy.has_method("apply_knockback"):
+		_perfect_guard_chain += 1
+		show_quick_tip("Perfect guard x%d" % _perfect_guard_chain, 0.45)
+		if _perfect_guard_chain % 3 == 0 and GameManager:
+			var guard_bonus: int = 12
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + guard_bonus
+			record_world_event("Perfect guard chain bonus +%dg." % guard_bonus)
 		var rebound_dir: Vector2 = _enemy.global_position - player.global_position
 		_enemy.apply_knockback(rebound_dir, 360.0)
+	else:
+		_perfect_guard_chain = 0
 	if not GameManager:
 		return
 	var alive: bool = GameManager.apply_damage(final_damage)
