@@ -61,6 +61,7 @@ var _revenge_buff_until: float = 0.0
 var _no_ore_kill_streak: int = 0
 var _attack_speed_buff_until: float = 0.0
 var _no_elite_kill_streak: int = 0
+var _shield_charges: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -103,6 +104,7 @@ const ATTACK_CONE_DOT_MIN := 0.2
 const BACKSTAB_DOT_MAX := -0.45
 const BACKSTAB_BONUS_MULT := 1.25
 const ELITE_PITY_KILLS := 14
+const SHIELD_MAX_CHARGES := 3
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -995,6 +997,11 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now < _combat_invuln_until:
 		return
+	if _shield_charges > 0:
+		_shield_charges -= 1
+		_combat_invuln_until = now + 0.45
+		show_quick_tip("Shield blocked the hit!", 0.45)
+		return
 	var guarded: bool = (now - (float(_last_attack_ms) / 1000.0)) <= ATTACK_GUARD_WINDOW_SEC
 	var final_damage: float = damage
 	var panic_mode: bool = false
@@ -1124,6 +1131,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		var bonus_gold: int = 14 + depth_bonus * 4
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
 		_attack_speed_buff_until = now_sec + STREAK_HASTE_SEC
+		_shield_charges = mini(SHIELD_MAX_CHARGES, _shield_charges + 1)
 		show_quick_tip("Kill streak %d! +%dg" % [_kill_streak, bonus_gold], 1.1)
 		record_world_event("Combat bonus: streak %d (+%dg)." % [_kill_streak, bonus_gold])
 	_play_fx_mine()
