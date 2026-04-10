@@ -387,6 +387,17 @@ func initialize_quests():
 		"reward": {"gold": 320, "items": ["gold_ore:2"]}
 	}
 
+	quests["combat_mastery"] = {
+		"id": "combat_mastery",
+		"title": "Combat Mastery",
+		"description": "Defeat 35 enemies in total.",
+		"objectives": [
+			{"type": "enemy_kill", "count": 35, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 420, "items": ["gold_ore:3"]}
+	}
+
 	_register_chain_quests_from_templates()
 
 func _register_chain_quests_from_templates() -> void:
