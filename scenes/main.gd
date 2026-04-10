@@ -78,6 +78,7 @@ var _hype_rank: String = "Rookie"
 var _quest_near_done_latched: Dictionary = {}
 var _streak_medal_awarded: Dictionary = {}
 var _run_best_tag: String = "None"
+var _combat_quest_chain: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -2107,6 +2108,12 @@ func _on_quest_completed(quest_id: String):
 			play_screen_shake(4.8)
 			show_quick_tip("Combat objective complete!", 1.0)
 			record_world_event("Combat triumph: %s." % str(quest_data.get("title", quest_id)))
+			_combat_quest_chain += 1
+			if GameManager and _combat_quest_chain >= 2:
+				var chain_bonus: int = 25 + (_combat_quest_chain - 2) * 10
+				GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + chain_bonus
+				show_quick_tip("Combat chain x%d +%dg" % [_combat_quest_chain, chain_bonus], 1.0)
+				record_world_event("Combat quest chain reward: +%dg." % chain_bonus)
 		_apply_story_completion_feedback(quest_data)
 		if quest_id == "intro_combat":
 			QuestSystem.start_quest("deep_mine_hunt")
@@ -2165,6 +2172,7 @@ func _combat_quest_progress_line() -> String:
 	return ""
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
+	_combat_quest_chain = 0
 	var rs: String = reason if not reason.is_empty() else "unknown"
 	var line: String = "Quest failed: %s (%s)" % [quest_id, rs]
 	if UITextCatalog:
