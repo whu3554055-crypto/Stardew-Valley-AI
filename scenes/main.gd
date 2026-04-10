@@ -75,6 +75,7 @@ var _last_stand_used_run: bool = false
 var _perfect_guard_chain_best: int = 0
 var _hype_points: int = 0
 var _hype_rank: String = "Rookie"
+var _quest_near_done_latched: Dictionary = {}
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -2150,7 +2151,12 @@ func _combat_quest_progress_line() -> String:
 				continue
 			var cur: int = int(od.get("current", 0))
 			var goal: int = int(od.get("count", 1))
+			if goal > 0 and cur < goal and float(cur) / float(goal) >= 0.8:
+				if not bool(_quest_near_done_latched.get(str(qid), false)):
+					_quest_near_done_latched[str(qid)] = true
+					show_quick_tip("Almost done: %s" % str(q.get("title", qid)), 0.65)
 			return "Quest %s: %d/%d" % [str(q.get("title", qid)), cur, goal]
+		_quest_near_done_latched[str(qid)] = false
 	return ""
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
