@@ -9,6 +9,8 @@ var _animation_player: AnimationPlayer
 var facing_direction = Vector2.DOWN
 var is_moving = false
 var _footstep_cooldown: float = 0.0
+var _knockback_vel: Vector2 = Vector2.ZERO
+var _knockback_decay: float = 850.0
 const FOOTSTEP_INTERVAL := 0.38
 
 signal interacted(tile_position)
@@ -38,6 +40,9 @@ func _physics_process(delta):
 		facing_direction = Vector2.RIGHT
 
 	velocity = velocity_input.normalized() * SPEED
+	if _knockback_vel.length() > 0.1:
+		velocity += _knockback_vel
+		_knockback_vel = _knockback_vel.move_toward(Vector2.ZERO, _knockback_decay * delta)
 	is_moving = velocity_input.length() > 0
 
 	if is_moving:
@@ -94,3 +99,11 @@ func _unhandled_input(event):
 func get_facing_tile() -> Vector2i:
 	var tile_pos = global_position / 32
 	return Vector2i(tile_pos.x + facing_direction.x, tile_pos.y + facing_direction.y)
+
+
+func apply_knockback(dir: Vector2, force: float, decay_per_sec: float = 850.0) -> void:
+	var n: Vector2 = dir.normalized()
+	if n.length() <= 0.001:
+		return
+	_knockback_vel += n * maxf(0.0, force)
+	_knockback_decay = maxf(160.0, decay_per_sec)

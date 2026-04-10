@@ -868,6 +868,9 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	if now < _combat_invuln_until:
 		return
 	_combat_invuln_until = now + 0.55
+	if player and player.has_method("apply_knockback"):
+		var kb_dir: Vector2 = player.global_position - _enemy.global_position
+		player.apply_knockback(kb_dir, 240.0, 920.0)
 	if not GameManager:
 		return
 	var alive: bool = GameManager.apply_damage(damage)
