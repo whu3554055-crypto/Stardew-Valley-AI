@@ -1,4 +1,5 @@
 extends Node2D
+const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 
 @onready var player = $Player
 @onready var tilemap = $TileMap
@@ -35,6 +36,7 @@ const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
 const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
 const PLAYER_CREATION_SCENE := preload("res://scenes/player_creation_panel.tscn")
 const PLAYER_JOURNAL_SCENE := preload("res://scenes/player_journal_panel.tscn")
+const COMBAT_WEAPONS_CFG_PATH := "res://data/combat/weapons.json"
 var audio_mix_panel: CanvasLayer = null
 var player_creation_panel: CanvasLayer = null
 var player_journal_panel: CanvasLayer = null
@@ -42,9 +44,27 @@ var _had_savegame: bool = false
 var _boot_finished: bool = false
 var _stamina_low_latched: bool = false
 var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
+var _enemy_layer: Node2D = null
+var _combat_invuln_until: float = 0.0
+var _last_attack_ms: int = -99999
+var _combat_weapons_cfg: Dictionary = {}
+var _active_weapon_id: String = "starter_sword"
+var _hitstop_active: bool = false
+const PLAYER_ATTACK_COOLDOWN_MS := 340
+const PLAYER_ATTACK_RANGE := 56.0
+const PLAYER_ATTACK_DAMAGE := 12
+const PLAYER_ATTACK_KNOCKBACK := 220.0
+const PLAYER_ATTACK_HITSTOP_SEC := 0.04
+const PLAYER_RESPAWN_HEAL_RATIO := 0.65
+const MAX_MINE_ENEMIES := 5
 const WORLD_EVENT_FEED_MAX := 6
-const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle"
-const SAVE_BUNDLE_VERSION := 4
+const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
+const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
+const GAME_SAVE_SLOT_B_PATH := "user://game_save_b.bundle"
+const GAME_SAVE_META_PATH := "user://game_save_meta.json"
+const TAMPER_LOG_PATH := "user://tamper_events.log"
+const SAVE_BUNDLE_VERSION := 5
+const SAVE_SIGN_SECRET := "sv_save_sign_v1_local_pepper"
 const BASE_STAMINA_MAX := 100.0
 ## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
 var _visible_feed_last: Dictionary = {}
@@ -52,6 +72,8 @@ var _visible_feed_last: Dictionary = {}
 func _ready():
 	# Connect signals
 	player.interacted.connect(_on_player_interact)
+	if player.has_signal("attack_requested"):
+		player.attack_requested.connect(_on_player_attack_requested)
 	if GameManager:
 		if not GameManager.time_changed.is_connected(_on_time_changed):
 			GameManager.time_changed.connect(_on_time_changed)
@@ -128,6 +150,11 @@ func _ready():
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
+	_enemy_layer = Node2D.new()
+	_enemy_layer.name = "EnemyLayer"
+	_enemy_layer.z_index = 3
+	add_child(_enemy_layer)
+	_load_combat_weapons_config()
 	_apply_a3_ui_polish()
 	
 	if not GameManager.player_data.get("profile", {}).get("confirmed", false):
@@ -224,6 +251,7 @@ func _on_locale_changed(_code: String) -> void:
 func _process(_delta: float) -> void:
 	_update_activity_zone_label()
 	_check_stamina_low_feedback()
+	_maintain_combat_spawns()
 
 func _apply_a3_ui_polish() -> void:
 	## Readability + panel chrome (A3 presentation pass).
@@ -571,17 +599,111 @@ func _update_activity_zone_label() -> void:
 	activity_zone_label.text = ""
 
 func _try_load_save_bundle() -> bool:
-	if not FileAccess.file_exists(GAME_SAVE_BUNDLE_PATH):
-		return false
-	var f: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.READ)
-	if f == null:
-		return false
-	var bundle: Variant = f.get_var()
-	f.close()
-	if bundle is Dictionary and int(bundle.get("version", 0)) >= 2:
-		_apply_save_bundle(bundle)
+	var best: Dictionary = _pick_best_valid_bundle()
+	if not best.is_empty():
+		_apply_save_bundle(best["bundle"])
 		return true
+	# Legacy fallback: migrate old single-file save on next write.
+	if FileAccess.file_exists(GAME_SAVE_BUNDLE_PATH):
+		var f: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.READ)
+		if f:
+			var legacy: Variant = f.get_var()
+			f.close()
+			if legacy is Dictionary and int(legacy.get("version", 0)) >= 2:
+				_log_tamper_event("legacy_load_unsigned", {"path": GAME_SAVE_BUNDLE_PATH})
+				_apply_save_bundle(legacy)
+				return true
 	return false
+
+
+func _pick_best_valid_bundle() -> Dictionary:
+	var best_seq: int = -1
+	var best: Dictionary = {}
+	for p in [GAME_SAVE_SLOT_A_PATH, GAME_SAVE_SLOT_B_PATH]:
+		if not FileAccess.file_exists(p):
+			continue
+		var f: FileAccess = FileAccess.open(p, FileAccess.READ)
+		if f == null:
+			continue
+		var raw: Variant = f.get_var()
+		f.close()
+		if not (raw is Dictionary):
+			continue
+		var b: Dictionary = raw
+		if int(b.get("version", 0)) < 2:
+			continue
+		if not _verify_bundle_signature(b):
+			_log_tamper_event("signature_mismatch", {"path": p})
+			continue
+		var seq: int = int(b.get("save_seq", 0))
+		if seq >= best_seq:
+			best_seq = seq
+			best = {"path": p, "bundle": b, "seq": seq}
+	return best
+
+
+func _bundle_signing_payload(bundle: Dictionary) -> Dictionary:
+	return {
+		"version": int(bundle.get("version", 0)),
+		"save_seq": int(bundle.get("save_seq", 0)),
+		"player": bundle.get("player", {}),
+		"farm": bundle.get("farm", {}),
+		"inventory": bundle.get("inventory", {}),
+		"quests": bundle.get("quests", {})
+	}
+
+
+func _canonicalize_value(v: Variant) -> Variant:
+	if v is Dictionary:
+		var d: Dictionary = v
+		var ks: Array = d.keys()
+		ks.sort()
+		var out: Dictionary = {}
+		for k in ks:
+			out[k] = _canonicalize_value(d[k])
+		return out
+	if v is Array:
+		var arr: Array = v
+		var out_arr: Array = []
+		for e in arr:
+			out_arr.append(_canonicalize_value(e))
+		return out_arr
+	return v
+
+
+func _compute_bundle_signature(bundle: Dictionary) -> String:
+	var payload: Dictionary = _bundle_signing_payload(bundle)
+	var normalized: Variant = _canonicalize_value(payload)
+	var msg: PackedByteArray = JSON.stringify(normalized).to_utf8_buffer()
+	var key: PackedByteArray = SAVE_SIGN_SECRET.to_utf8_buffer()
+	var crypto := Crypto.new()
+	var digest: PackedByteArray = crypto.hmac_digest(HashingContext.HASH_SHA256, key, msg)
+	return digest.hex_encode()
+
+
+func _verify_bundle_signature(bundle: Dictionary) -> bool:
+	var sig: String = str(bundle.get("signature", "")).strip_edges()
+	if sig.is_empty():
+		return false
+	return sig == _compute_bundle_signature(bundle)
+
+
+func _log_tamper_event(event_name: String, data: Dictionary = {}) -> void:
+	var row: Dictionary = {
+		"ts": Time.get_unix_time_from_system(),
+		"event": event_name,
+		"day": int(GameManager.player_data.get("day", 1)) if GameManager else 1,
+		"season": str(GameManager.player_data.get("season", "spring")) if GameManager else "spring",
+		"year": int(GameManager.player_data.get("year", 1)) if GameManager else 1
+	}
+	if not data.is_empty():
+		row["data"] = data
+	var f: FileAccess = FileAccess.open(TAMPER_LOG_PATH, FileAccess.READ_WRITE)
+	if f == null:
+		return
+	f.seek_end()
+	f.store_line(JSON.stringify(row))
+	f.close()
 
 
 func _apply_save_bundle(bundle: Dictionary) -> void:
@@ -612,6 +734,7 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 		active_story_hotspot = (bundle["active_story_hotspot"] as Dictionary).duplicate(true)
 	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
 		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
+	_validate_loaded_state()
 
 func _clamp_player_stamina_and_gold() -> void:
 	if not GameManager:
@@ -622,6 +745,10 @@ func _clamp_player_stamina_and_gold() -> void:
 	GameManager.player_data["stamina"] = clampf(scur, 0.0, smax)
 	var g: int = int(GameManager.player_data.get("gold", 0))
 	GameManager.player_data["gold"] = maxi(0, g)
+	var hpmax: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
+	GameManager.player_data["hp_max"] = hpmax
+	var hp: float = float(GameManager.player_data.get("hp", hpmax))
+	GameManager.player_data["hp"] = clampf(hp, 0.0, hpmax)
 
 
 func _migrate_player_data_if_needed(src_version: int) -> void:
@@ -649,6 +776,9 @@ func _migrate_player_data_if_needed(src_version: int) -> void:
 				"outfit_id": 0,
 				"confirmed": true
 			}
+	if src_version < 5:
+		if not GameManager.player_data.has("reward_ledger"):
+			GameManager.player_data["reward_ledger"] = {}
 
 
 func _build_save_bundle() -> Dictionary:
@@ -662,6 +792,226 @@ func _build_save_bundle() -> Dictionary:
 		"active_story_hotspot": active_story_hotspot.duplicate(true),
 		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {}
 	}
+
+
+func _maintain_combat_spawns() -> void:
+	if _enemy_layer == null:
+		return
+	if not GameZones.can_mine_here(player.global_position):
+		return
+	var alive: int = 0
+	for c in _enemy_layer.get_children():
+		if c is EnemyMelee:
+			alive += 1
+	if alive >= MAX_MINE_ENEMIES:
+		return
+	_spawn_mine_enemy()
+
+
+func _spawn_mine_enemy() -> void:
+	if _enemy_layer == null:
+		return
+	var mine: Rect2 = GameZones.mine_world_rect()
+	var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
+	var e := EnemyMelee.new()
+	e.max_hp = 20 + depth * 8 + randi_range(0, 10)
+	e.hp = e.max_hp
+	e.move_speed = randf_range(40.0 + depth * 2.5, 55.0 + depth * 3.0)
+	e.contact_damage = randf_range(7.0 + depth * 1.5, 11.0 + depth * 2.0)
+	if depth >= 2:
+		e.drop_item_id = "gold_ore" if randf() < 0.25 else ("silver_ore" if randf() < 0.45 else "coal")
+	elif depth == 1:
+		e.drop_item_id = "iron_ore" if randf() < 0.34 else ("coal" if randf() < 0.58 else "stone_chunk")
+	else:
+		e.drop_item_id = "stone_chunk" if randf() < 0.78 else "coal"
+	e.global_position = Vector2(
+		randf_range(mine.position.x + 14.0, mine.end.x - 14.0),
+		randf_range(mine.position.y + 14.0, mine.end.y - 14.0)
+	)
+	e.contact_hit.connect(_on_enemy_contact_hit)
+	e.enemy_killed.connect(_on_enemy_killed)
+	_enemy_layer.add_child(e)
+
+
+func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
+	var w: Dictionary = _weapon_profile()
+	var now_ms: int = Time.get_ticks_msec()
+	var cd_ms: int = int(w.get("cooldown_ms", PLAYER_ATTACK_COOLDOWN_MS))
+	if now_ms - _last_attack_ms < cd_ms:
+		return
+	_last_attack_ms = now_ms
+	var center: Vector2 = origin + facing.normalized() * 30.0
+	var range_v: float = float(w.get("range", PLAYER_ATTACK_RANGE))
+	var dmg: int = int(w.get("damage", PLAYER_ATTACK_DAMAGE))
+	var kb: float = float(w.get("knockback", PLAYER_ATTACK_KNOCKBACK))
+	var hitstop_sec: float = float(w.get("hitstop_sec", PLAYER_ATTACK_HITSTOP_SEC))
+	var hit_any: bool = false
+	for c in _enemy_layer.get_children():
+		if not (c is EnemyMelee):
+			continue
+		var e: EnemyMelee = c
+		if e.global_position.distance_to(center) <= range_v:
+			var killed: bool = e.take_damage(dmg)
+			var dir: Vector2 = e.global_position - origin
+			if not killed:
+				e.apply_knockback(dir, kb)
+			hit_any = true
+	if hit_any:
+		_play_fx_chop()
+		if GatheringSfx:
+			GatheringSfx.play_chop()
+		_play_hitstop(hitstop_sec)
+
+
+func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
+	var now: float = Time.get_ticks_msec() / 1000.0
+	if now < _combat_invuln_until:
+		return
+	_combat_invuln_until = now + 0.55
+	if not GameManager:
+		return
+	var alive: bool = GameManager.apply_damage(damage)
+	update_ui()
+	if not alive:
+		_handle_player_defeat()
+
+
+func _handle_player_defeat() -> void:
+	var home: Vector2 = Vector2(640, 360)
+	player.global_position = home
+	if GameManager:
+		var hpmax: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
+		var heal_to: float = hpmax * PLAYER_RESPAWN_HEAL_RATIO
+		GameManager.player_data["hp"] = heal_to
+		var gold: int = int(GameManager.player_data.get("gold", 0))
+		GameManager.player_data["gold"] = maxi(0, gold - 60)
+	_combat_invuln_until = Time.get_ticks_msec() / 1000.0 + 1.2
+	show_dialogue("You collapsed and woke up at the farmhouse. Lost 60g.")
+	update_ui()
+
+
+func _on_enemy_killed(enemy: EnemyMelee) -> void:
+	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
+	if not template.is_empty():
+		var n: int = enemy.roll_drop_count()
+		for _i in range(n):
+			InventoryManager.add_item(template.duplicate(true))
+	if QuestSystem:
+		QuestSystem.track_event("enemy_kill", {
+			"enemy_id": enemy.enemy_id,
+			"count": 1,
+			"mine_depth": GameZones.mine_depth_from_global_y(enemy.global_position.y)
+		})
+	_play_fx_mine()
+	if GatheringSfx:
+		GatheringSfx.play_mine_swing()
+	play_screen_shake(3.2)
+	record_world_event("Defeated %s." % enemy.enemy_id)
+	update_ui()
+
+
+func _load_combat_weapons_config() -> void:
+	_combat_weapons_cfg = {
+		"starter_sword": {
+			"damage": PLAYER_ATTACK_DAMAGE,
+			"range": PLAYER_ATTACK_RANGE,
+			"cooldown_ms": PLAYER_ATTACK_COOLDOWN_MS,
+			"knockback": PLAYER_ATTACK_KNOCKBACK,
+			"hitstop_sec": PLAYER_ATTACK_HITSTOP_SEC
+		}
+	}
+	var f: FileAccess = FileAccess.open(COMBAT_WEAPONS_CFG_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var raw: String = f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(raw)
+	if parsed is Dictionary:
+		var dd: Dictionary = parsed
+		if dd.get("weapons") is Dictionary:
+			_combat_weapons_cfg = (dd["weapons"] as Dictionary).duplicate(true)
+
+
+func _weapon_profile() -> Dictionary:
+	var w: Dictionary = _combat_weapons_cfg.get(_active_weapon_id, {})
+	if w.is_empty():
+		w = {
+			"damage": PLAYER_ATTACK_DAMAGE,
+			"range": PLAYER_ATTACK_RANGE,
+			"cooldown_ms": PLAYER_ATTACK_COOLDOWN_MS,
+			"knockback": PLAYER_ATTACK_KNOCKBACK,
+			"hitstop_sec": PLAYER_ATTACK_HITSTOP_SEC
+		}
+	return w
+
+
+func _play_hitstop(sec: float) -> void:
+	var dur: float = clampf(sec, 0.0, 0.09)
+	if dur <= 0.0 or _hitstop_active:
+		return
+	_hitstop_active = true
+	var old_scale: float = Engine.time_scale
+	Engine.time_scale = minf(old_scale, 0.18)
+	await get_tree().create_timer(dur, true, false, true).timeout
+	Engine.time_scale = old_scale
+	_hitstop_active = false
+
+
+func _validate_loaded_state() -> void:
+	if not GameManager:
+		return
+	_clamp_player_stamina_and_gold()
+	if not GameManager.player_data.has("reward_ledger") or not (GameManager.player_data.get("reward_ledger") is Dictionary):
+		GameManager.player_data["reward_ledger"] = {}
+		_log_tamper_event("repair_reward_ledger_missing")
+	if farm_manager and FarmTierCatalog:
+		var old_tier: int = int(farm_manager.farm_tier)
+		farm_manager.farm_tier = clampi(old_tier, 1, maxi(1, FarmTierCatalog.max_tier()))
+		if old_tier != farm_manager.farm_tier:
+			_log_tamper_event("repair_farm_tier", {"from": old_tier, "to": farm_manager.farm_tier})
+	if BuildingUpgradeCatalog:
+		var old_house: int = int(GameManager.player_data.get("house_level", 1))
+		var fixed_house: int = clampi(old_house, 1, BuildingUpgradeCatalog.max_level())
+		GameManager.player_data["house_level"] = fixed_house
+		if old_house != fixed_house:
+			_log_tamper_event("repair_house_level", {"from": old_house, "to": fixed_house})
+	if InventoryManager and ItemDatabase:
+		var repaired_slots: int = 0
+		for i in range(InventoryManager.INVENTORY_SIZE):
+			var it = InventoryManager.inventory[i]
+			if it == null:
+				continue
+			if not (it is Dictionary):
+				InventoryManager.inventory[i] = null
+				repaired_slots += 1
+				continue
+			var d: Dictionary = it
+			var iid: String = str(d.get("id", "")).strip_edges()
+			var tpl: Dictionary = ItemDatabase.get_item(iid)
+			if iid.is_empty() or tpl.is_empty():
+				InventoryManager.inventory[i] = null
+				repaired_slots += 1
+				continue
+			var st: int = int(d.get("stack", 0))
+			var mx: int = maxi(1, int(tpl.get("max_stack", 99)))
+			var fixed_st: int = clampi(st, 1, mx)
+			if fixed_st != st:
+				d["stack"] = fixed_st
+				InventoryManager.inventory[i] = d
+				repaired_slots += 1
+		if repaired_slots > 0:
+			InventoryManager.inventory_updated.emit()
+			_log_tamper_event("repair_inventory_slots", {"count": repaired_slots})
+	if QuestSystem:
+		var repaired: int = 0
+		for qid in QuestSystem.completed_quests:
+			if QuestSystem.active_quests.has(qid):
+				QuestSystem.active_quests.erase(qid)
+				repaired += 1
+			if QuestSystem.quests.has(qid):
+				QuestSystem.quests[qid]["status"] = QuestSystem.QuestStatus.COMPLETED
+		if repaired > 0:
+			_log_tamper_event("repair_quest_state_overlap", {"count": repaired})
 
 
 func initialize_playable_first_loop():
@@ -1755,7 +2105,12 @@ func update_ui():
 		if stamina_label:
 			var s: float = float(GameManager.player_data.get("stamina", 100.0))
 			var sm: float = float(GameManager.player_data.get("stamina_max", 100.0))
-			stamina_label.text = UITextCatalog.format_text("hud", "stamina", {"cur": int(s), "max": int(sm)})
+			var hp: float = float(GameManager.player_data.get("hp", 100.0))
+			var hpm: float = float(GameManager.player_data.get("hp_max", 100.0))
+			stamina_label.text = "%s | HP: %d / %d" % [
+				UITextCatalog.format_text("hud", "stamina", {"cur": int(s), "max": int(sm)}),
+				int(hp), int(hpm)
+			]
 		var wname: String = WeatherSystem.get_weather_name() if WeatherSystem else ""
 		var wdisp: String = UITextCatalog.localized_weather_name(wname)
 		weather_label.text = UITextCatalog.format_text("hud", "weather", {"name": wdisp})
@@ -1770,7 +2125,9 @@ func update_ui():
 		if stamina_label:
 			var s2: float = float(GameManager.player_data.get("stamina", 100.0))
 			var sm2: float = float(GameManager.player_data.get("stamina_max", 100.0))
-			stamina_label.text = "Stamina: %d / %d" % [int(s2), int(sm2)]
+			var hp2: float = float(GameManager.player_data.get("hp", 100.0))
+			var hpm2: float = float(GameManager.player_data.get("hp_max", 100.0))
+			stamina_label.text = "Stamina: %d / %d | HP: %d / %d" % [int(s2), int(sm2), int(hp2), int(hpm2)]
 		weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
 		season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
 		day_label.text = "Day %d, Year %d" % [GameManager.player_data.day, GameManager.player_data.year]
@@ -1906,18 +2263,62 @@ func toggle_inventory():
 
 func save_game() -> bool:
 	var bundle: Dictionary = _build_save_bundle()
-	var bf: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.WRITE)
+	var meta: Dictionary = _read_save_meta()
+	var next_seq: int = int(meta.get("last_seq", 0)) + 1
+	bundle["save_seq"] = next_seq
+	bundle["saved_at_unix"] = Time.get_unix_time_from_system()
+	bundle["signature"] = _compute_bundle_signature(bundle)
+	var slot_path: String = GAME_SAVE_SLOT_A_PATH if (next_seq % 2 == 1) else GAME_SAVE_SLOT_B_PATH
+	var temp_path: String = "%s.tmp" % slot_path
+	var bf: FileAccess = FileAccess.open(temp_path, FileAccess.WRITE)
 	if bf == null:
-		push_warning("Main: failed to open save path for writing: %s" % GAME_SAVE_BUNDLE_PATH)
+		push_warning("Main: failed to open save path for writing: %s" % temp_path)
+		_log_tamper_event("save_write_failed", {"path": temp_path})
 		return false
 	bf.store_var(bundle)
 	bf.close()
+	var rn_ok: Error = DirAccess.rename_absolute(temp_path, slot_path)
+	if rn_ok != OK:
+		_log_tamper_event("save_rename_failed", {"from": temp_path, "to": slot_path, "code": int(rn_ok)})
+		return false
+	_write_save_meta({
+		"last_seq": next_seq,
+		"last_slot": "a" if slot_path == GAME_SAVE_SLOT_A_PATH else "b",
+		"last_saved_at_unix": int(bundle.get("saved_at_unix", 0))
+	})
+	# Keep writing legacy path for compatibility/migration safety.
+	var legacy: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.WRITE)
+	if legacy:
+		legacy.store_var(bundle)
+		legacy.close()
 	if NPCMemorySystem:
 		NPCMemorySystem.save_memories()
 	if NPCEmotionSystem:
 		NPCEmotionSystem.save_emotion_state()
 	print("Game saved!")
 	return true
+
+
+func _read_save_meta() -> Dictionary:
+	if not FileAccess.file_exists(GAME_SAVE_META_PATH):
+		return {}
+	var f: FileAccess = FileAccess.open(GAME_SAVE_META_PATH, FileAccess.READ)
+	if f == null:
+		return {}
+	var raw: String = f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(raw)
+	if parsed is Dictionary:
+		return parsed
+	return {}
+
+
+func _write_save_meta(meta: Dictionary) -> void:
+	var f: FileAccess = FileAccess.open(GAME_SAVE_META_PATH, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify(meta, "\t"))
+	f.close()
 
 
 func _notification(what: int) -> void:
