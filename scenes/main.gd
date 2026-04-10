@@ -1066,6 +1066,7 @@ func _handle_player_defeat() -> void:
 
 func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	var depth_now: int = GameZones.mine_depth_from_global_y(enemy.global_position.y)
+	var is_elite: bool = str(enemy.enemy_id).find("_elite") >= 0
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec > _kill_streak_expire_at:
 		_kill_streak = 0
@@ -1099,7 +1100,11 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
-	if GameManager and str(enemy.enemy_id).find("_elite") >= 0:
+	if is_elite:
+		show_quick_tip("Elite defeated!", 0.8)
+	else:
+		show_quick_tip("Enemy defeated.", 0.35)
+	if GameManager and is_elite:
 		_no_elite_kill_streak = 0
 		var bounty_gold: int = ELITE_BOUNTY_GOLD_BASE + depth_now * 10
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bounty_gold
@@ -1114,6 +1119,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 				show_quick_tip("Elite bonus drop: %s" % bonus_item_id, 0.8)
 	else:
 		_no_elite_kill_streak += 1
+	var splash_hits: int = 0
 	for c in _enemy_layer.get_children():
 		if not (c is EnemyMelee):
 			continue
@@ -1122,6 +1128,9 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 			continue
 		if near_enemy.global_position.distance_to(enemy.global_position) <= KILL_SPLASH_RANGE:
 			near_enemy.take_damage(KILL_SPLASH_DAMAGE)
+			splash_hits += 1
+	if splash_hits > 0:
+		show_quick_tip("Cleave hit x%d" % splash_hits, 0.45)
 	if GameManager:
 		var total_kills: int = int(GameManager.player_data.get("combat_kills_total", 0)) + 1
 		GameManager.player_data["combat_kills_total"] = total_kills
