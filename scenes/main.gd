@@ -868,8 +868,9 @@ func _maintain_combat_spawns() -> void:
 		return
 	var in_mine_now: bool = GameZones.can_mine_here(player.global_position)
 	if _was_in_mine_last_frame and not in_mine_now and (_run_kills > 0 or _run_bonus_gold > 0):
-		record_world_event("Mine run recap: kills %d, elites %d, bonus +%dg, guard chain best x%d." % [_run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best])
-		show_quick_tip("Run recap: %d kills / +%dg / guard x%d" % [_run_kills, _run_bonus_gold, _perfect_guard_chain_best], 1.2)
+		var run_stars: int = _run_star_rating(_run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best)
+		record_world_event("Mine run recap: %d★, kills %d, elites %d, bonus +%dg, guard chain best x%d." % [run_stars, _run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best])
+		show_quick_tip("Run recap %d★: %d kills / +%dg" % [run_stars, _run_kills, _run_bonus_gold], 1.2)
 		_run_kills = 0
 		_run_elites = 0
 		_run_bonus_gold = 0
@@ -2384,6 +2385,19 @@ func _hype_rank_from_points(points: int) -> String:
 	if points >= HYPE_STEP:
 		return "Hot"
 	return "Rookie"
+
+
+func _run_star_rating(kills: int, elites: int, bonus_gold: int, guard_best: int) -> int:
+	var score: int = kills + elites * 4 + bonus_gold / 18 + guard_best * 2
+	if score >= 48:
+		return 5
+	if score >= 34:
+		return 4
+	if score >= 22:
+		return 3
+	if score >= 12:
+		return 2
+	return 1
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
