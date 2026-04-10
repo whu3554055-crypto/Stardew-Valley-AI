@@ -1832,6 +1832,15 @@ func _on_day_changed(new_day):
 		var daily_kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
 		var daily_elites: int = int(GameManager.player_data.get("combat_elites_today", 0))
 		var rating: String = _combat_daily_rating(daily_kills, daily_elites, _daily_peak_streak, defeats_today)
+		if GameManager:
+			if rating == "S":
+				GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + 55
+				show_quick_tip("Daily S rating reward +55g", 1.0)
+				record_world_event("Daily combat S reward claimed (+55g).")
+			elif rating == "A":
+				GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + 30
+				show_quick_tip("Daily A rating reward +30g", 0.9)
+				record_world_event("Daily combat A reward claimed (+30g).")
 		if daily_kills >= 12 and defeats_today == 0 and not bool(GameManager.player_data.get("combat_badge_flawless_day", false)):
 			GameManager.player_data["combat_badge_flawless_day"] = true
 			record_world_event("Badge unlocked: Flawless Combat Day.")
