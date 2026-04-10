@@ -76,6 +76,7 @@ var _perfect_guard_chain_best: int = 0
 var _hype_points: int = 0
 var _hype_rank: String = "Rookie"
 var _quest_near_done_latched: Dictionary = {}
+var _streak_medal_awarded: Dictionary = {}
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -1161,6 +1162,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	_kill_streak += 1
 	_kill_streak_expire_at = now_sec + KILL_STREAK_WINDOW_SEC
 	_daily_peak_streak = maxi(_daily_peak_streak, _kill_streak)
+	_try_award_streak_medal(_kill_streak)
 	if GameManager:
 		var best_streak: int = int(GameManager.player_data.get("combat_best_streak", 0))
 		if _kill_streak > best_streak:
@@ -2379,6 +2381,26 @@ func _streak_tier_label(streak: int) -> String:
 	if streak >= 10:
 		return "Silver"
 	return "Bronze"
+
+
+func _try_award_streak_medal(streak: int) -> void:
+	var medals: Dictionary = {
+		5: {"name": "Bronze Medal", "gold": 10},
+		10: {"name": "Silver Medal", "gold": 18},
+		15: {"name": "Gold Medal", "gold": 28},
+		20: {"name": "Mythic Medal", "gold": 45}
+	}
+	if not medals.has(streak):
+		return
+	if bool(_streak_medal_awarded.get(streak, false)):
+		return
+	_streak_medal_awarded[streak] = true
+	var d: Dictionary = medals[streak]
+	var bonus: int = int(d.get("gold", 0))
+	if GameManager:
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus
+	show_quick_tip("%s unlocked! +%dg" % [str(d.get("name", "Medal")), bonus], 1.0)
+	record_world_event("Streak medal unlocked: %s (+%dg)." % [str(d.get("name", "Medal")), bonus])
 
 
 func _hype_rank_from_points(points: int) -> String:
