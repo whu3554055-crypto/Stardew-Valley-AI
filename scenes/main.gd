@@ -77,6 +77,7 @@ const KILL_STREAK_STEP := 5
 const ELITE_BASE_CHANCE := 0.08
 const ATTACK_GUARD_WINDOW_SEC := 0.22
 const ATTACK_GUARD_DAMAGE_REDUCTION := 0.35
+const KILL_HEAL_BASE := 2.0
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -972,6 +973,7 @@ func _handle_player_defeat() -> void:
 
 
 func _on_enemy_killed(enemy: EnemyMelee) -> void:
+	var depth_now: int = GameZones.mine_depth_from_global_y(enemy.global_position.y)
 	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
 	if not template.is_empty():
 		var n: int = enemy.roll_drop_count()
@@ -981,8 +983,10 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		QuestSystem.track_event("enemy_kill", {
 			"enemy_id": enemy.enemy_id,
 			"count": 1,
-			"mine_depth": GameZones.mine_depth_from_global_y(enemy.global_position.y)
+			"mine_depth": depth_now
 		})
+	if GameManager and GameManager.has_method("heal_hp"):
+		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec > _kill_streak_expire_at:
 		_kill_streak = 0
