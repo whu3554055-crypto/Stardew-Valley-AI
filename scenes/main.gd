@@ -59,6 +59,7 @@ var _kill_streak: int = 0
 var _kill_streak_expire_at: float = 0.0
 var _revenge_buff_until: float = 0.0
 var _no_ore_kill_streak: int = 0
+var _attack_speed_buff_until: float = 0.0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -91,6 +92,8 @@ const PANIC_DAMAGE_REDUCTION := 0.2
 const PANIC_INVULN_SEC := 0.85
 const ELITE_BOUNTY_GOLD_BASE := 36
 const ATTACK_STAMINA_COST := 4.0
+const STREAK_HASTE_SEC := 2.2
+const STREAK_HASTE_COOLDOWN_MULT := 0.72
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -921,6 +924,9 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 		return
 	var now_ms: int = Time.get_ticks_msec()
 	var cd_ms: int = int(w.get("cooldown_ms", PLAYER_ATTACK_COOLDOWN_MS))
+	var now_sec: float = float(now_ms) / 1000.0
+	if now_sec <= _attack_speed_buff_until:
+		cd_ms = maxi(80, int(round(float(cd_ms) * STREAK_HASTE_COOLDOWN_MULT)))
 	if now_ms - _last_attack_ms < cd_ms:
 		return
 	_last_attack_ms = now_ms
@@ -1078,6 +1084,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		var depth_bonus: int = maxi(0, GameZones.mine_depth_from_global_y(enemy.global_position.y))
 		var bonus_gold: int = 14 + depth_bonus * 4
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
+		_attack_speed_buff_until = now_sec + STREAK_HASTE_SEC
 		show_quick_tip("Kill streak %d! +%dg" % [_kill_streak, bonus_gold], 1.1)
 		record_world_event("Combat bonus: streak %d (+%dg)." % [_kill_streak, bonus_gold])
 	_play_fx_mine()
