@@ -78,6 +78,7 @@ const ELITE_BASE_CHANCE := 0.08
 const ATTACK_GUARD_WINDOW_SEC := 0.22
 const ATTACK_GUARD_DAMAGE_REDUCTION := 0.35
 const KILL_HEAL_BASE := 2.0
+const KILL_MILESTONES := [25, 60, 120]
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -987,6 +988,18 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
+	if GameManager:
+		var total_kills: int = int(GameManager.player_data.get("combat_kills_total", 0)) + 1
+		GameManager.player_data["combat_kills_total"] = total_kills
+		var milestone_idx: int = int(GameManager.player_data.get("combat_kill_milestone_idx", 0))
+		if milestone_idx >= 0 and milestone_idx < KILL_MILESTONES.size():
+			var target: int = int(KILL_MILESTONES[milestone_idx])
+			if total_kills >= target:
+				var milestone_gold: int = 80 + milestone_idx * 70
+				GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + milestone_gold
+				GameManager.player_data["combat_kill_milestone_idx"] = milestone_idx + 1
+				record_world_event("Combat milestone %d kills reached (+%dg)." % [target, milestone_gold])
+				show_quick_tip("Milestone reached: %d kills!" % target, 1.3)
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if now_sec > _kill_streak_expire_at:
 		_kill_streak = 0
