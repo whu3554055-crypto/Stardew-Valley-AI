@@ -14,6 +14,10 @@
       "damage_max": 9.5,
       "drop_count_min": 1,
       "drop_count_max": 2,
+      "elite_chance": 0.06,
+      "elite_hp_mult": 1.45,
+      "elite_damage_mult": 1.25,
+      "elite_drop_bonus": 1,
       "drop_pool": [
         {"item": "stone_chunk", "weight": 72.0},
         {"item": "coal", "weight": 22.0},
@@ -33,6 +37,10 @@
       "damage_max": 12.0,
       "drop_count_min": 1,
       "drop_count_max": 2,
+      "elite_chance": 0.1,
+      "elite_hp_mult": 1.55,
+      "elite_damage_mult": 1.32,
+      "elite_drop_bonus": 1,
       "drop_pool": [
         {"item": "iron_ore", "weight": 40.0},
         {"item": "coal", "weight": 38.0},
@@ -52,6 +60,10 @@
       "damage_max": 15.0,
       "drop_count_min": 1,
       "drop_count_max": 3,
+      "elite_chance": 0.14,
+      "elite_hp_mult": 1.7,
+      "elite_damage_mult": 1.38,
+      "elite_drop_bonus": 2,
       "drop_pool": [
         {"item": "silver_ore", "weight": 42.0},
         {"item": "coal", "weight": 30.0},

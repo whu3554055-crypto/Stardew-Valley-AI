@@ -81,3 +81,9 @@ func apply_knockback(dir: Vector2, force: float) -> void:
 	if n.length() <= 0.001:
 		return
 	_knockback_vel += n * maxf(0.0, force)
+
+
+func set_body_color(c: Color) -> void:
+	var body: ColorRect = get_node_or_null("Body") as ColorRect
+	if body:
+		body.color = c

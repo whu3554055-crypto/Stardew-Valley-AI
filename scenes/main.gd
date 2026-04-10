@@ -74,6 +74,7 @@ const COMBO_BONUS_PER_STACK := 0.08
 const COMBO_MAX_STACKS := 5
 const KILL_STREAK_WINDOW_SEC := 6.0
 const KILL_STREAK_STEP := 5
+const ELITE_BASE_CHANCE := 0.08
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -854,6 +855,18 @@ func _spawn_mine_enemy() -> bool:
 	e.drop_count_min = maxi(1, int(profile.get("drop_count_min", 1)))
 	e.drop_count_max = maxi(e.drop_count_min, int(profile.get("drop_count_max", 2)))
 	e.drop_item_id = _pick_weighted_drop_item(profile.get("drop_pool", []), "stone_chunk")
+	var elite_chance: float = clampf(float(profile.get("elite_chance", ELITE_BASE_CHANCE + float(depth) * 0.02)), 0.0, 0.45)
+	if randf() < elite_chance:
+		var hp_mult: float = maxf(1.1, float(profile.get("elite_hp_mult", 1.55)))
+		var dmg_mult: float = maxf(1.1, float(profile.get("elite_damage_mult", 1.3)))
+		var extra_drop: int = maxi(1, int(profile.get("elite_drop_bonus", 1)))
+		e.max_hp = int(round(float(e.max_hp) * hp_mult))
+		e.hp = e.max_hp
+		e.contact_damage = float(e.contact_damage) * dmg_mult
+		e.drop_count_max += extra_drop
+		e.enemy_id = "%s_elite" % e.enemy_id
+		e.set_body_color(Color(0.78, 0.45, 0.86, 0.96))
+		record_world_event("An elite foe appears in the mine!")
 	var spawn_pos: Vector2 = Vector2.ZERO
 	var found_pos: bool = false
 	for _i in range(8):
