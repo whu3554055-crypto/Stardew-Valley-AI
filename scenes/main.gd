@@ -73,6 +73,8 @@ var _run_bonus_gold: int = 0
 var _perfect_guard_chain: int = 0
 var _last_stand_used_run: bool = false
 var _perfect_guard_chain_best: int = 0
+var _hype_points: int = 0
+var _hype_rank: String = "Rookie"
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -122,6 +124,7 @@ const CLUTCH_HP_RATIO := 0.2
 const CLUTCH_BONUS_GOLD := 22
 const MOMENTUM_STEP := 20
 const NO_HIT_STREAK_GOAL := 8
+const HYPE_STEP := 18
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -872,6 +875,8 @@ func _maintain_combat_spawns() -> void:
 		_run_bonus_gold = 0
 		_last_stand_used_run = false
 		_perfect_guard_chain_best = 0
+		_hype_points = 0
+		_hype_rank = "Rookie"
 	_was_in_mine_last_frame = in_mine_now
 	if not GameZones.can_mine_here(player.global_position):
 		if _enemy_layer.get_child_count() > 0:
@@ -1149,6 +1154,12 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 			record_world_event("New personal best streak: %d." % _kill_streak)
 			show_quick_tip("New PB streak: %d" % _kill_streak, 0.85)
 	var dropped_ore: bool = false
+	_hype_points += 3 + (4 if is_elite else 0)
+	var hype_now: String = _hype_rank_from_points(_hype_points)
+	if hype_now != _hype_rank:
+		_hype_rank = hype_now
+		show_quick_tip("Hype rank: %s" % _hype_rank, 0.85)
+		record_world_event("Combat hype advanced to %s." % _hype_rank)
 	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
 	if not template.is_empty():
 		var n: int = enemy.roll_drop_count()
@@ -2349,6 +2360,18 @@ func _streak_tier_label(streak: int) -> String:
 	if streak >= 10:
 		return "Silver"
 	return "Bronze"
+
+
+func _hype_rank_from_points(points: int) -> String:
+	if points >= HYPE_STEP * 4:
+		return "Mythic"
+	if points >= HYPE_STEP * 3:
+		return "Legend"
+	if points >= HYPE_STEP * 2:
+		return "Heroic"
+	if points >= HYPE_STEP:
+		return "Hot"
+	return "Rookie"
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
