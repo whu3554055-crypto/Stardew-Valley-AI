@@ -107,6 +107,7 @@ const BACKSTAB_BONUS_MULT := 1.25
 const ELITE_PITY_KILLS := 14
 const SHIELD_MAX_CHARGES := 3
 const COMBO_FEEDBACK_MIN_STACK := 2
+const BIG_HIT_THRESHOLD := 24
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -970,12 +971,19 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 		var to_enemy: Vector2 = (e.global_position - origin).normalized()
 		if e.global_position.distance_to(center) <= range_v and facing_n.dot(to_enemy) >= ATTACK_CONE_DOT_MIN:
 			var dmg_to_apply: int = final_dmg
+			var special_tag: String = ""
 			var enemy_to_player: Vector2 = (player.global_position - e.global_position).normalized()
 			if enemy_to_player.dot(to_enemy) <= BACKSTAB_DOT_MAX:
 				dmg_to_apply = maxi(1, int(round(float(dmg_to_apply) * BACKSTAB_BONUS_MULT)))
+				special_tag = "Backstab!"
 			if e.max_hp > 0 and float(e.hp) / float(e.max_hp) <= EXECUTE_THRESHOLD_RATIO:
 				dmg_to_apply = maxi(1, int(round(float(final_dmg) * EXECUTE_BONUS_MULT)))
+				special_tag = "Execute!"
 			var killed: bool = e.take_damage(dmg_to_apply)
+			if not special_tag.is_empty():
+				show_quick_tip(special_tag, 0.45)
+			elif dmg_to_apply >= BIG_HIT_THRESHOLD:
+				show_quick_tip("Heavy hit %d!" % dmg_to_apply, 0.4)
 			var dir: Vector2 = e.global_position - origin
 			if not killed:
 				e.apply_knockback(dir, kb)
