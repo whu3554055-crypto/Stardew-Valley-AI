@@ -1693,11 +1693,14 @@ func _on_day_changed(new_day):
 		var defeats_today: int = int(GameManager.player_data.get("daily_defeats", 0))
 		var daily_kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
 		var daily_elites: int = int(GameManager.player_data.get("combat_elites_today", 0))
+		var rating: String = _combat_daily_rating(daily_kills, daily_elites, _daily_peak_streak, defeats_today)
 		if daily_kills >= 12 and defeats_today == 0 and not bool(GameManager.player_data.get("combat_badge_flawless_day", false)):
 			GameManager.player_data["combat_badge_flawless_day"] = true
 			record_world_event("Badge unlocked: Flawless Combat Day.")
 			show_quick_tip("Badge: Flawless Combat Day", 1.2)
 		record_world_event("Combat recap: kills %d, elites %d, peak streak %d." % [daily_kills, daily_elites, _daily_peak_streak])
+		record_world_event("Combat rating today: %s" % rating)
+		show_quick_tip("Daily combat rating: %s" % rating, 1.0)
 		GameManager.player_data["combat_kills_today"] = 0
 		GameManager.player_data["combat_elites_today"] = 0
 		GameManager.player_data["daily_defeats"] = 0
@@ -2191,6 +2194,17 @@ func _basic_emotion_label(emotion: int) -> String:
 		NPCEmotionSystem.BasicEmotion.NOSTALGIC:
 			return "nostalgic"
 	return "different"
+
+
+func _combat_daily_rating(kills: int, elites: int, peak_streak: int, defeats: int) -> String:
+	var score: int = kills + elites * 4 + peak_streak * 2 - defeats * 6
+	if score >= 40:
+		return "S"
+	if score >= 26:
+		return "A"
+	if score >= 14:
+		return "B"
+	return "C"
 
 func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	if quest_data.get("source", "") != "daily_narrative":
