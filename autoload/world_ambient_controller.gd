@@ -5,19 +5,10 @@ extends Node
 ## Tuning: `res://data/presentation/immersion_config.json` (ImmersionConfig autoload).
 
 const _FB_SEASON := {
-	"spring": "res://assets/audio/ambience/spring.ogg",
-	"summer": "res://assets/audio/ambience/summer.ogg",
-	"fall": "res://assets/audio/ambience/fall.ogg",
-	"winter": "res://assets/audio/ambience/winter.ogg",
-}
-const _AUDIO_FALLBACKS := {
-	"res://assets/audio/ambience/spring.ogg": "res://assets/audio/ambience_extended/birds_forest.wav",
-	"res://assets/audio/ambience/summer.ogg": "res://assets/audio/ambience_extended/birds_forest.wav",
-	"res://assets/audio/ambience/fall.ogg": "res://assets/audio/ambience_extended/leaves_rustle.wav",
-	"res://assets/audio/ambience/winter.ogg": "res://assets/audio/ambience_extended/wind_trees.wav",
-	"res://assets/audio/ambience/rain.ogg": "res://assets/audio/ambience_extended/rain_light.wav",
-	"res://assets/audio/ambience/storm.ogg": "res://assets/audio/ambience_extended/rain_heavy.wav",
-	"res://assets/audio/locations/town_crowd.ogg": "res://assets/audio/ambience_extended/birds_morning.wav"
+	"spring": "res://assets/audio/ambience_extended/birds_forest.wav",
+	"summer": "res://assets/audio/ambience_extended/birds_forest.wav",
+	"fall": "res://assets/audio/ambience_extended/leaves_rustle.wav",
+	"winter": "res://assets/audio/ambience_extended/wind_trees.wav",
 }
 
 var _season_player: AudioStreamPlayer
@@ -341,7 +332,7 @@ func _apply_weather_layer() -> void:
 			_stop_stream(_windy_player)
 			var pr: String = ImmersionConfig.get_weather_audio_path("rain") if ImmersionConfig else ""
 			if pr.is_empty():
-				pr = "res://assets/audio/ambience/rain.ogg"
+				pr = "res://assets/audio/ambience_extended/rain_light.wav"
 			_play_loop_stream(_weather_player, pr)
 			var vbr: float = ImmersionConfig.get_weather_vol_base_db("rain") if ImmersionConfig else -13.5
 			_weather_player.set_meta("wa_vol_base", vbr)
@@ -349,7 +340,7 @@ func _apply_weather_layer() -> void:
 			_stop_stream(_windy_player)
 			var ps: String = ImmersionConfig.get_weather_audio_path("storm") if ImmersionConfig else ""
 			if ps.is_empty():
-				ps = "res://assets/audio/ambience/storm.ogg"
+				ps = "res://assets/audio/ambience_extended/rain_heavy.wav"
 			_play_loop_stream(_weather_player, ps)
 			var vbs: float = ImmersionConfig.get_weather_vol_base_db("storm") if ImmersionConfig else -11.5
 			_weather_player.set_meta("wa_vol_base", vbs)
@@ -439,26 +430,15 @@ func _play_loop_stream(player: AudioStreamPlayer, path: String) -> void:
 	if path.is_empty():
 		_stop_stream(player)
 		return
-	var chosen_path: String = path
-	var f: FileAccess = FileAccess.open(path, FileAccess.READ)
-	if f:
-		var size: int = int(f.get_length())
-		f.close()
-		# Some shipped placeholder OGG files are tiny and fail to decode.
-		if path.to_lower().ends_with(".ogg") and size < 1024:
-			var fb: String = str(_AUDIO_FALLBACKS.get(path, "")).strip_edges()
-			if not fb.is_empty():
-				push_warning("[WorldAmbient] Placeholder audio detected, using fallback: %s -> %s" % [path, fb])
-				chosen_path = fb
-	if player.get_meta("wa_path", "") == chosen_path and player.playing:
+	if player.get_meta("wa_path", "") == path and player.playing:
 		return
 	# Guard both the import map and the source file to avoid noisy load errors.
-	if not ResourceLoader.exists(chosen_path) or not FileAccess.file_exists(chosen_path):
-		push_warning("[WorldAmbient] Missing audio: %s" % chosen_path)
+	if not ResourceLoader.exists(path) or not FileAccess.file_exists(path):
+		push_warning("[WorldAmbient] Missing audio: %s" % path)
 		return
-	var stream: AudioStream = load(chosen_path) as AudioStream
+	var stream: AudioStream = load(path) as AudioStream
 	if stream == null:
-		push_warning("[WorldAmbient] Failed to decode audio stream: %s" % chosen_path)
+		push_warning("[WorldAmbient] Failed to decode audio stream: %s" % path)
 		return
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = true
@@ -466,7 +446,7 @@ func _play_loop_stream(player: AudioStreamPlayer, path: String) -> void:
 		var w: AudioStreamWAV = stream as AudioStreamWAV
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		w.loop_begin = 0
-	player.set_meta("wa_path", chosen_path)
+	player.set_meta("wa_path", path)
 	player.stream = stream
 	player.play()
 

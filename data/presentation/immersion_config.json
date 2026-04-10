@@ -3,14 +3,14 @@
   "audio": {
     "paths": {
       "season": {
-        "spring": "res://assets/audio/ambience/spring.ogg",
-        "summer": "res://assets/audio/ambience/summer.ogg",
-        "fall": "res://assets/audio/ambience/fall.ogg",
-        "winter": "res://assets/audio/ambience/winter.ogg"
+        "spring": "res://assets/audio/ambience_extended/birds_forest.wav",
+        "summer": "res://assets/audio/ambience_extended/birds_forest.wav",
+        "fall": "res://assets/audio/ambience_extended/leaves_rustle.wav",
+        "winter": "res://assets/audio/ambience_extended/wind_trees.wav"
       },
       "weather": {
-        "rain": "res://assets/audio/ambience/rain.ogg",
-        "storm": "res://assets/audio/ambience/storm.ogg",
+        "rain": "res://assets/audio/ambience_extended/rain_light.wav",
+        "storm": "res://assets/audio/ambience_extended/rain_heavy.wav",
         "snow_wind": "res://assets/audio/ambience_extended/wind_trees.wav",
         "windy": "res://assets/audio/ambience_extended/leaves_rustle.wav"
       },
@@ -18,7 +18,7 @@
         "forest": "res://assets/audio/locations/forest_birds.ogg",
         "beach": "res://assets/audio/locations/beach_waves.ogg",
         "river": "res://assets/audio/ambience_extended/river_flow.wav",
-        "town": "res://assets/audio/locations/town_crowd.ogg",
+        "town": "res://assets/audio/ambience_extended/birds_morning.wav",
         "farm": "res://assets/audio/ambience_extended/stream_gentle.wav"
       },
       "night_crickets": "res://assets/audio/ambience_extended/crickets_night.wav",
