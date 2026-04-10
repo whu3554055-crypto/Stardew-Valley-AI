@@ -2997,4 +2997,3 @@ func _on_ai_config_pressed():
 		add_child(ai_config_instance)
 	
 	ai_config_instance.open_config()
-

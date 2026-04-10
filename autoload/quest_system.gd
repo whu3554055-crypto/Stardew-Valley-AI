@@ -565,13 +565,16 @@ func complete_quest(quest_id: String):
 	var grant_id: String = "quest_reward:%s" % quest_id
 	if _claim_reward_grant(grant_id):
 		if reward_data.has("gold"):
-			GameManager.player_data.gold += int(reward_data.gold)
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + int(reward_data.get("gold", 0))
 		if reward_data.has("items"):
-			for item_str in reward_data.items:
+			var reward_items: Array = reward_data.get("items", [])
+			for item_str in reward_items:
 				var parts = item_str.split(":")
 				var item_id = parts[0]
 				var count = int(parts[1]) if parts.size() > 1 else 1
 				var item_template = ItemDatabase.get_item(item_id)
+				if item_template.is_empty():
+					continue
 				for i in range(count):
 					InventoryManager.add_item(item_template.duplicate(true))
 		_apply_reward_pool(reward_data)
@@ -719,6 +722,8 @@ func _grant_item_spec(item_spec: String) -> void:
 	var parts: PackedStringArray = spec.split(":")
 	var item_id: String = str(parts[0])
 	var count: int = int(parts[1]) if parts.size() > 1 else 1
+	if not ItemDatabase:
+		return
 	var item_template = ItemDatabase.get_item(item_id)
 	if item_template.is_empty():
 		return
@@ -1043,7 +1048,7 @@ func _current_day_index() -> int:
 
 func turn_in_quest(quest_id: String):
 	if not quests.has(quest_id):
-		return
+		return false
 
 	var quest = quests[quest_id]
 	if quest.status == QuestStatus.COMPLETED:
@@ -1054,20 +1059,26 @@ func turn_in_quest(quest_id: String):
 func get_active_quests() -> Array:
 	var result = []
 	for quest_id in active_quests:
-		result.append(quests[quest_id])
+		if quests.has(quest_id):
+			result.append(quests[quest_id])
 	return result
 
 func get_completed_quests() -> Array:
 	var result = []
 	for quest_id in completed_quests:
-		result.append(quests[quest_id])
+		if quests.has(quest_id):
+			result.append(quests[quest_id])
 	return result
 
 func track_event(event_type: String, data: Dictionary):
 	for quest_id in active_quests.duplicate():
+		if not quests.has(quest_id):
+			continue
 		var quest = quests[quest_id]
 		for i in range(quest.objectives.size()):
 			var objective = quest.objectives[i]
+			if not (objective is Dictionary):
+				continue
 			if str(objective.get("type", "")) != event_type:
 				continue
 			if not _objective_matches_event(objective, data):
@@ -1138,6 +1149,8 @@ func add_story_daily_quest(event_data: Dictionary):
 	Create one lightweight daily quest from narrative event.
 	Playable-first: simple talk objective with clear reward.
 	"""
+	if not GameManager or not GameManager.player_data:
+		return
 	var day_key = "%d-%s-%d" % [GameManager.player_data.year, GameManager.player_data.season, GameManager.player_data.day]
 	var narrative_day_key: String = str(event_data.get("narrative_day_key", day_key))
 	var existing_qid: String = ""
@@ -1285,6 +1298,7 @@ func load_snapshot(data: Variant) -> void:
 	completed_quests.clear()
 	failed_quests.clear()
 	var d: Dictionary = data
+	last_story_quest_day_key = ""
 	if d.has("last_story_quest_day_key"):
 		last_story_quest_day_key = str(d["last_story_quest_day_key"])
 	if d.get("active_quests") is Array:
@@ -1302,6 +1316,9 @@ func load_snapshot(data: Variant) -> void:
 			if saved.has("status"):
 				saved["status"] = int(saved["status"])
 			quests[qid] = saved
+	active_quests = active_quests.filter(func(qid): return quests.has(qid))
+	completed_quests = completed_quests.filter(func(qid): return quests.has(qid))
+	failed_quests = failed_quests.filter(func(qid): return quests.has(qid))
 	for qid in completed_quests:
 		if active_quests.has(qid):
 			active_quests.erase(qid)
