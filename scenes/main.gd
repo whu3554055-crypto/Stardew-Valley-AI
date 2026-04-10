@@ -98,6 +98,9 @@ const STREAK_HASTE_COOLDOWN_MULT := 0.72
 const CRIT_STAMINA_REFUND := 2.0
 const KILL_SPLASH_RANGE := 46.0
 const KILL_SPLASH_DAMAGE := 6
+const ATTACK_CONE_DOT_MIN := 0.2
+const BACKSTAB_DOT_MAX := -0.45
+const BACKSTAB_BONUS_MULT := 1.25
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -953,12 +956,17 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var hit_any: bool = false
 	var is_crit: bool = randf() < crit_chance
 	var final_dmg: int = maxi(1, int(round(float(dmg) * combo_mult * revenge_mult * (crit_mult if is_crit else 1.0))))
+	var facing_n: Vector2 = facing.normalized()
 	for c in _enemy_layer.get_children():
 		if not (c is EnemyMelee):
 			continue
 		var e: EnemyMelee = c
-		if e.global_position.distance_to(center) <= range_v:
+		var to_enemy: Vector2 = (e.global_position - origin).normalized()
+		if e.global_position.distance_to(center) <= range_v and facing_n.dot(to_enemy) >= ATTACK_CONE_DOT_MIN:
 			var dmg_to_apply: int = final_dmg
+			var enemy_to_player: Vector2 = (player.global_position - e.global_position).normalized()
+			if enemy_to_player.dot(to_enemy) <= BACKSTAB_DOT_MAX:
+				dmg_to_apply = maxi(1, int(round(float(dmg_to_apply) * BACKSTAB_BONUS_MULT)))
 			if e.max_hp > 0 and float(e.hp) / float(e.max_hp) <= EXECUTE_THRESHOLD_RATIO:
 				dmg_to_apply = maxi(1, int(round(float(final_dmg) * EXECUTE_BONUS_MULT)))
 			var killed: bool = e.take_damage(dmg_to_apply)
