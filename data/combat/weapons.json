@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "weapons": {
+    "starter_sword": {
+      "damage": 12,
+      "range": 58.0,
+      "cooldown_ms": 330,
+      "knockback": 230.0,
+      "hitstop_sec": 0.04
+    },
+    "heavy_pick_blade": {
+      "damage": 16,
+      "range": 52.0,
+      "cooldown_ms": 420,
+      "knockback": 280.0,
+      "hitstop_sec": 0.055
+    }
+  }
+}
