@@ -63,6 +63,7 @@ var _attack_speed_buff_until: float = 0.0
 var _no_elite_kill_streak: int = 0
 var _shield_charges: int = 0
 var _daily_peak_streak: int = 0
+var _crit_chain: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -1001,11 +1002,21 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 			GatheringSfx.play_chop()
 		_play_hitstop(hitstop_sec)
 		if is_crit:
+			_crit_chain += 1
 			if GameManager and GameManager.has_method("restore_stamina"):
 				GameManager.restore_stamina(CRIT_STAMINA_REFUND)
 			show_quick_tip("Critical hit!", 0.55)
+			if _crit_chain >= 3 and GameManager:
+				var crit_bonus: int = 18
+				GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + crit_bonus
+				record_world_event("Critical chain x%d (+%dg)." % [_crit_chain, crit_bonus])
+				show_quick_tip("Critical chain x%d!" % _crit_chain, 0.8)
+				_crit_chain = 0
+		else:
+			_crit_chain = 0
 	else:
 		_combo_hits = 0
+		_crit_chain = 0
 
 
 func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
