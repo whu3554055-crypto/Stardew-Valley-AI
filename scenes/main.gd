@@ -1770,6 +1770,9 @@ func _on_quest_completed(quest_id: String):
 		if quest_id == "intro_combat":
 			QuestSystem.start_quest("deep_mine_hunt")
 			record_world_event("New combat contract unlocked: Deep Mine Hunt.")
+		elif quest_id == "deep_mine_hunt":
+			QuestSystem.start_quest("elite_slayer")
+			record_world_event("New combat contract unlocked: Elite Slayer.")
 	_refresh_quest_log()
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:

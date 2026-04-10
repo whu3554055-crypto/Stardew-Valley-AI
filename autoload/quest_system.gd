@@ -354,6 +354,17 @@ func initialize_quests():
 		"reward": {"gold": 140, "items": ["iron_ore:2"]}
 	}
 
+	quests["elite_slayer"] = {
+		"id": "elite_slayer",
+		"title": "Elite Slayer",
+		"description": "Defeat 2 elite mine enemies.",
+		"objectives": [
+			{"type": "enemy_kill", "count": 2, "current": 0, "enemy_id": "mine_slime_elite"}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 220, "items": ["silver_ore:2"]}
+	}
+
 	_register_chain_quests_from_templates()
 
 func _register_chain_quests_from_templates() -> void:
