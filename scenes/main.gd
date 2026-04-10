@@ -986,6 +986,9 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	if player and player.has_method("apply_knockback"):
 		var kb_dir: Vector2 = player.global_position - _enemy.global_position
 		player.apply_knockback(kb_dir, 240.0, 920.0)
+	if guarded and _enemy and _enemy.has_method("apply_knockback"):
+		var rebound_dir: Vector2 = _enemy.global_position - player.global_position
+		_enemy.apply_knockback(rebound_dir, 360.0)
 	if not GameManager:
 		return
 	var alive: bool = GameManager.apply_damage(final_damage)
