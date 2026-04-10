@@ -1030,11 +1030,14 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	if not GameManager:
 		return
 	var alive: bool = GameManager.apply_damage(final_damage)
+	play_screen_shake(3.8 if panic_mode else 2.6)
 	_revenge_buff_until = now + REVENGE_BUFF_SEC
 	if guarded:
 		show_quick_tip("Guarded hit!", 0.4)
 	elif panic_mode:
 		show_quick_tip("Panic guard activated!", 0.5)
+	else:
+		show_quick_tip("You were hit!", 0.35)
 	update_ui()
 	if not alive:
 		_handle_player_defeat()
