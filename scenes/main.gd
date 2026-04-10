@@ -60,6 +60,7 @@ var _kill_streak_expire_at: float = 0.0
 var _revenge_buff_until: float = 0.0
 var _no_ore_kill_streak: int = 0
 var _attack_speed_buff_until: float = 0.0
+var _no_elite_kill_streak: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -101,6 +102,7 @@ const KILL_SPLASH_DAMAGE := 6
 const ATTACK_CONE_DOT_MIN := 0.2
 const BACKSTAB_DOT_MAX := -0.45
 const BACKSTAB_BONUS_MULT := 1.25
+const ELITE_PITY_KILLS := 14
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -894,7 +896,7 @@ func _spawn_mine_enemy() -> bool:
 	e.drop_count_max = maxi(e.drop_count_min, int(profile.get("drop_count_max", 2)))
 	e.drop_item_id = _pick_weighted_drop_item(profile.get("drop_pool", []), "stone_chunk")
 	var elite_chance: float = clampf(float(profile.get("elite_chance", ELITE_BASE_CHANCE + float(depth) * 0.02)), 0.0, 0.45)
-	if randf() < elite_chance:
+	if randf() < elite_chance or _no_elite_kill_streak >= ELITE_PITY_KILLS:
 		var hp_mult: float = maxf(1.1, float(profile.get("elite_hp_mult", 1.55)))
 		var dmg_mult: float = maxf(1.1, float(profile.get("elite_damage_mult", 1.3)))
 		var extra_drop: int = maxi(1, int(profile.get("elite_drop_bonus", 1)))
@@ -1083,6 +1085,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
 	if GameManager and str(enemy.enemy_id).find("_elite") >= 0:
+		_no_elite_kill_streak = 0
 		var bounty_gold: int = ELITE_BOUNTY_GOLD_BASE + depth_now * 10
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bounty_gold
 		record_world_event("Elite bounty claimed (+%dg)." % bounty_gold)
@@ -1094,6 +1097,8 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 			if not bonus_tpl.is_empty():
 				InventoryManager.add_item(bonus_tpl.duplicate(true))
 				show_quick_tip("Elite bonus drop: %s" % bonus_item_id, 0.8)
+	else:
+		_no_elite_kill_streak += 1
 	for c in _enemy_layer.get_children():
 		if not (c is EnemyMelee):
 			continue
