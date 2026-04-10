@@ -870,6 +870,7 @@ func _spawn_mine_enemy() -> bool:
 	var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
 	var e := EnemyMelee.new()
 	var profile: Dictionary = _pick_enemy_profile_for_depth(depth)
+	e.profile_id = str(profile.get("id", ""))
 	var hp_base: int = int(profile.get("max_hp_base", 20))
 	var hp_scale: int = int(profile.get("max_hp_depth_scale", 8))
 	e.enemy_id = str(profile.get("enemy_id", "mine_slime"))
@@ -1047,6 +1048,13 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bounty_gold
 		record_world_event("Elite bounty claimed (+%dg)." % bounty_gold)
 		show_quick_tip("Elite bounty +%dg" % bounty_gold, 0.9)
+		var elite_profile: Dictionary = _find_enemy_profile_by_id(enemy.profile_id)
+		var bonus_item_id: String = _pick_weighted_drop_item(elite_profile.get("elite_bonus_drop_pool", []), "")
+		if not bonus_item_id.is_empty():
+			var bonus_tpl: Dictionary = ItemDatabase.get_item(bonus_item_id)
+			if not bonus_tpl.is_empty():
+				InventoryManager.add_item(bonus_tpl.duplicate(true))
+				show_quick_tip("Elite bonus drop: %s" % bonus_item_id, 0.8)
 	if GameManager:
 		var total_kills: int = int(GameManager.player_data.get("combat_kills_total", 0)) + 1
 		GameManager.player_data["combat_kills_total"] = total_kills
@@ -1120,6 +1128,20 @@ func _pick_enemy_profile_for_depth(depth: int) -> Dictionary:
 		var dmin: int = int(d.get("depth_min", 0))
 		var dmax: int = int(d.get("depth_max", 999))
 		if depth >= dmin and depth <= dmax:
+			return d
+	return {}
+
+
+func _find_enemy_profile_by_id(profile_id: String) -> Dictionary:
+	var pid: String = profile_id.strip_edges()
+	if pid.is_empty():
+		return {}
+	var profiles: Array = _combat_enemies_cfg.get("mine_profiles", [])
+	for p in profiles:
+		if not (p is Dictionary):
+			continue
+		var d: Dictionary = p
+		if str(d.get("id", "")).strip_edges() == pid:
 			return d
 	return {}
 

@@ -16,6 +16,7 @@ class_name EnemyMelee
 @export var drop_item_id: String = "stone_chunk"
 @export var drop_count_min: int = 1
 @export var drop_count_max: int = 2
+@export var profile_id: String = ""
 
 var hp: int = 24
 var _contact_cd: float = 0.0

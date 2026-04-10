@@ -18,6 +18,10 @@
       "elite_hp_mult": 1.45,
       "elite_damage_mult": 1.25,
       "elite_drop_bonus": 1,
+      "elite_bonus_drop_pool": [
+        {"item": "copper_ore", "weight": 60.0},
+        {"item": "coal", "weight": 40.0}
+      ],
       "drop_pool": [
         {"item": "stone_chunk", "weight": 72.0},
         {"item": "coal", "weight": 22.0},
@@ -41,6 +45,11 @@
       "elite_hp_mult": 1.55,
       "elite_damage_mult": 1.32,
       "elite_drop_bonus": 1,
+      "elite_bonus_drop_pool": [
+        {"item": "iron_ore", "weight": 62.0},
+        {"item": "coal", "weight": 28.0},
+        {"item": "silver_ore", "weight": 10.0}
+      ],
       "drop_pool": [
         {"item": "iron_ore", "weight": 40.0},
         {"item": "coal", "weight": 38.0},
@@ -64,6 +73,11 @@
       "elite_hp_mult": 1.7,
       "elite_damage_mult": 1.38,
       "elite_drop_bonus": 2,
+      "elite_bonus_drop_pool": [
+        {"item": "silver_ore", "weight": 50.0},
+        {"item": "gold_ore", "weight": 32.0},
+        {"item": "iron_ore", "weight": 18.0}
+      ],
       "drop_pool": [
         {"item": "silver_ore", "weight": 42.0},
         {"item": "coal", "weight": 30.0},
