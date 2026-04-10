@@ -54,6 +54,13 @@ func _ready() -> void:
 			GameManager.time_changed.connect(_on_game_time_changed)
 	call_deferred("_refresh_all")
 
+
+func _exit_tree() -> void:
+	# Ensure audio streams are detached on shutdown/headless quit.
+	for p in [_season_player, _weather_player, _windy_player, _region_player, _night_player, _morning_player]:
+		if p:
+			_stop_stream(p)
+
 func _lvl(path: String, fb: float) -> float:
 	return ImmersionConfig.get_float(path, fb) if ImmersionConfig else fb
 
@@ -452,6 +459,7 @@ func _play_loop_stream(player: AudioStreamPlayer, path: String) -> void:
 
 func _stop_stream(player: AudioStreamPlayer) -> void:
 	player.stop()
+	player.stream = null
 	if player.has_meta("wa_path"):
 		player.remove_meta("wa_path")
 	if (player == _weather_player or player == _windy_player) and player.has_meta("wa_vol_base"):
