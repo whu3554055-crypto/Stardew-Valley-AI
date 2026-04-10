@@ -50,6 +50,7 @@ var _last_attack_ms: int = -99999
 var _combat_weapons_cfg: Dictionary = {}
 var _active_weapon_id: String = "starter_sword"
 var _hitstop_active: bool = false
+var _next_mine_spawn_at: float = 0.0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -57,6 +58,9 @@ const PLAYER_ATTACK_KNOCKBACK := 220.0
 const PLAYER_ATTACK_HITSTOP_SEC := 0.04
 const PLAYER_RESPAWN_HEAL_RATIO := 0.65
 const MAX_MINE_ENEMIES := 5
+const MINE_SPAWN_MIN_INTERVAL_SEC := 1.2
+const MINE_SPAWN_MAX_INTERVAL_SEC := 2.1
+const MINE_SPAWN_MIN_PLAYER_DIST := 84.0
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -799,18 +803,26 @@ func _maintain_combat_spawns() -> void:
 		return
 	if not GameZones.can_mine_here(player.global_position):
 		return
+	var now: float = Time.get_ticks_msec() / 1000.0
+	if now < _next_mine_spawn_at:
+		return
 	var alive: int = 0
 	for c in _enemy_layer.get_children():
 		if c is EnemyMelee:
 			alive += 1
 	if alive >= MAX_MINE_ENEMIES:
 		return
-	_spawn_mine_enemy()
+	if _spawn_mine_enemy():
+		var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
+		var interval: float = lerpf(MINE_SPAWN_MAX_INTERVAL_SEC, MINE_SPAWN_MIN_INTERVAL_SEC, clampf(float(depth) / 3.0, 0.0, 1.0))
+		_next_mine_spawn_at = now + interval
+	else:
+		_next_mine_spawn_at = now + 0.25
 
 
-func _spawn_mine_enemy() -> void:
+func _spawn_mine_enemy() -> bool:
 	if _enemy_layer == null:
-		return
+		return false
 	var mine: Rect2 = GameZones.mine_world_rect()
 	var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
 	var e := EnemyMelee.new()
@@ -824,13 +836,24 @@ func _spawn_mine_enemy() -> void:
 		e.drop_item_id = "iron_ore" if randf() < 0.34 else ("coal" if randf() < 0.58 else "stone_chunk")
 	else:
 		e.drop_item_id = "stone_chunk" if randf() < 0.78 else "coal"
-	e.global_position = Vector2(
-		randf_range(mine.position.x + 14.0, mine.end.x - 14.0),
-		randf_range(mine.position.y + 14.0, mine.end.y - 14.0)
-	)
+	var spawn_pos: Vector2 = Vector2.ZERO
+	var found_pos: bool = false
+	for _i in range(8):
+		var cand := Vector2(
+			randf_range(mine.position.x + 14.0, mine.end.x - 14.0),
+			randf_range(mine.position.y + 14.0, mine.end.y - 14.0)
+		)
+		if cand.distance_to(player.global_position) >= MINE_SPAWN_MIN_PLAYER_DIST:
+			spawn_pos = cand
+			found_pos = true
+			break
+	if not found_pos:
+		return false
+	e.global_position = spawn_pos
 	e.contact_hit.connect(_on_enemy_contact_hit)
 	e.enemy_killed.connect(_on_enemy_killed)
 	_enemy_layer.add_child(e)
+	return true
 
 
 func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
