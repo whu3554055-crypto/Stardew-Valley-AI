@@ -95,6 +95,8 @@ const ATTACK_STAMINA_COST := 4.0
 const STREAK_HASTE_SEC := 2.2
 const STREAK_HASTE_COOLDOWN_MULT := 0.72
 const CRIT_STAMINA_REFUND := 2.0
+const KILL_SPLASH_RANGE := 46.0
+const KILL_SPLASH_DAMAGE := 6
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -1072,6 +1074,14 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 			if not bonus_tpl.is_empty():
 				InventoryManager.add_item(bonus_tpl.duplicate(true))
 				show_quick_tip("Elite bonus drop: %s" % bonus_item_id, 0.8)
+	for c in _enemy_layer.get_children():
+		if not (c is EnemyMelee):
+			continue
+		var near_enemy: EnemyMelee = c
+		if near_enemy == enemy:
+			continue
+		if near_enemy.global_position.distance_to(enemy.global_position) <= KILL_SPLASH_RANGE:
+			near_enemy.take_damage(KILL_SPLASH_DAMAGE)
 	if GameManager:
 		var total_kills: int = int(GameManager.player_data.get("combat_kills_total", 0)) + 1
 		GameManager.player_data["combat_kills_total"] = total_kills
