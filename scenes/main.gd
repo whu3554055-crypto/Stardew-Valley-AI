@@ -72,6 +72,7 @@ var _run_elites: int = 0
 var _run_bonus_gold: int = 0
 var _perfect_guard_chain: int = 0
 var _last_stand_used_run: bool = false
+var _perfect_guard_chain_best: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -864,12 +865,13 @@ func _maintain_combat_spawns() -> void:
 		return
 	var in_mine_now: bool = GameZones.can_mine_here(player.global_position)
 	if _was_in_mine_last_frame and not in_mine_now and (_run_kills > 0 or _run_bonus_gold > 0):
-		record_world_event("Mine run recap: kills %d, elites %d, bonus +%dg." % [_run_kills, _run_elites, _run_bonus_gold])
-		show_quick_tip("Run recap: %d kills / +%dg" % [_run_kills, _run_bonus_gold], 1.2)
+		record_world_event("Mine run recap: kills %d, elites %d, bonus +%dg, guard chain best x%d." % [_run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best])
+		show_quick_tip("Run recap: %d kills / +%dg / guard x%d" % [_run_kills, _run_bonus_gold, _perfect_guard_chain_best], 1.2)
 		_run_kills = 0
 		_run_elites = 0
 		_run_bonus_gold = 0
 		_last_stand_used_run = false
+		_perfect_guard_chain_best = 0
 	_was_in_mine_last_frame = in_mine_now
 	if not GameZones.can_mine_here(player.global_position):
 		if _enemy_layer.get_child_count() > 0:
@@ -1070,6 +1072,7 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 		player.apply_knockback(kb_dir, 240.0, 920.0)
 	if guarded and _enemy and _enemy.has_method("apply_knockback"):
 		_perfect_guard_chain += 1
+		_perfect_guard_chain_best = maxi(_perfect_guard_chain_best, _perfect_guard_chain)
 		show_quick_tip("Perfect guard x%d" % _perfect_guard_chain, 0.45)
 		if _perfect_guard_chain % 3 == 0 and GameManager:
 			var guard_bonus: int = 12
