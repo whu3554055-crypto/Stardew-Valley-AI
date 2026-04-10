@@ -9,6 +9,7 @@ class_name EnemyMelee
 @export var contact_interval_sec: float = 0.9
 @export var detection_range: float = 300.0
 @export var hit_stun_sec: float = 0.14
+@export var no_contact_after_spawn_sec: float = 0.6
 @export var drop_item_id: String = "stone_chunk"
 @export var drop_count_min: int = 1
 @export var drop_count_max: int = 2
@@ -18,12 +19,14 @@ var _contact_cd: float = 0.0
 var _flash_t: float = 0.0
 var _knockback_vel: Vector2 = Vector2.ZERO
 var _hit_stun_t: float = 0.0
+var _spawned_at_sec: float = 0.0
 
 signal contact_hit(enemy: EnemyMelee, damage: float)
 signal enemy_killed(enemy: EnemyMelee)
 
 func _ready() -> void:
 	hp = max_hp
+	_spawned_at_sec = Time.get_ticks_msec() / 1000.0
 	add_to_group("enemy")
 	if get_node_or_null("Body") == null:
 		var body := ColorRect.new()
@@ -52,7 +55,8 @@ func _process(delta: float) -> void:
 	var d: float = dv.length()
 	if d <= detection_range and d > 1.0 and _knockback_vel.length() < 28.0:
 		global_position += dv.normalized() * move_speed * delta
-	if d <= 22.0 and _contact_cd <= 0.0:
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if d <= 22.0 and _contact_cd <= 0.0 and (now_sec - _spawned_at_sec) >= no_contact_after_spawn_sec:
 		_contact_cd = contact_interval_sec
 		contact_hit.emit(self, contact_damage)
 

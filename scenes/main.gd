@@ -805,6 +805,9 @@ func _maintain_combat_spawns() -> void:
 	if _enemy_layer == null:
 		return
 	if not GameZones.can_mine_here(player.global_position):
+		if _enemy_layer.get_child_count() > 0:
+			for c in _enemy_layer.get_children():
+				c.queue_free()
 		return
 	var now: float = Time.get_ticks_msec() / 1000.0
 	if now < _next_mine_spawn_at:
