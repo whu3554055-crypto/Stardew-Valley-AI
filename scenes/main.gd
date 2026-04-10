@@ -1017,14 +1017,24 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 func _handle_player_defeat() -> void:
 	var home: Vector2 = Vector2(640, 360)
 	player.global_position = home
+	var charged_gold: bool = false
 	if GameManager:
 		var hpmax: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
 		var heal_to: float = hpmax * PLAYER_RESPAWN_HEAL_RATIO
 		GameManager.player_data["hp"] = heal_to
-		var gold: int = int(GameManager.player_data.get("gold", 0))
-		GameManager.player_data["gold"] = maxi(0, gold - 60)
+		var day_idx: int = int(GameManager.player_data.get("year", 1)) * 1000 + int(GameManager.player_data.get("day", 1))
+		var insured_day: int = int(GameManager.player_data.get("defeat_insurance_day", -1))
+		if insured_day == day_idx:
+			var gold: int = int(GameManager.player_data.get("gold", 0))
+			GameManager.player_data["gold"] = maxi(0, gold - 60)
+			charged_gold = true
+		else:
+			GameManager.player_data["defeat_insurance_day"] = day_idx
 	_combat_invuln_until = Time.get_ticks_msec() / 1000.0 + 1.2
-	show_dialogue("You collapsed and woke up at the farmhouse. Lost 60g.")
+	if charged_gold:
+		show_dialogue("You collapsed and woke up at the farmhouse. Lost 60g.")
+	else:
+		show_dialogue("You collapsed and woke up at the farmhouse. Daily rescue covered the loss.")
 	update_ui()
 
 
