@@ -1106,6 +1106,10 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		GameManager.player_data["combat_kills_today"] = int(GameManager.player_data.get("combat_kills_today", 0)) + 1
 		if is_elite:
 			GameManager.player_data["combat_elites_today"] = int(GameManager.player_data.get("combat_elites_today", 0)) + 1
+			if not bool(GameManager.player_data.get("combat_badge_first_elite", false)):
+				GameManager.player_data["combat_badge_first_elite"] = true
+				record_world_event("Badge unlocked: First Elite Down.")
+				show_quick_tip("Badge: First Elite Down", 1.2)
 	if is_elite:
 		show_quick_tip("Elite defeated!", 0.8)
 	else:
@@ -1157,6 +1161,10 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		_shield_charges = mini(SHIELD_MAX_CHARGES, _shield_charges + 1)
 		show_quick_tip("Kill streak %d! +%dg" % [_kill_streak, bonus_gold], 1.1)
 		record_world_event("Combat bonus: streak %d (+%dg)." % [_kill_streak, bonus_gold])
+		if _kill_streak >= 10 and not bool(GameManager.player_data.get("combat_badge_streak_10", false)):
+			GameManager.player_data["combat_badge_streak_10"] = true
+			record_world_event("Badge unlocked: Streak x10.")
+			show_quick_tip("Badge: Streak x10", 1.2)
 	_play_fx_mine()
 	if GatheringSfx:
 		GatheringSfx.play_mine_swing()
@@ -1671,12 +1679,17 @@ func _on_time_changed(new_time):
 func _on_day_changed(new_day):
 	_reset_daily_event_budget()
 	if GameManager:
-		GameManager.player_data["daily_defeats"] = 0
+		var defeats_today: int = int(GameManager.player_data.get("daily_defeats", 0))
 		var daily_kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
 		var daily_elites: int = int(GameManager.player_data.get("combat_elites_today", 0))
+		if daily_kills >= 12 and defeats_today == 0 and not bool(GameManager.player_data.get("combat_badge_flawless_day", false)):
+			GameManager.player_data["combat_badge_flawless_day"] = true
+			record_world_event("Badge unlocked: Flawless Combat Day.")
+			show_quick_tip("Badge: Flawless Combat Day", 1.2)
 		record_world_event("Combat recap: kills %d, elites %d, peak streak %d." % [daily_kills, daily_elites, _daily_peak_streak])
 		GameManager.player_data["combat_kills_today"] = 0
 		GameManager.player_data["combat_elites_today"] = 0
+		GameManager.player_data["daily_defeats"] = 0
 		_daily_peak_streak = 0
 	update_ui()
 	if QuestSystem and QuestSystem.has_method("on_day_passed"):
