@@ -10,6 +10,15 @@ const _FB_SEASON := {
 	"fall": "res://assets/audio/ambience/fall.ogg",
 	"winter": "res://assets/audio/ambience/winter.ogg",
 }
+const _AUDIO_FALLBACKS := {
+	"res://assets/audio/ambience/spring.ogg": "res://assets/audio/ambience_extended/birds_forest.wav",
+	"res://assets/audio/ambience/summer.ogg": "res://assets/audio/ambience_extended/birds_forest.wav",
+	"res://assets/audio/ambience/fall.ogg": "res://assets/audio/ambience_extended/leaves_rustle.wav",
+	"res://assets/audio/ambience/winter.ogg": "res://assets/audio/ambience_extended/wind_trees.wav",
+	"res://assets/audio/ambience/rain.ogg": "res://assets/audio/ambience_extended/rain_light.wav",
+	"res://assets/audio/ambience/storm.ogg": "res://assets/audio/ambience_extended/rain_heavy.wav",
+	"res://assets/audio/locations/town_crowd.ogg": "res://assets/audio/ambience_extended/birds_morning.wav"
+}
 
 var _season_player: AudioStreamPlayer
 var _weather_player: AudioStreamPlayer
@@ -430,13 +439,26 @@ func _play_loop_stream(player: AudioStreamPlayer, path: String) -> void:
 	if path.is_empty():
 		_stop_stream(player)
 		return
-	if player.get_meta("wa_path", "") == path and player.playing:
+	var chosen_path: String = path
+	var f: FileAccess = FileAccess.open(path, FileAccess.READ)
+	if f:
+		var size: int = int(f.get_length())
+		f.close()
+		# Some shipped placeholder OGG files are tiny and fail to decode.
+		if path.to_lower().ends_with(".ogg") and size < 1024:
+			var fb: String = str(_AUDIO_FALLBACKS.get(path, "")).strip_edges()
+			if not fb.is_empty():
+				push_warning("[WorldAmbient] Placeholder audio detected, using fallback: %s -> %s" % [path, fb])
+				chosen_path = fb
+	if player.get_meta("wa_path", "") == chosen_path and player.playing:
 		return
-	if not ResourceLoader.exists(path):
-		push_warning("[WorldAmbient] Missing audio: %s" % path)
+	# Guard both the import map and the source file to avoid noisy load errors.
+	if not ResourceLoader.exists(chosen_path) or not FileAccess.file_exists(chosen_path):
+		push_warning("[WorldAmbient] Missing audio: %s" % chosen_path)
 		return
-	var stream: AudioStream = load(path) as AudioStream
+	var stream: AudioStream = load(chosen_path) as AudioStream
 	if stream == null:
+		push_warning("[WorldAmbient] Failed to decode audio stream: %s" % chosen_path)
 		return
 	if stream is AudioStreamOggVorbis:
 		(stream as AudioStreamOggVorbis).loop = true
@@ -444,7 +466,7 @@ func _play_loop_stream(player: AudioStreamPlayer, path: String) -> void:
 		var w: AudioStreamWAV = stream as AudioStreamWAV
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		w.loop_begin = 0
-	player.set_meta("wa_path", path)
+	player.set_meta("wa_path", chosen_path)
 	player.stream = stream
 	player.play()
 

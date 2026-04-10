@@ -526,5 +526,4 @@ autowrap_mode = 2
 
 [node name="Lewis" parent="." instance=ExtResource("8_lewis")]
 
-[connection signal="time_changed" from="." to="." method="_on_time_changed"]
 [connection signal="pressed" from="UILayer/AIConfigButton" to="." method="_on_ai_config_pressed"]

@@ -148,11 +148,11 @@ func _ready():
 	if player.has_signal("attack_requested"):
 		player.attack_requested.connect(_on_player_attack_requested)
 	if GameManager:
-		if not GameManager.time_changed.is_connected(_on_time_changed):
+		if GameManager.has_signal("time_changed") and not GameManager.time_changed.is_connected(_on_time_changed):
 			GameManager.time_changed.connect(_on_time_changed)
-		if not GameManager.day_changed.is_connected(_on_day_changed):
+		if GameManager.has_signal("day_changed") and not GameManager.day_changed.is_connected(_on_day_changed):
 			GameManager.day_changed.connect(_on_day_changed)
-		if not GameManager.season_changed.is_connected(_on_season_changed):
+		if GameManager.has_signal("season_changed") and not GameManager.season_changed.is_connected(_on_season_changed):
 			GameManager.season_changed.connect(_on_season_changed)
 	if LocaleSettings:
 		LocaleSettings.locale_changed.connect(_on_locale_changed)
@@ -994,7 +994,7 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	var hitstop_sec: float = float(w.get("hitstop_sec", PLAYER_ATTACK_HITSTOP_SEC))
 	var crit_chance: float = clampf(float(w.get("crit_chance", PLAYER_ATTACK_CRIT_CHANCE)), 0.0, 1.0)
 	var crit_mult: float = maxf(1.0, float(w.get("crit_mult", PLAYER_ATTACK_CRIT_MULT)))
-	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	now_sec = Time.get_ticks_msec() / 1000.0
 	if now_sec > _combo_expire_at:
 		if _combo_hits >= 2:
 			show_quick_tip("Combo dropped.", 0.35)
