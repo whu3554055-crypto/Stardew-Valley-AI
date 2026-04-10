@@ -72,6 +72,7 @@ const MAX_MINE_ENEMIES := 5
 const MINE_SPAWN_MIN_INTERVAL_SEC := 1.2
 const MINE_SPAWN_MAX_INTERVAL_SEC := 2.1
 const MINE_SPAWN_MIN_PLAYER_DIST := 84.0
+const MINE_SPAWN_MAX_PLAYER_DIST := 320.0
 const COMBO_WINDOW_SEC := 1.2
 const COMBO_BONUS_PER_STACK := 0.08
 const COMBO_MAX_STACKS := 5
@@ -903,12 +904,13 @@ func _spawn_mine_enemy() -> bool:
 		record_world_event("An elite foe appears in the mine!")
 	var spawn_pos: Vector2 = Vector2.ZERO
 	var found_pos: bool = false
-	for _i in range(8):
+	for _i in range(12):
 		var cand := Vector2(
 			randf_range(mine.position.x + 14.0, mine.end.x - 14.0),
 			randf_range(mine.position.y + 14.0, mine.end.y - 14.0)
 		)
-		if cand.distance_to(player.global_position) >= MINE_SPAWN_MIN_PLAYER_DIST:
+		var dist_to_player: float = cand.distance_to(player.global_position)
+		if dist_to_player >= MINE_SPAWN_MIN_PLAYER_DIST and dist_to_player <= MINE_SPAWN_MAX_PLAYER_DIST:
 			spawn_pos = cand
 			found_pos = true
 			break

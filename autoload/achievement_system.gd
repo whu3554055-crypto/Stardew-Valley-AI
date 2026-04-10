@@ -82,6 +82,18 @@ func unlock_achievement(achievement_id: String):
 		return
 
 	var achievement = achievements[achievement_id]
+	var grant_id: String = "achievement_unlock:%s" % achievement_id
+	if GameManager and GameManager.player_data:
+		if not GameManager.player_data.has("reward_ledger") or not (GameManager.player_data.get("reward_ledger") is Dictionary):
+			GameManager.player_data["reward_ledger"] = {}
+		var ledger: Dictionary = GameManager.player_data["reward_ledger"]
+		if ledger.has(grant_id):
+			achievement.unlocked = true
+			if not unlocked_achievements.has(achievement_id):
+				unlocked_achievements.append(achievement_id)
+			return
+		ledger[grant_id] = int(GameManager.player_data.get("day", 1))
+		GameManager.player_data["reward_ledger"] = ledger
 	if not achievement.unlocked:
 		achievement.unlocked = true
 		unlocked_achievements.append(achievement_id)
