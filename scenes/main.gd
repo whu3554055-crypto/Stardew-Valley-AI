@@ -84,6 +84,8 @@ const KILL_MILESTONES := [25, 60, 120]
 const REVENGE_BUFF_SEC := 2.6
 const REVENGE_DAMAGE_MULT := 1.22
 const ORE_PITY_KILL_THRESHOLD := 6
+const EXECUTE_THRESHOLD_RATIO := 0.25
+const EXECUTE_BONUS_MULT := 1.35
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -926,7 +928,10 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 			continue
 		var e: EnemyMelee = c
 		if e.global_position.distance_to(center) <= range_v:
-			var killed: bool = e.take_damage(final_dmg)
+			var dmg_to_apply: int = final_dmg
+			if e.max_hp > 0 and float(e.hp) / float(e.max_hp) <= EXECUTE_THRESHOLD_RATIO:
+				dmg_to_apply = maxi(1, int(round(float(final_dmg) * EXECUTE_BONUS_MULT)))
+			var killed: bool = e.take_damage(dmg_to_apply)
 			var dir: Vector2 = e.global_position - origin
 			if not killed:
 				e.apply_knockback(dir, kb)
