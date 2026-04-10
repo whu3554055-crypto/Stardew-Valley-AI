@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "mine_profiles": [
+    {
+      "id": "slime_shallow",
+      "enemy_id": "mine_slime",
+      "depth_min": 0,
+      "depth_max": 0,
+      "max_hp_base": 18,
+      "max_hp_depth_scale": 6,
+      "speed_min": 38.0,
+      "speed_max": 52.0,
+      "damage_min": 6.5,
+      "damage_max": 9.5,
+      "drop_count_min": 1,
+      "drop_count_max": 2,
+      "drop_pool": [
+        {"item": "stone_chunk", "weight": 72.0},
+        {"item": "coal", "weight": 22.0},
+        {"item": "copper_ore", "weight": 6.0}
+      ]
+    },
+    {
+      "id": "slime_mid",
+      "enemy_id": "mine_slime",
+      "depth_min": 1,
+      "depth_max": 1,
+      "max_hp_base": 24,
+      "max_hp_depth_scale": 8,
+      "speed_min": 43.0,
+      "speed_max": 58.0,
+      "damage_min": 8.0,
+      "damage_max": 12.0,
+      "drop_count_min": 1,
+      "drop_count_max": 2,
+      "drop_pool": [
+        {"item": "iron_ore", "weight": 40.0},
+        {"item": "coal", "weight": 38.0},
+        {"item": "stone_chunk", "weight": 22.0}
+      ]
+    },
+    {
+      "id": "slime_deep",
+      "enemy_id": "mine_slime",
+      "depth_min": 2,
+      "depth_max": 99,
+      "max_hp_base": 30,
+      "max_hp_depth_scale": 10,
+      "speed_min": 48.0,
+      "speed_max": 62.0,
+      "damage_min": 10.0,
+      "damage_max": 15.0,
+      "drop_count_min": 1,
+      "drop_count_max": 3,
+      "drop_pool": [
+        {"item": "silver_ore", "weight": 42.0},
+        {"item": "coal", "weight": 30.0},
+        {"item": "gold_ore", "weight": 20.0},
+        {"item": "iron_ore", "weight": 8.0}
+      ]
+    }
+  ]
+}

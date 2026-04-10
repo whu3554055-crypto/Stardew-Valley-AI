@@ -37,6 +37,7 @@ const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
 const PLAYER_CREATION_SCENE := preload("res://scenes/player_creation_panel.tscn")
 const PLAYER_JOURNAL_SCENE := preload("res://scenes/player_journal_panel.tscn")
 const COMBAT_WEAPONS_CFG_PATH := "res://data/combat/weapons.json"
+const COMBAT_ENEMIES_CFG_PATH := "res://data/combat/enemies.json"
 var audio_mix_panel: CanvasLayer = null
 var player_creation_panel: CanvasLayer = null
 var player_journal_panel: CanvasLayer = null
@@ -48,6 +49,7 @@ var _enemy_layer: Node2D = null
 var _combat_invuln_until: float = 0.0
 var _last_attack_ms: int = -99999
 var _combat_weapons_cfg: Dictionary = {}
+var _combat_enemies_cfg: Dictionary = {}
 var _active_weapon_id: String = "starter_sword"
 var _hitstop_active: bool = false
 var _next_mine_spawn_at: float = 0.0
@@ -159,6 +161,7 @@ func _ready():
 	_enemy_layer.z_index = 3
 	add_child(_enemy_layer)
 	_load_combat_weapons_config()
+	_load_combat_enemies_config()
 	_apply_a3_ui_polish()
 	
 	if not GameManager.player_data.get("profile", {}).get("confirmed", false):
@@ -826,16 +829,17 @@ func _spawn_mine_enemy() -> bool:
 	var mine: Rect2 = GameZones.mine_world_rect()
 	var depth: int = GameZones.mine_depth_from_global_y(player.global_position.y)
 	var e := EnemyMelee.new()
-	e.max_hp = 20 + depth * 8 + randi_range(0, 10)
+	var profile: Dictionary = _pick_enemy_profile_for_depth(depth)
+	var hp_base: int = int(profile.get("max_hp_base", 20))
+	var hp_scale: int = int(profile.get("max_hp_depth_scale", 8))
+	e.enemy_id = str(profile.get("enemy_id", "mine_slime"))
+	e.max_hp = hp_base + depth * hp_scale + randi_range(0, 10)
 	e.hp = e.max_hp
-	e.move_speed = randf_range(40.0 + depth * 2.5, 55.0 + depth * 3.0)
-	e.contact_damage = randf_range(7.0 + depth * 1.5, 11.0 + depth * 2.0)
-	if depth >= 2:
-		e.drop_item_id = "gold_ore" if randf() < 0.25 else ("silver_ore" if randf() < 0.45 else "coal")
-	elif depth == 1:
-		e.drop_item_id = "iron_ore" if randf() < 0.34 else ("coal" if randf() < 0.58 else "stone_chunk")
-	else:
-		e.drop_item_id = "stone_chunk" if randf() < 0.78 else "coal"
+	e.move_speed = randf_range(float(profile.get("speed_min", 40.0 + depth * 2.5)), float(profile.get("speed_max", 55.0 + depth * 3.0)))
+	e.contact_damage = randf_range(float(profile.get("damage_min", 7.0 + depth * 1.5)), float(profile.get("damage_max", 11.0 + depth * 2.0)))
+	e.drop_count_min = maxi(1, int(profile.get("drop_count_min", 1)))
+	e.drop_count_max = maxi(e.drop_count_min, int(profile.get("drop_count_max", 2)))
+	e.drop_item_id = _pick_weighted_drop_item(profile.get("drop_pool", []), "stone_chunk")
 	var spawn_pos: Vector2 = Vector2.ZERO
 	var found_pos: bool = false
 	for _i in range(8):
@@ -956,6 +960,56 @@ func _load_combat_weapons_config() -> void:
 		var dd: Dictionary = parsed
 		if dd.get("weapons") is Dictionary:
 			_combat_weapons_cfg = (dd["weapons"] as Dictionary).duplicate(true)
+
+
+func _load_combat_enemies_config() -> void:
+	_combat_enemies_cfg = {"mine_profiles": []}
+	var f: FileAccess = FileAccess.open(COMBAT_ENEMIES_CFG_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var raw: String = f.get_as_text()
+	f.close()
+	var parsed = JSON.parse_string(raw)
+	if parsed is Dictionary:
+		var dd: Dictionary = parsed
+		if dd.get("mine_profiles") is Array:
+			_combat_enemies_cfg = dd.duplicate(true)
+
+
+func _pick_enemy_profile_for_depth(depth: int) -> Dictionary:
+	var profiles: Array = _combat_enemies_cfg.get("mine_profiles", [])
+	for p in profiles:
+		if not (p is Dictionary):
+			continue
+		var d: Dictionary = p
+		var dmin: int = int(d.get("depth_min", 0))
+		var dmax: int = int(d.get("depth_max", 999))
+		if depth >= dmin and depth <= dmax:
+			return d
+	return {}
+
+
+func _pick_weighted_drop_item(entries: Variant, fallback: String) -> String:
+	if not (entries is Array):
+		return fallback
+	var arr: Array = entries
+	var total: float = 0.0
+	for e in arr:
+		if e is Dictionary:
+			total += maxf(0.0, float((e as Dictionary).get("weight", 0.0)))
+	if total <= 0.0:
+		return fallback
+	var roll: float = randf() * total
+	var acc: float = 0.0
+	for e in arr:
+		if not (e is Dictionary):
+			continue
+		var d: Dictionary = e
+		acc += maxf(0.0, float(d.get("weight", 0.0)))
+		if roll <= acc:
+			var item_id: String = str(d.get("item", fallback)).strip_edges()
+			return item_id if not item_id.is_empty() else fallback
+	return fallback
 
 
 func _weapon_profile() -> Dictionary:
