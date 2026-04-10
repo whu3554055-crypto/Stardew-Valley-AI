@@ -89,6 +89,7 @@ const EXECUTE_BONUS_MULT := 1.35
 const PANIC_HP_RATIO := 0.2
 const PANIC_DAMAGE_REDUCTION := 0.2
 const PANIC_INVULN_SEC := 0.85
+const ELITE_BOUNTY_GOLD_BASE := 36
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -1026,6 +1027,11 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
+	if GameManager and str(enemy.enemy_id).find("_elite") >= 0:
+		var bounty_gold: int = ELITE_BOUNTY_GOLD_BASE + depth_now * 10
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bounty_gold
+		record_world_event("Elite bounty claimed (+%dg)." % bounty_gold)
+		show_quick_tip("Elite bounty +%dg" % bounty_gold, 0.9)
 	if GameManager:
 		var total_kills: int = int(GameManager.player_data.get("combat_kills_total", 0)) + 1
 		GameManager.player_data["combat_kills_total"] = total_kills
