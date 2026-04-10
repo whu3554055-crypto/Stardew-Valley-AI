@@ -365,6 +365,17 @@ func initialize_quests():
 		"reward": {"gold": 220, "items": ["silver_ore:2"]}
 	}
 
+	quests["streak_hunter"] = {
+		"id": "streak_hunter",
+		"title": "Streak Hunter",
+		"description": "Reach a kill streak of 8 in the mine.",
+		"objectives": [
+			{"type": "enemy_kill", "count": 1, "current": 0, "min_streak": 8}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 180, "items": ["coal:4"]}
+	}
+
 	_register_chain_quests_from_templates()
 
 func _register_chain_quests_from_templates() -> void:
@@ -1068,6 +1079,9 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 	if ot == "enemy_kill":
 		if objective.has("enemy_id"):
 			if str(data.get("enemy_id", "")) != str(objective.get("enemy_id", "")):
+				return false
+		if objective.has("min_streak"):
+			if int(data.get("kill_streak", 0)) < int(objective.get("min_streak", 0)):
 				return false
 		if objective.has("min_depth"):
 			return int(data.get("mine_depth", 0)) >= int(objective.get("min_depth", 0))

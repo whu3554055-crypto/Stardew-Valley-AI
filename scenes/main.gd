@@ -1001,6 +1001,11 @@ func _handle_player_defeat() -> void:
 
 func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	var depth_now: int = GameZones.mine_depth_from_global_y(enemy.global_position.y)
+	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if now_sec > _kill_streak_expire_at:
+		_kill_streak = 0
+	_kill_streak += 1
+	_kill_streak_expire_at = now_sec + KILL_STREAK_WINDOW_SEC
 	var dropped_ore: bool = false
 	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
 	if not template.is_empty():
@@ -1023,7 +1028,8 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		QuestSystem.track_event("enemy_kill", {
 			"enemy_id": enemy.enemy_id,
 			"count": 1,
-			"mine_depth": depth_now
+			"mine_depth": depth_now,
+			"kill_streak": _kill_streak
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
@@ -1044,11 +1050,6 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 				GameManager.player_data["combat_kill_milestone_idx"] = milestone_idx + 1
 				record_world_event("Combat milestone %d kills reached (+%dg)." % [target, milestone_gold])
 				show_quick_tip("Milestone reached: %d kills!" % target, 1.3)
-	var now_sec: float = Time.get_ticks_msec() / 1000.0
-	if now_sec > _kill_streak_expire_at:
-		_kill_streak = 0
-	_kill_streak += 1
-	_kill_streak_expire_at = now_sec + KILL_STREAK_WINDOW_SEC
 	if _kill_streak > 0 and _kill_streak % KILL_STREAK_STEP == 0 and GameManager:
 		var depth_bonus: int = maxi(0, GameZones.mine_depth_from_global_y(enemy.global_position.y))
 		var bonus_gold: int = 14 + depth_bonus * 4
@@ -1830,6 +1831,9 @@ func _on_quest_completed(quest_id: String):
 		elif quest_id == "deep_mine_hunt":
 			QuestSystem.start_quest("elite_slayer")
 			record_world_event("New combat contract unlocked: Elite Slayer.")
+		elif quest_id == "elite_slayer":
+			QuestSystem.start_quest("streak_hunter")
+			record_world_event("New combat contract unlocked: Streak Hunter.")
 	_refresh_quest_log()
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
