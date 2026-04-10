@@ -332,6 +332,28 @@ func initialize_quests():
 		"reward": {"gold": 40, "items": ["wood_log:3"]}
 	}
 
+	quests["intro_combat"] = {
+		"id": "intro_combat",
+		"title": "First Blood",
+		"description": "Defeat 3 enemies in the mine.",
+		"objectives": [
+			{"type": "enemy_kill", "count": 3, "current": 0}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 70, "items": ["coal:2"]}
+	}
+
+	quests["deep_mine_hunt"] = {
+		"id": "deep_mine_hunt",
+		"title": "Deep Mine Hunt",
+		"description": "Defeat 5 enemies in deep mine layers (depth >= 1).",
+		"objectives": [
+			{"type": "enemy_kill", "count": 5, "current": 0, "min_depth": 1}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 140, "items": ["iron_ore:2"]}
+	}
+
 	_register_chain_quests_from_templates()
 
 func _register_chain_quests_from_templates() -> void:
@@ -481,18 +503,19 @@ func complete_quest(quest_id: String):
 
 	# Give rewards
 	var reward_data: Dictionary = quest.reward if quest.get("reward") is Dictionary else {}
-	if reward_data.has("gold"):
-		GameManager.player_data.gold += int(reward_data.gold)
-
-	if reward_data.has("items"):
-		for item_str in reward_data.items:
-			var parts = item_str.split(":")
-			var item_id = parts[0]
-			var count = int(parts[1]) if parts.size() > 1 else 1
-			var item_template = ItemDatabase.get_item(item_id)
-			for i in range(count):
-				InventoryManager.add_item(item_template.duplicate(true))
-	_apply_reward_pool(reward_data)
+	var grant_id: String = "quest_reward:%s" % quest_id
+	if _claim_reward_grant(grant_id):
+		if reward_data.has("gold"):
+			GameManager.player_data.gold += int(reward_data.gold)
+		if reward_data.has("items"):
+			for item_str in reward_data.items:
+				var parts = item_str.split(":")
+				var item_id = parts[0]
+				var count = int(parts[1]) if parts.size() > 1 else 1
+				var item_template = ItemDatabase.get_item(item_id)
+				for i in range(count):
+					InventoryManager.add_item(item_template.duplicate(true))
+		_apply_reward_pool(reward_data)
 	_apply_quest_outcome_impacts(quest_id, quest, true)
 
 	# Move from active to completed
@@ -680,7 +703,7 @@ func _resolve_managed_chain_finale(final_quest: Dictionary, chain_id: String) ->
 		streak_mult += float(managed_chain_streak.get("bonus_per_stack", 0.1)) * st
 	bonus_gold = int(round(float(bonus_gold) * streak_mult))
 
-	if GameManager and GameManager.player_data:
+	if GameManager and GameManager.player_data and _claim_reward_grant("managed_chain_bonus:%s:%d" % [chain_id, _current_day_index()]):
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
 
 	if AIEconomySystem and AIEconomySystem.has_method("pulse_story_completion"):
@@ -788,7 +811,7 @@ func _fail_managed_chain_timeout(failed_qid: String, today_idx: int) -> void:
 			managed_chain_state_changed.emit(qid, "failed")
 	var pace := "failed"
 	var bonus_gold: int = int(managed_chain_failure.get("bonus_gold", 0))
-	if GameManager and GameManager.player_data and bonus_gold != 0:
+	if GameManager and GameManager.player_data and bonus_gold != 0 and _claim_reward_grant("managed_chain_fail_bonus:%s:%d" % [chain_id, today_idx]):
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
 	if AIEconomySystem and AIEconomySystem.has_method("pulse_story_completion"):
 		var f: float = float(managed_chain_pulse_factor.get("failed", 0.94))
@@ -805,6 +828,27 @@ func _fail_managed_chain_timeout(failed_qid: String, today_idx: int) -> void:
 	})
 	_set_chain_cooldown(chain_id)
 	_spawn_recovery_quest(chain_id)
+
+
+func _reward_ledger() -> Dictionary:
+	if not GameManager or not GameManager.player_data:
+		return {}
+	if not GameManager.player_data.has("reward_ledger") or not (GameManager.player_data.get("reward_ledger") is Dictionary):
+		GameManager.player_data["reward_ledger"] = {}
+	return GameManager.player_data["reward_ledger"]
+
+
+func _claim_reward_grant(grant_id: String) -> bool:
+	var gid: String = grant_id.strip_edges()
+	if gid.is_empty():
+		return true
+	var ledger: Dictionary = _reward_ledger()
+	if ledger.has(gid):
+		return false
+	ledger[gid] = _current_day_index()
+	if GameManager and GameManager.player_data:
+		GameManager.player_data["reward_ledger"] = ledger
+	return true
 
 func _apply_chain_timeout_impacts(chain_id: String) -> void:
 	var npc_id: String = "pierre"
@@ -1009,6 +1053,13 @@ func _objective_matches_event(objective: Dictionary, data: Dictionary) -> bool:
 			return str(data.get("item_id", "")) == str(objective.get("item_id", ""))
 		return true
 	if ot == "earn_gold":
+		return true
+	if ot == "enemy_kill":
+		if objective.has("enemy_id"):
+			if str(data.get("enemy_id", "")) != str(objective.get("enemy_id", "")):
+				return false
+		if objective.has("min_depth"):
+			return int(data.get("mine_depth", 0)) >= int(objective.get("min_depth", 0))
 		return true
 	if objective.has("crop_id"):
 		return data.get("crop_id") == objective.get("crop_id")
