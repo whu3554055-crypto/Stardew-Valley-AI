@@ -1879,6 +1879,9 @@ func _on_quest_completed(quest_id: String):
 		elif quest_id == "elite_slayer":
 			QuestSystem.start_quest("streak_hunter")
 			record_world_event("New combat contract unlocked: Streak Hunter.")
+		elif quest_id == "streak_hunter":
+			QuestSystem.start_quest("elite_slayer_ii")
+			record_world_event("New combat contract unlocked: Elite Slayer II.")
 	_refresh_quest_log()
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:

@@ -376,6 +376,17 @@ func initialize_quests():
 		"reward": {"gold": 180, "items": ["coal:4"]}
 	}
 
+	quests["elite_slayer_ii"] = {
+		"id": "elite_slayer_ii",
+		"title": "Elite Slayer II",
+		"description": "Defeat 4 elite enemies in deep mine layers (depth >= 2).",
+		"objectives": [
+			{"type": "enemy_kill", "count": 4, "current": 0, "enemy_id": "mine_slime_elite", "min_depth": 2}
+		],
+		"status": QuestStatus.NOT_STARTED,
+		"reward": {"gold": 320, "items": ["gold_ore:2"]}
+	}
+
 	_register_chain_quests_from_templates()
 
 func _register_chain_quests_from_templates() -> void:
