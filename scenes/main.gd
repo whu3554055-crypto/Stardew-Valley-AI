@@ -1109,6 +1109,7 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("intro_cook")
 		QuestSystem.start_quest("intro_chop")
 		QuestSystem.start_quest("intro_craft")
+		QuestSystem.start_quest("intro_combat")
 		QuestSystem.start_quest("earn_gold")
 	
 	if DailyNarrativeSystem:
@@ -1696,6 +1697,9 @@ func _on_quest_completed(quest_id: String):
 			record_world_event(reward_line)
 			show_quick_tip(reward_line, 1.75)
 		_apply_story_completion_feedback(quest_data)
+		if quest_id == "intro_combat":
+			QuestSystem.start_quest("deep_mine_hunt")
+			record_world_event("New combat contract unlocked: Deep Mine Hunt.")
 	_refresh_quest_log()
 
 func _on_quest_failed(quest_id: String, reason: String) -> void:
