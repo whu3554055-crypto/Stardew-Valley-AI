@@ -1139,6 +1139,12 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	_kill_streak += 1
 	_kill_streak_expire_at = now_sec + KILL_STREAK_WINDOW_SEC
 	_daily_peak_streak = maxi(_daily_peak_streak, _kill_streak)
+	if GameManager:
+		var best_streak: int = int(GameManager.player_data.get("combat_best_streak", 0))
+		if _kill_streak > best_streak:
+			GameManager.player_data["combat_best_streak"] = _kill_streak
+			record_world_event("New personal best streak: %d." % _kill_streak)
+			show_quick_tip("New PB streak: %d" % _kill_streak, 0.85)
 	var dropped_ore: bool = false
 	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
 	if not template.is_empty():
