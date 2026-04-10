@@ -58,6 +58,7 @@ var _combo_expire_at: float = 0.0
 var _kill_streak: int = 0
 var _kill_streak_expire_at: float = 0.0
 var _revenge_buff_until: float = 0.0
+var _no_ore_kill_streak: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -82,6 +83,7 @@ const KILL_HEAL_BASE := 2.0
 const KILL_MILESTONES := [25, 60, 120]
 const REVENGE_BUFF_SEC := 2.6
 const REVENGE_DAMAGE_MULT := 1.22
+const ORE_PITY_KILL_THRESHOLD := 6
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -981,11 +983,24 @@ func _handle_player_defeat() -> void:
 
 func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	var depth_now: int = GameZones.mine_depth_from_global_y(enemy.global_position.y)
+	var dropped_ore: bool = false
 	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
 	if not template.is_empty():
 		var n: int = enemy.roll_drop_count()
 		for _i in range(n):
 			InventoryManager.add_item(template.duplicate(true))
+		dropped_ore = str(enemy.drop_item_id).ends_with("_ore")
+	if dropped_ore:
+		_no_ore_kill_streak = 0
+	else:
+		_no_ore_kill_streak += 1
+		if _no_ore_kill_streak >= ORE_PITY_KILL_THRESHOLD:
+			var pity_item_id: String = "silver_ore" if depth_now >= 2 else ("iron_ore" if depth_now >= 1 else "copper_ore")
+			var pity_tpl: Dictionary = ItemDatabase.get_item(pity_item_id)
+			if not pity_tpl.is_empty():
+				InventoryManager.add_item(pity_tpl.duplicate(true))
+				_no_ore_kill_streak = 0
+				show_quick_tip("Ore pity drop: %s" % pity_item_id, 0.9)
 	if QuestSystem:
 		QuestSystem.track_event("enemy_kill", {
 			"enemy_id": enemy.enemy_id,
