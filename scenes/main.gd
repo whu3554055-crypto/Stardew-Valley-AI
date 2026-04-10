@@ -65,6 +65,7 @@ var _shield_charges: int = 0
 var _daily_peak_streak: int = 0
 var _crit_chain: int = 0
 var _momentum_score: int = 0
+var _no_hit_kill_streak: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -113,6 +114,7 @@ const BIG_HIT_THRESHOLD := 24
 const CLUTCH_HP_RATIO := 0.2
 const CLUTCH_BONUS_GOLD := 22
 const MOMENTUM_STEP := 20
+const NO_HIT_STREAK_GOAL := 8
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -1053,6 +1055,7 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	if not GameManager:
 		return
 	var alive: bool = GameManager.apply_damage(final_damage)
+	_no_hit_kill_streak = 0
 	play_screen_shake(3.8 if panic_mode else 2.6)
 	_revenge_buff_until = now + REVENGE_BUFF_SEC
 	if guarded:
@@ -1128,6 +1131,12 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
+	_no_hit_kill_streak += 1
+	if _no_hit_kill_streak == NO_HIT_STREAK_GOAL and GameManager:
+		var no_hit_bonus: int = 45
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + no_hit_bonus
+		record_world_event("No-hit streak achieved! +%dg." % no_hit_bonus)
+		show_quick_tip("No-hit streak x%d!" % NO_HIT_STREAK_GOAL, 1.0)
 	_momentum_score += 3 + (2 if is_elite else 0)
 	if _momentum_score >= MOMENTUM_STEP:
 		var momentum_tiers: int = _momentum_score / MOMENTUM_STEP
