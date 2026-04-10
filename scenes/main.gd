@@ -1157,6 +1157,11 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		GameManager.player_data["combat_kills_today"] = int(GameManager.player_data.get("combat_kills_today", 0)) + 1
 		if is_elite:
 			GameManager.player_data["combat_elites_today"] = int(GameManager.player_data.get("combat_elites_today", 0)) + 1
+			var elite_today: int = int(GameManager.player_data.get("combat_elites_today", 0))
+			show_quick_tip("Elite progress today: %d / 5" % mini(elite_today, 5), 0.9)
+			if elite_today == 5:
+				record_world_event("Daily elite hunter target reached (5/5).")
+				show_quick_tip("Daily elite target complete!", 1.0)
 			if not bool(GameManager.player_data.get("combat_badge_first_elite", false)):
 				GameManager.player_data["combat_badge_first_elite"] = true
 				record_world_event("Badge unlocked: First Elite Down.")
