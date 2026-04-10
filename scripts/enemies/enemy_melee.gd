@@ -12,6 +12,7 @@ class_name EnemyMelee
 @export var despawn_range: float = 860.0
 @export var hit_stun_sec: float = 0.14
 @export var no_contact_after_spawn_sec: float = 0.6
+@export var contact_windup_sec: float = 0.22
 @export var drop_item_id: String = "stone_chunk"
 @export var drop_count_min: int = 1
 @export var drop_count_max: int = 2
@@ -22,6 +23,7 @@ var _flash_t: float = 0.0
 var _knockback_vel: Vector2 = Vector2.ZERO
 var _hit_stun_t: float = 0.0
 var _spawned_at_sec: float = 0.0
+var _attack_windup_t: float = 0.0
 
 signal contact_hit(enemy: EnemyMelee, damage: float)
 signal enemy_killed(enemy: EnemyMelee)
@@ -42,12 +44,18 @@ func _process(delta: float) -> void:
 	_contact_cd = maxf(0.0, _contact_cd - delta)
 	_flash_t = maxf(0.0, _flash_t - delta)
 	_hit_stun_t = maxf(0.0, _hit_stun_t - delta)
+	_attack_windup_t = maxf(0.0, _attack_windup_t - delta)
 	_knockback_vel = _knockback_vel.move_toward(Vector2.ZERO, 520.0 * delta)
 	if _knockback_vel.length() > 1.0:
 		global_position += _knockback_vel * delta
 	var body: ColorRect = get_node_or_null("Body") as ColorRect
 	if body:
-		body.color = Color(1.0, 0.62, 0.62, 1.0) if _flash_t > 0.0 else Color(0.44, 0.77, 0.52, 0.95)
+		if _flash_t > 0.0:
+			body.color = Color(1.0, 0.62, 0.62, 1.0)
+		elif _attack_windup_t > 0.0:
+			body.color = Color(0.95, 0.86, 0.38, 1.0)
+		else:
+			body.color = Color(0.44, 0.77, 0.52, 0.95)
 	var p: Node2D = get_tree().get_first_node_in_group("player") as Node2D
 	if p == null:
 		return
@@ -64,6 +72,9 @@ func _process(delta: float) -> void:
 		global_position += dv.normalized() * move_speed * delta
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if d <= 22.0 and _contact_cd <= 0.0 and (now_sec - _spawned_at_sec) >= no_contact_after_spawn_sec:
+		if _attack_windup_t <= 0.0:
+			_attack_windup_t = contact_windup_sec
+	if _attack_windup_t <= 0.0 and d <= 24.0 and _contact_cd <= 0.0 and (now_sec - _spawned_at_sec) >= no_contact_after_spawn_sec:
 		_contact_cd = contact_interval_sec
 		contact_hit.emit(self, contact_damage)
 
@@ -73,6 +84,7 @@ func take_damage(amount: int) -> bool:
 	hp -= amount
 	_flash_t = 0.12
 	_hit_stun_t = maxf(_hit_stun_t, hit_stun_sec)
+	_attack_windup_t = 0.0
 	if hp <= 0:
 		enemy_killed.emit(self)
 		queue_free()
