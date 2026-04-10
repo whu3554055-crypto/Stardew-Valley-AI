@@ -57,6 +57,7 @@ var _combo_hits: int = 0
 var _combo_expire_at: float = 0.0
 var _kill_streak: int = 0
 var _kill_streak_expire_at: float = 0.0
+var _revenge_buff_until: float = 0.0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -79,6 +80,8 @@ const ATTACK_GUARD_WINDOW_SEC := 0.22
 const ATTACK_GUARD_DAMAGE_REDUCTION := 0.35
 const KILL_HEAL_BASE := 2.0
 const KILL_MILESTONES := [25, 60, 120]
+const REVENGE_BUFF_SEC := 2.6
+const REVENGE_DAMAGE_MULT := 1.22
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -911,9 +914,10 @@ func _on_player_attack_requested(origin: Vector2, facing: Vector2) -> void:
 	_combo_expire_at = now_sec + COMBO_WINDOW_SEC
 	var combo_stack: int = mini(_combo_hits, COMBO_MAX_STACKS)
 	var combo_mult: float = 1.0 + COMBO_BONUS_PER_STACK * float(combo_stack)
+	var revenge_mult: float = REVENGE_DAMAGE_MULT if now_sec <= _revenge_buff_until else 1.0
 	var hit_any: bool = false
 	var is_crit: bool = randf() < crit_chance
-	var final_dmg: int = maxi(1, int(round(float(dmg) * combo_mult * (crit_mult if is_crit else 1.0))))
+	var final_dmg: int = maxi(1, int(round(float(dmg) * combo_mult * revenge_mult * (crit_mult if is_crit else 1.0))))
 	for c in _enemy_layer.get_children():
 		if not (c is EnemyMelee):
 			continue
@@ -952,6 +956,7 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 	if not GameManager:
 		return
 	var alive: bool = GameManager.apply_damage(final_damage)
+	_revenge_buff_until = now + REVENGE_BUFF_SEC
 	if guarded:
 		show_quick_tip("Guarded hit!", 0.4)
 	update_ui()
