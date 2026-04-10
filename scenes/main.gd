@@ -109,6 +109,8 @@ const ELITE_PITY_KILLS := 14
 const SHIELD_MAX_CHARGES := 3
 const COMBO_FEEDBACK_MIN_STACK := 2
 const BIG_HIT_THRESHOLD := 24
+const CLUTCH_HP_RATIO := 0.2
+const CLUTCH_BONUS_GOLD := 22
 const WORLD_EVENT_FEED_MAX := 6
 const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
 const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
@@ -1124,6 +1126,13 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
+	if GameManager:
+		var hp_cur: float = float(GameManager.player_data.get("hp", 100.0))
+		var hp_max: float = maxf(1.0, float(GameManager.player_data.get("hp_max", 100.0)))
+		if hp_cur / hp_max <= CLUTCH_HP_RATIO:
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + CLUTCH_BONUS_GOLD
+			record_world_event("Clutch kill! +%dg bonus." % CLUTCH_BONUS_GOLD)
+			show_quick_tip("Clutch kill!", 0.8)
 	if GameManager:
 		GameManager.player_data["combat_kills_today"] = int(GameManager.player_data.get("combat_kills_today", 0)) + 1
 		if is_elite:
