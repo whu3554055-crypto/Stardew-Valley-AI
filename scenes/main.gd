@@ -79,6 +79,7 @@ var _quest_near_done_latched: Dictionary = {}
 var _streak_medal_awarded: Dictionary = {}
 var _run_best_tag: String = "None"
 var _combat_quest_chain: int = 0
+var _last_stand_redeem_until: float = 0.0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -1113,6 +1114,7 @@ func _on_enemy_contact_hit(_enemy: EnemyMelee, damage: float) -> void:
 		_last_stand_used_run = true
 		GameManager.player_data["hp"] = 1.0
 		_combat_invuln_until = now + 1.35
+		_last_stand_redeem_until = now + 8.0
 		record_world_event("Last Stand triggered! You survived with 1 HP.")
 		show_quick_tip("Last Stand!", 0.9)
 		update_ui()
@@ -1161,6 +1163,12 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 	var depth_now: int = GameZones.mine_depth_from_global_y(enemy.global_position.y)
 	var is_elite: bool = str(enemy.enemy_id).find("_elite") >= 0
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
+	if _last_stand_redeem_until > 0.0 and now_sec <= _last_stand_redeem_until and GameManager:
+		var redeem_gold: int = 35
+		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + redeem_gold
+		record_world_event("Redemption! Last Stand converted to victory (+%dg)." % redeem_gold)
+		show_quick_tip("Redemption +%dg" % redeem_gold, 1.0)
+		_last_stand_redeem_until = 0.0
 	if now_sec > _kill_streak_expire_at:
 		_kill_streak = 0
 	_kill_streak += 1
