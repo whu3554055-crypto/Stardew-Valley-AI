@@ -62,6 +62,7 @@ var _no_ore_kill_streak: int = 0
 var _attack_speed_buff_until: float = 0.0
 var _no_elite_kill_streak: int = 0
 var _shield_charges: int = 0
+var _daily_peak_streak: int = 0
 const PLAYER_ATTACK_COOLDOWN_MS := 340
 const PLAYER_ATTACK_RANGE := 56.0
 const PLAYER_ATTACK_DAMAGE := 12
@@ -1072,6 +1073,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		_kill_streak = 0
 	_kill_streak += 1
 	_kill_streak_expire_at = now_sec + KILL_STREAK_WINDOW_SEC
+	_daily_peak_streak = maxi(_daily_peak_streak, _kill_streak)
 	var dropped_ore: bool = false
 	var template: Dictionary = ItemDatabase.get_item(enemy.drop_item_id)
 	if not template.is_empty():
@@ -1100,6 +1102,10 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		})
 	if GameManager and GameManager.has_method("heal_hp"):
 		GameManager.heal_hp(KILL_HEAL_BASE + float(depth_now) * 0.5)
+	if GameManager:
+		GameManager.player_data["combat_kills_today"] = int(GameManager.player_data.get("combat_kills_today", 0)) + 1
+		if is_elite:
+			GameManager.player_data["combat_elites_today"] = int(GameManager.player_data.get("combat_elites_today", 0)) + 1
 	if is_elite:
 		show_quick_tip("Elite defeated!", 0.8)
 	else:
@@ -1666,6 +1672,12 @@ func _on_day_changed(new_day):
 	_reset_daily_event_budget()
 	if GameManager:
 		GameManager.player_data["daily_defeats"] = 0
+		var daily_kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
+		var daily_elites: int = int(GameManager.player_data.get("combat_elites_today", 0))
+		record_world_event("Combat recap: kills %d, elites %d, peak streak %d." % [daily_kills, daily_elites, _daily_peak_streak])
+		GameManager.player_data["combat_kills_today"] = 0
+		GameManager.player_data["combat_elites_today"] = 0
+		_daily_peak_streak = 0
 	update_ui()
 	if QuestSystem and QuestSystem.has_method("on_day_passed"):
 		QuestSystem.on_day_passed()
