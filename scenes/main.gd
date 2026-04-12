@@ -753,6 +753,8 @@ func _pick_best_valid_bundle() -> Dictionary:
 
 
 func _bundle_signing_payload(bundle: Dictionary) -> Dictionary:
+	# Intentionally omit `world` (and other non-critical keys) so older signed saves
+	# remain valid after multi-scene fields are added to the stored bundle.
 	return {
 		"version": int(bundle.get("version", 0)),
 		"save_seq": int(bundle.get("save_seq", 0)),
