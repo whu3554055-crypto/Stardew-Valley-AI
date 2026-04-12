@@ -13,6 +13,10 @@ var player_data = {
 	"hp_max": 100.0
 }
 
+## Survives `Main` unload so `world_farm` saves can include journal fields (B2).
+var journal_world_event_feed: Array = []
+var journal_active_story_hotspot: Dictionary = {}
+
 # Time system
 var current_time = 6.0  # Start at 6 AM
 var time_speed = 10.0  # Seconds per game minute
