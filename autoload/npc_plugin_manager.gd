@@ -216,10 +216,26 @@ func broadcast_to_plugin(plugin_name: String, method: String, args: Array = []) 
 # ============================================
 
 func auto_load_plugins_for_npc(npc_id: String):
-	"""Auto-load plugins marked for auto-loading"""
-	for plugin_name in registered_plugins.keys():
+	"""Auto-load plugins marked for auto-loading (fixed order so dependencies stay stable)."""
+	var ordered: Array[String] = [
+		"mood_enhanced",
+		"social_dynamics",
+		"memory_enhanced",
+		"schedule_manager",
+	]
+	for plugin_name in ordered:
+		if not registered_plugins.has(plugin_name):
+			continue
 		if registered_plugins[plugin_name].auto_load:
 			load_plugin_for_npc(npc_id, plugin_name)
+
+
+func unload_all_plugins_for_npc(npc_id: String) -> void:
+	if not npc_active_plugins.has(npc_id):
+		return
+	var names: Array = npc_active_plugins[npc_id].keys()
+	for pn in names:
+		unload_plugin_from_npc(npc_id, str(pn))
 
 # ============================================
 # PLUGIN DISCOVERY
@@ -277,10 +293,55 @@ func load_plugin_state(npc_id: String, state: Dictionary):
 # BUILT-IN PLUGINS REGISTRATION
 # ============================================
 
+const _SOCIAL_FEED_MAX := 12
+
+
 func _ready():
 	"""Register built-in plugins"""
 	register_builtin_plugins()
 	print("[NPCPluginManager] Initialized with ", registered_plugins.size(), " plugins")
+	if GameManager and GameManager.has_signal("day_changed"):
+		if not GameManager.day_changed.is_connected(_on_game_day_changed):
+			GameManager.day_changed.connect(_on_game_day_changed)
+
+
+func _npc_display_name_for_feed(npc_id: String) -> String:
+	if EnhancedPersonalitySystem:
+		var profile: Dictionary = EnhancedPersonalitySystem.get_npc_complete_profile(npc_id)
+		if profile.has("basic_info"):
+			var n: String = str(profile.basic_info.get("name", "")).strip_edges()
+			if not n.is_empty():
+				return n
+	return str(npc_id).capitalize()
+
+
+func _on_game_day_changed(_new_day: int) -> void:
+	if not NPCBehaviorController or not GameManager:
+		return
+	if randf() > 0.42:
+		return
+	var ids: Array = NPCBehaviorController.get_all_npc_ids()
+	var social_ids: Array[String] = []
+	for raw in ids:
+		var nid: String = str(raw)
+		if is_plugin_loaded_for_npc(nid, "social_dynamics"):
+			social_ids.append(nid)
+	if social_ids.size() < 2:
+		return
+	social_ids.shuffle()
+	var na: String = social_ids[0]
+	var nb: String = social_ids[1]
+	var line: String = "镇上闲语：%s 和 %s 似乎在广场上聊了几句。" % [
+		_npc_display_name_for_feed(na),
+		_npc_display_name_for_feed(nb),
+	]
+	var ts: String = ""
+	if GameManager.has_method("get_time_string"):
+		ts = str(GameManager.get_time_string())
+	var stamped: String = "[%s] %s" % [ts if not ts.is_empty() else "--:--", line]
+	GameManager.journal_world_event_feed.push_front(stamped)
+	if GameManager.journal_world_event_feed.size() > _SOCIAL_FEED_MAX:
+		GameManager.journal_world_event_feed.resize(_SOCIAL_FEED_MAX)
 
 func register_builtin_plugins():
 	"""Register all built-in plugin types"""

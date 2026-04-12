@@ -365,9 +365,13 @@ func register_npc(npc_id: String, initial_state: Dictionary = {}):
 	npc_states[npc_id].merge(initial_state)
 	if not npc_relationship_stage.has(npc_id):
 		npc_relationship_stage[npc_id] = "neutral"
+	if NPCPluginManager:
+		NPCPluginManager.auto_load_plugins_for_npc(npc_id)
 
 func unregister_npc(npc_id: String):
 	"""注销 NPC"""
+	if NPCPluginManager:
+		NPCPluginManager.unload_all_plugins_for_npc(npc_id)
 	npc_states.erase(npc_id)
 
 func force_interaction(npc1_id: String, npc2_id: String, type: String = "casual"):

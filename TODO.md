@@ -16,7 +16,8 @@
 4. **防遗漏优先于一次做完（No-Loss Priority）**  
    当下不做完的点必须记录到“实施中发现（防遗漏）”，确保后续可追踪、可排期。
 
-5. **玩家可见后果（反暗箱，长期遵守）**  
+5. **清单与实现一致**：凡在本文件标为 `[x]` 的条目，须在工程内具备**可运行路径**（非仅文档表述）；发现脱节时以代码修复或改回 `[ ]` 为准。  
+6. **玩家可见后果（反暗箱，长期遵守）**  
    - 任何会改变玩家**可感知**状态（经济、社交、任务进度、NPC 情绪与记忆、叙事/Agentic 运行时等）的逻辑，**必须**有对应的玩家可见反馈；禁止只改后台数值却零提示。  
    - **同一因果事件，最多两条信息**：一条说明「发生了什么」，一条说明「对你意味着什么」（物品名、金币、NPC、涨跌方向等）。  
    - **用游戏内语言呈现**；内部 `reason`/错误码/调试串需映射为简短玩家文案，不直接糊进 UI。  
@@ -138,7 +139,7 @@
   - [x] 基础异步任务生成框架
   - [x] LLM 创意增强接口 (LLM-enhanced quest details)
   - [x] 任务目标自动验证逻辑 (Objective verification)：客户端 `verify_active_objectives()`（`fetch` / `delivery` / `talk` / `problem_solving`，交付型依赖 `track_event("talk")`）；回归 `tests/unit/test_ai_quest_objective_verify.gd`。
-- [x] **社交动力学插件 (Social Dynamics)**: （MVP/骨架已达）`NPCPluginManager` 注册 `social_dynamics_plugin.gd`（群组、影响度、共情等状态与 API，可随 NPC 存档）。**争吵 / 合作 / 流言的强演出 + 统一世界简报（与总纲「玩家可见后果」）**仍属加深项，需在 B4 与叙事/任务侧对齐验收。
+- [x] **社交动力学插件 (Social Dynamics)**: （MVP 运行路径）`NPCPluginManager` 注册 `social_dynamics_plugin.gd`；**`NPCBehaviorController.register_npc` 时 `auto_load_plugins_for_npc`**（与 `mood_enhanced` / `memory_enhanced` / `schedule_manager` 同批按序加载），注销时 `unload_all_plugins_for_npc`。**换日**约 42% 概率向 `GameManager.journal_world_event_feed` 写入一条「镇上闲语」（两名已加载社交插件的村民），满足总纲「玩家可见后果」最低线。**争吵 / 合作 / 流言深度演出与谣言链**仍属 B4 加深。
 
 - [ ] **语音集成 (NPC Audio/TTS)**: 为 NPC 对话集成文本转语音。
 
