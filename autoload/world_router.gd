@@ -5,6 +5,11 @@ extends Node
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const PLAYGROUND_SCENE := "res://scenes/world/world_playground.tscn"
+const FARM_STUB_SCENE := "res://scenes/world/world_farm_stub.tscn"
+const TOWN_STUB_SCENE := "res://scenes/world/world_town_stub.tscn"
+const FOREST_STUB_SCENE := "res://scenes/world/world_forest_stub.tscn"
+const BEACH_STUB_SCENE := "res://scenes/world/world_beach_stub.tscn"
+const MINE_STUB_SCENE := "res://scenes/world/world_mine_stub.tscn"
 
 var pending_spawn_id: String = ""
 
