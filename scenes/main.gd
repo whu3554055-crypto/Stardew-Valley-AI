@@ -172,6 +172,8 @@ func _ready():
 	if QuestSystem:
 		QuestSystem.quest_started.connect(_on_quest_log_changed)
 		QuestSystem.quest_updated.connect(_on_quest_log_changed)
+		if QuestSystem.has_signal("quest_journal_refresh_requested"):
+			QuestSystem.quest_journal_refresh_requested.connect(_on_quest_log_changed)
 		QuestSystem.quest_completed.connect(_on_quest_completed)
 		if QuestSystem.has_signal("quest_failed"):
 			QuestSystem.quest_failed.connect(_on_quest_failed)

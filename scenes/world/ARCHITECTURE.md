@@ -14,6 +14,10 @@
 - 使用 `WorldSpawnPoint`（`Marker2D` + 组 `world_spawn` + `spawn_id`）。
 - 场景加载后由 `WorldRouter.apply_pending_spawn_and_clear()`（或 `apply_pending_spawn_to_player()`）将 `group("player")` 的节点对齐到目标点。
 
+## 任务 UI 与切场景
+
+- `QuestSystem` 为 Autoload，任务状态在切场景后仍保留；`Main` 再次成为当前场景时会重连 UI。`WorldRouter.world_changed` 触发 `quest_journal_refresh_requested`，便于在**仍停留在带日志 UI 的场景**（若未来共享 HUD）时刷新；当前以 `Main` 为主界面。
+
 ## 存档中的世界字段
 
 - Bundle 内 `world: { "path": string, "spawn_id": string }` 描述上次退出时的场景与出生点。

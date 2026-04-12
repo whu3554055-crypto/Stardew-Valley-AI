@@ -68,11 +68,26 @@ signal managed_chain_resolved(outcome)
 signal managed_chain_state_changed(quest_id, state)
 signal quest_impact_applied(quest_id, impact)
 signal quest_failed(quest_id, reason)
+signal quest_journal_refresh_requested()
 
 func _ready():
 	_load_managed_chain_config()
 	_load_chain_templates()
 	initialize_quests()
+	call_deferred("_connect_world_router_quest_ui")
+
+
+func _connect_world_router_quest_ui() -> void:
+	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_changed_quest_refresh):
+		WorldRouter.world_changed.connect(_on_world_changed_quest_refresh)
+
+
+func _on_world_changed_quest_refresh(_scene_path: String) -> void:
+	call_deferred("_emit_quest_journal_refresh")
+
+
+func _emit_quest_journal_refresh() -> void:
+	quest_journal_refresh_requested.emit()
 
 func _load_managed_chain_config() -> void:
 	var f: FileAccess = FileAccess.open(MANAGED_CHAIN_CONFIG_PATH, FileAccess.READ)
