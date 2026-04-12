@@ -237,6 +237,8 @@ func _ready():
 		return
 	
 	_finish_boot_after_profile()
+	if WorldRouter:
+		WorldRouter.apply_pending_spawn_and_clear()
 
 
 func _open_player_creation() -> void:
@@ -248,6 +250,8 @@ func _on_player_creation_done() -> void:
 	_record_history("game_start", {})
 	save_game()
 	_finish_boot_after_profile()
+	if WorldRouter:
+		WorldRouter.apply_pending_spawn_and_clear()
 
 
 func _finish_boot_after_profile() -> void:

@@ -22,6 +22,6 @@
 ## 切换流程（摘要）
 
 1. 游戏加载存档 → `WorldRouter.set_world_state_from_bundle(world)`。
-2. `Main` 完成角色档案引导后 → `call_deferred` → `WorldRouter.consume_saved_world_after_boot()`。
+2. `Main` 完成角色档案引导后 → `call_deferred` → `WorldRouter.consume_saved_world_after_boot()`（**每局仅执行一次**，避免从子场景返回时覆盖 `change_world` 写入的 `pending_spawn_id`）。
 3. 若 `path` 与当前场景一致 → 仅应用出生点；否则 `change_scene_to_file`。
-4. 新场景根节点 `_ready` 末尾调用 `WorldRouter.apply_pending_spawn_and_clear()`（示例：`world_playground_root.gd`）。
+4. 新场景根节点在玩家就绪后调用 `WorldRouter.apply_pending_spawn_and_clear()`：`world_playground_root.gd`；`Main` 在 `_finish_boot_after_profile()` 之后同步调用一次，用于从其它场景经传送返回时的落点。

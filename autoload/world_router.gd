@@ -10,6 +10,7 @@ var pending_spawn_id: String = ""
 
 var _bundle_world_path: String = ""
 var _bundle_spawn_id: String = ""
+var _saved_world_consumed_at_boot: bool = false
 
 signal world_changed(scene_path: String)
 
@@ -37,6 +38,9 @@ func build_world_save_dict() -> Dictionary:
 
 
 func consume_saved_world_after_boot() -> void:
+	if _saved_world_consumed_at_boot:
+		return
+	_saved_world_consumed_at_boot = true
 	var target: String = _bundle_world_path
 	var spawn: String = _bundle_spawn_id
 	_bundle_world_path = ""
