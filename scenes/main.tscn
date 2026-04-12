@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=17 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
@@ -14,12 +14,25 @@
 [ext_resource type="Script" path="res://scripts/game_tilemap.gd" id="12_gtmap"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="13_playertex"]
 [ext_resource type="PackedScene" path="res://scenes/shop_ui.tscn" id="14_shop"]
+[ext_resource type="Script" path="res://scripts/world/world_spawn_point.gd" id="15_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="Spawn_default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(640, 360)
+script = ExtResource("15_spawn")
+spawn_id = "default"
+
+[node name="Spawn_playground_return" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(120, 340)
+script = ExtResource("15_spawn")
+spawn_id = "playground_return"
 
 [node name="TileMap" type="TileMap" parent="."]
 z_index = -3
