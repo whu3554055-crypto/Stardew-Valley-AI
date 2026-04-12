@@ -1,0 +1,16 @@
+---
+description: Use fixed Godot 4.6 console exe for headless runs in this repo
+alwaysApply: true
+---
+
+# Godot headless（本项目）
+
+在本仓库需要 **headless 跑 Godot**（冒烟、验证、类 CI 检查）时：
+
+1. **优先**从仓库根目录执行：`tools/run_headless_smoke.ps1`（默认使用下方 exe；可用环境变量 `GODOT_CONSOLE` 覆盖）。
+2. 或直接调用（与脚本默认值一致）：
+   `D:\program\Godot_v4.6.2-stable_win64_console.exe`
+
+**要求**：不要只把命令写给用户；在需要验证时应 **自己执行** headless。
+
+常用参数：`--headless --path "<仓库根>" --quit-after <帧数>`。可选 `--scene "res://..."`。`--quit-after` 为引擎迭代次数，不是秒。
