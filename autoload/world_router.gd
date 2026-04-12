@@ -41,6 +41,8 @@ func consume_saved_world_after_boot() -> void:
 	var spawn: String = _bundle_spawn_id
 	_bundle_world_path = ""
 	_bundle_spawn_id = "default"
+	if spawn.is_empty():
+		spawn = "default"
 	if target.is_empty():
 		target = MAIN_SCENE
 	pending_spawn_id = spawn
