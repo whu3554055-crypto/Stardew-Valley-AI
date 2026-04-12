@@ -27,6 +27,8 @@ var _season_crossfade_active: bool = false
 var _season_crossfade_tween: Tween = null
 
 func _ready() -> void:
+	if DisplayServer.get_name().to_lower().contains("headless"):
+		return
 	var sdb: float = _lvl("audio.levels.season_db_day", -10.0)
 	_season_player = _make_player("SeasonBed", "Music", sdb)
 	_weather_player = _make_player("WeatherLayer", "Ambience", -14.0)
@@ -56,6 +58,18 @@ func _ready() -> void:
 	call_deferred("_connect_world_router_ambient_refresh")
 
 
+func _on_tree_exiting_stop_audio() -> void:
+	_kill_season_crossfade_tween()
+	for p in [_season_player, _weather_player, _windy_player, _region_player, _night_player, _morning_player]:
+		if p:
+			_stop_stream(p)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		_on_tree_exiting_stop_audio()
+
+
 func _connect_world_router_ambient_refresh() -> void:
 	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_router_scene_changed):
 		WorldRouter.world_changed.connect(_on_world_router_scene_changed)
@@ -67,10 +81,7 @@ func _on_world_router_scene_changed(_scene_path: String) -> void:
 
 
 func _exit_tree() -> void:
-	# Ensure audio streams are detached on shutdown/headless quit.
-	for p in [_season_player, _weather_player, _windy_player, _region_player, _night_player, _morning_player]:
-		if p:
-			_stop_stream(p)
+	_on_tree_exiting_stop_audio()
 
 func _lvl(path: String, fb: float) -> float:
 	return ImmersionConfig.get_float(path, fb) if ImmersionConfig else fb
@@ -79,6 +90,8 @@ func request_activity_duck(duration_sec: float = 1.0) -> void:
 	_activity_duck_sec = maxf(_activity_duck_sec, duration_sec)
 
 func _process(delta: float) -> void:
+	if DisplayServer.get_name().to_lower().contains("headless"):
+		return
 	if _activity_duck_sec > 0.0:
 		_activity_duck_sec = maxf(0.0, _activity_duck_sec - delta)
 	_apply_ambient_volume_modifiers()
