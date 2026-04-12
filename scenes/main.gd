@@ -2,8 +2,8 @@ extends Node2D
 const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 
 @onready var player = $Player
-@onready var tilemap = $TileMap
-@onready var farm_manager = $FarmManager
+@onready var tilemap: TileMap = get_node_or_null("TileMap") as TileMap
+@onready var farm_manager: FarmManager = get_node_or_null("FarmManager") as FarmManager
 @onready var ui_layer = $UILayer
 @onready var time_label = $UILayer/TimeLabel
 @onready var gold_label = $UILayer/GoldLabel
@@ -131,16 +131,10 @@ const MOMENTUM_STEP := 20
 const NO_HIT_STREAK_GOAL := 8
 const HYPE_STEP := 18
 const WORLD_EVENT_FEED_MAX := 6
-const GAME_SAVE_BUNDLE_PATH := "user://game_save.bundle" # legacy fallback path
-const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
-const GAME_SAVE_SLOT_B_PATH := "user://game_save_b.bundle"
-const GAME_SAVE_META_PATH := "user://game_save_meta.json"
-const TAMPER_LOG_PATH := "user://tamper_events.log"
-const SAVE_BUNDLE_VERSION := 6
-const SAVE_SIGN_SECRET := "sv_save_sign_v1_local_pepper"
 const BASE_STAMINA_MAX := 100.0
 ## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
 var _visible_feed_last: Dictionary = {}
+var _dialogue_hide_timer: Timer
 
 func _ready():
 	# Connect signals
@@ -159,9 +153,15 @@ func _ready():
 	if AchievementSystem:
 		AchievementSystem.achievement_unlocked.connect(_on_achievement_unlocked_history)
 	
-	# Connect farming signals for quest tracking
-	farm_manager.crop_planted.connect(_on_crop_planted)
-	farm_manager.crop_harvested.connect(_on_crop_harvested)
+	# Connect farming signals for quest tracking (farm lives in `world_farm.tscn` after B2)
+	if farm_manager:
+		farm_manager.crop_planted.connect(_on_crop_planted)
+		farm_manager.crop_harvested.connect(_on_crop_harvested)
+
+	_dialogue_hide_timer = Timer.new()
+	_dialogue_hide_timer.one_shot = true
+	_dialogue_hide_timer.timeout.connect(_on_dialogue_hide_timeout)
+	add_child(_dialogue_hide_timer)
 	
 	# Single save file: `game_save.bundle` (see `save_game` / `_build_save_bundle`)
 	_had_savegame = _try_load_save_bundle()
@@ -225,6 +225,7 @@ func _ready():
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
+
 	_enemy_layer = Node2D.new()
 	_enemy_layer.name = "EnemyLayer"
 	_enemy_layer.z_index = 3
@@ -277,6 +278,16 @@ func _print_boot_banner() -> void:
 	print("NPCs with AI: Pierre, Abigail, Lewis")
 	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | O journal | F10 audio")
 	print("======================================")
+
+
+func _exit_tree() -> void:
+	if GameManager:
+		GameManager.journal_world_event_feed.clear()
+		for s in world_event_feed:
+			GameManager.journal_world_event_feed.append(str(s))
+		GameManager.journal_active_story_hotspot = active_story_hotspot.duplicate(true)
+	if farm_manager and FarmStateCache:
+		FarmStateCache.sync_from_manager(farm_manager)
 
 
 func _record_history(event_key: String, params: Dictionary = {}) -> void:
@@ -720,13 +731,13 @@ func _try_load_save_bundle() -> bool:
 		_apply_save_bundle(best["bundle"])
 		return true
 	# Legacy fallback: migrate old single-file save on next write.
-	if FileAccess.file_exists(GAME_SAVE_BUNDLE_PATH):
-		var f: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.READ)
+	if FileAccess.file_exists(GameSaveService.GAME_SAVE_BUNDLE_PATH):
+		var f: FileAccess = FileAccess.open(GameSaveService.GAME_SAVE_BUNDLE_PATH, FileAccess.READ)
 		if f:
 			var legacy: Variant = f.get_var()
 			f.close()
 			if legacy is Dictionary and int(legacy.get("version", 0)) >= 2:
-				_log_tamper_event("legacy_load_unsigned", {"path": GAME_SAVE_BUNDLE_PATH})
+				_log_tamper_event("legacy_load_unsigned", {"path": GameSaveService.GAME_SAVE_BUNDLE_PATH})
 				_apply_save_bundle(legacy)
 				return true
 	return false
@@ -735,7 +746,7 @@ func _try_load_save_bundle() -> bool:
 func _pick_best_valid_bundle() -> Dictionary:
 	var best_seq: int = -1
 	var best: Dictionary = {}
-	for p in [GAME_SAVE_SLOT_A_PATH, GAME_SAVE_SLOT_B_PATH]:
+	for p in [GameSaveService.GAME_SAVE_SLOT_A_PATH, GameSaveService.GAME_SAVE_SLOT_B_PATH]:
 		if not FileAccess.file_exists(p):
 			continue
 		var f: FileAccess = FileAccess.open(p, FileAccess.READ)
@@ -748,7 +759,7 @@ func _pick_best_valid_bundle() -> Dictionary:
 		var b: Dictionary = raw
 		if int(b.get("version", 0)) < 2:
 			continue
-		if not _verify_bundle_signature(b):
+		if not GameSaveService.verify_bundle_signature(b):
 			_log_tamper_event("signature_mismatch", {"path": p})
 			continue
 		var seq: int = int(b.get("save_seq", 0))
@@ -758,70 +769,9 @@ func _pick_best_valid_bundle() -> Dictionary:
 	return best
 
 
-func _bundle_signing_payload(bundle: Dictionary) -> Dictionary:
-	# Intentionally omit `world` (and other non-critical keys) so older signed saves
-	# remain valid after multi-scene fields are added to the stored bundle.
-	return {
-		"version": int(bundle.get("version", 0)),
-		"save_seq": int(bundle.get("save_seq", 0)),
-		"player": bundle.get("player", {}),
-		"farm": bundle.get("farm", {}),
-		"inventory": bundle.get("inventory", {}),
-		"quests": bundle.get("quests", {})
-	}
-
-
-func _canonicalize_value(v: Variant) -> Variant:
-	if v is Dictionary:
-		var d: Dictionary = v
-		var ks: Array = d.keys()
-		ks.sort()
-		var out: Dictionary = {}
-		for k in ks:
-			out[k] = _canonicalize_value(d[k])
-		return out
-	if v is Array:
-		var arr: Array = v
-		var out_arr: Array = []
-		for e in arr:
-			out_arr.append(_canonicalize_value(e))
-		return out_arr
-	return v
-
-
-func _compute_bundle_signature(bundle: Dictionary) -> String:
-	var payload: Dictionary = _bundle_signing_payload(bundle)
-	var normalized: Variant = _canonicalize_value(payload)
-	var msg: PackedByteArray = JSON.stringify(normalized).to_utf8_buffer()
-	var key: PackedByteArray = SAVE_SIGN_SECRET.to_utf8_buffer()
-	var crypto := Crypto.new()
-	var digest: PackedByteArray = crypto.hmac_digest(HashingContext.HASH_SHA256, key, msg)
-	return digest.hex_encode()
-
-
-func _verify_bundle_signature(bundle: Dictionary) -> bool:
-	var sig: String = str(bundle.get("signature", "")).strip_edges()
-	if sig.is_empty():
-		return false
-	return sig == _compute_bundle_signature(bundle)
-
-
 func _log_tamper_event(event_name: String, data: Dictionary = {}) -> void:
-	var row: Dictionary = {
-		"ts": Time.get_unix_time_from_system(),
-		"event": event_name,
-		"day": int(GameManager.player_data.get("day", 1)) if GameManager else 1,
-		"season": str(GameManager.player_data.get("season", "spring")) if GameManager else "spring",
-		"year": int(GameManager.player_data.get("year", 1)) if GameManager else 1
-	}
-	if not data.is_empty():
-		row["data"] = data
-	var f: FileAccess = FileAccess.open(TAMPER_LOG_PATH, FileAccess.READ_WRITE)
-	if f == null:
-		return
-	f.seek_end()
-	f.store_line(JSON.stringify(row))
-	f.close()
+	if GameSaveService:
+		GameSaveService.log_tamper_event(event_name, data)
 
 
 func _apply_save_bundle(bundle: Dictionary) -> void:
@@ -836,8 +786,12 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 			GameManager.player_data["stamina_max"] = 100.0
 		_apply_house_stamina_bonus()
 		_clamp_player_stamina_and_gold()
-	if bundle.get("farm") is Dictionary and farm_manager:
-		farm_manager.load_farm_data(bundle["farm"])
+	if bundle.get("farm") is Dictionary:
+		var fd: Dictionary = bundle["farm"]
+		if farm_manager:
+			farm_manager.load_farm_data(fd)
+		elif FarmStateCache:
+			FarmStateCache.set_from_dict(fd)
 	if bundle.get("inventory") is Dictionary and InventoryManager:
 		InventoryManager.load_snapshot(bundle["inventory"])
 	if bundle.get("quests") is Dictionary and QuestSystem:
@@ -850,6 +804,11 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 				break
 	if bundle.get("active_story_hotspot") is Dictionary:
 		active_story_hotspot = (bundle["active_story_hotspot"] as Dictionary).duplicate(true)
+	if GameManager:
+		GameManager.journal_world_event_feed.clear()
+		for item in world_event_feed:
+			GameManager.journal_world_event_feed.append(str(item))
+		GameManager.journal_active_story_hotspot = active_story_hotspot.duplicate(true)
 	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
 		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
 	if WorldRouter:
@@ -905,20 +864,16 @@ func _migrate_player_data_if_needed(src_version: int) -> void:
 
 
 func _build_save_bundle() -> Dictionary:
-	var world_dict: Dictionary = {}
-	if WorldRouter:
-		world_dict = WorldRouter.build_world_save_dict()
-	return {
-		"version": SAVE_BUNDLE_VERSION,
-		"player": GameManager.player_data.duplicate(true),
-		"farm": farm_manager.save_farm_data(),
-		"inventory": InventoryManager.save_snapshot(),
-		"quests": QuestSystem.save_snapshot(),
-		"world_event_feed": world_event_feed.duplicate(),
-		"active_story_hotspot": active_story_hotspot.duplicate(true),
-		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {},
-		"world": world_dict
-	}
+	var farm_block: Dictionary = {}
+	if farm_manager:
+		farm_block = farm_manager.save_farm_data()
+	elif FarmStateCache:
+		farm_block = FarmStateCache.get_snapshot()
+	return GameSaveService.build_runtime_bundle(
+		farm_block,
+		world_event_feed,
+		active_story_hotspot
+	)
 
 
 func _maintain_combat_spawns() -> void:
@@ -1488,8 +1443,9 @@ func _play_hitstop(sec: float) -> void:
 	var old_scale: float = Engine.time_scale
 	Engine.time_scale = minf(old_scale, 0.18)
 	await get_tree().create_timer(dur, true, false, true).timeout
-	Engine.time_scale = old_scale
-	_hitstop_active = false
+	if is_inside_tree():
+		Engine.time_scale = old_scale
+		_hitstop_active = false
 
 
 func _validate_loaded_state() -> void:
@@ -1549,6 +1505,10 @@ func _validate_loaded_state() -> void:
 			_log_tamper_event("repair_quest_state_overlap", {"count": repaired})
 
 
+func _is_headless_runtime() -> bool:
+	return DisplayServer.get_name().to_lower().contains("headless")
+
+
 func initialize_playable_first_loop():
 	"""
 	Playable-first bootstrap:
@@ -1567,8 +1527,10 @@ func initialize_playable_first_loop():
 		QuestSystem.start_quest("intro_combat")
 		QuestSystem.start_quest("earn_gold")
 	
-	if DailyNarrativeSystem:
+	if DailyNarrativeSystem and not _is_headless_runtime():
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
+		if not is_inside_tree():
+			return
 		if not narrative.is_empty():
 			var nt: String = str(narrative.get("title", "A new day begins"))
 			var nd: String = "Today's story: " + nt
@@ -1581,7 +1543,7 @@ func initialize_playable_first_loop():
 				QuestSystem.activate_chain_for_narrative(narrative)
 			if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
 				await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
-				if AgenticContentOrchestrator.has_method("get_runtime_status_line"):
+				if is_inside_tree() and AgenticContentOrchestrator.has_method("get_runtime_status_line"):
 					record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
 
 func give_starter_items():
@@ -1683,7 +1645,9 @@ func _on_recipe_chosen(recipe: Dictionary, mode: String) -> void:
 	update_ui()
 
 func _on_player_interact(tile_position: Vector2):
-	var tile_coords = tilemap.local_to_map(tile_position)
+	var tile_coords: Vector2i = Vector2i.ZERO
+	if tilemap:
+		tile_coords = tilemap.local_to_map(tile_position)
 
 	# Check for NPC interaction first
 	if current_npc:
@@ -1852,8 +1816,8 @@ func _on_player_interact(tile_position: Vector2):
 	if selected_item and _try_eat_selected_food():
 		return
 
-	# Farming interactions
-	if selected_item:
+	# Farming interactions (tilemap + FarmManager live in `world_farm.tscn` after B2)
+	if selected_item and farm_manager:
 		if selected_item.type == "seed":
 			if farm_manager.can_plant_here(tile_coords):
 				var crop_id: String = str(selected_item.get("crop_id", ""))
@@ -1876,6 +1840,7 @@ func _on_player_interact(tile_position: Vector2):
 			farm_manager.water_plant(tile_coords)
 			if GatheringSfx:
 				GatheringSfx.play_water()
+
 
 func _on_time_changed(new_time):
 	update_ui()
@@ -1921,15 +1886,17 @@ func _on_day_changed(new_day):
 			record_world_event(market_line)
 	
 	# Lightweight daily refresh keeps the game feeling alive.
-	if DailyNarrativeSystem and _consume_daily_budget("narrative"):
+	if DailyNarrativeSystem and _consume_daily_budget("narrative") and not _is_headless_runtime():
 		var narrative = await DailyNarrativeSystem.generate_daily_narrative_playable()
+		if not is_inside_tree():
+			return
 		record_world_event("New day, new story seed is ready.")
 		_apply_narrative_daily_quest(narrative)
 		if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative") and _consume_daily_budget("chain_activation"):
 			QuestSystem.activate_chain_for_narrative(narrative)
 		if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
 			await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
-			if AgenticContentOrchestrator.has_method("get_runtime_status_line"):
+			if is_inside_tree() and AgenticContentOrchestrator.has_method("get_runtime_status_line"):
 				record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
@@ -2884,6 +2851,8 @@ func _on_season_changed(new_season):
 	update_ui()
 
 func auto_water_crops():
+	if not farm_manager:
+		return
 	for position in farm_manager.planted_crops:
 		farm_manager.water_plant(position)
 
@@ -2943,9 +2912,16 @@ func update_ui():
 func show_dialogue(text: String):
 	if dialogue_label:
 		dialogue_label.text = text
-	dialogue_box.visible = true
-	await get_tree().create_timer(3.0).timeout
-	dialogue_box.visible = false
+	if dialogue_box:
+		dialogue_box.visible = true
+	if _dialogue_hide_timer:
+		_dialogue_hide_timer.stop()
+		_dialogue_hide_timer.start(3.0)
+
+
+func _on_dialogue_hide_timeout() -> void:
+	if dialogue_box:
+		dialogue_box.visible = false
 
 func show_quick_tip(text: String, duration: float = 1.35) -> void:
 	if not quick_tip_label or not quick_tip_timer:
@@ -3069,63 +3045,9 @@ func toggle_inventory():
 	inventory_ui.visible = not inventory_ui.visible
 
 func save_game() -> bool:
-	var bundle: Dictionary = _build_save_bundle()
-	var meta: Dictionary = _read_save_meta()
-	var next_seq: int = int(meta.get("last_seq", 0)) + 1
-	bundle["save_seq"] = next_seq
-	bundle["saved_at_unix"] = Time.get_unix_time_from_system()
-	bundle["signature"] = _compute_bundle_signature(bundle)
-	var slot_path: String = GAME_SAVE_SLOT_A_PATH if (next_seq % 2 == 1) else GAME_SAVE_SLOT_B_PATH
-	var temp_path: String = "%s.tmp" % slot_path
-	var bf: FileAccess = FileAccess.open(temp_path, FileAccess.WRITE)
-	if bf == null:
-		push_warning("Main: failed to open save path for writing: %s" % temp_path)
-		_log_tamper_event("save_write_failed", {"path": temp_path})
-		return false
-	bf.store_var(bundle)
-	bf.close()
-	var rn_ok: Error = DirAccess.rename_absolute(temp_path, slot_path)
-	if rn_ok != OK:
-		_log_tamper_event("save_rename_failed", {"from": temp_path, "to": slot_path, "code": int(rn_ok)})
-		return false
-	_write_save_meta({
-		"last_seq": next_seq,
-		"last_slot": "a" if slot_path == GAME_SAVE_SLOT_A_PATH else "b",
-		"last_saved_at_unix": int(bundle.get("saved_at_unix", 0))
-	})
-	# Keep writing legacy path for compatibility/migration safety.
-	var legacy: FileAccess = FileAccess.open(GAME_SAVE_BUNDLE_PATH, FileAccess.WRITE)
-	if legacy:
-		legacy.store_var(bundle)
-		legacy.close()
-	if NPCMemorySystem:
-		NPCMemorySystem.save_memories()
-	if NPCEmotionSystem:
-		NPCEmotionSystem.save_emotion_state()
-	print("Game saved!")
-	return true
-
-
-func _read_save_meta() -> Dictionary:
-	if not FileAccess.file_exists(GAME_SAVE_META_PATH):
-		return {}
-	var f: FileAccess = FileAccess.open(GAME_SAVE_META_PATH, FileAccess.READ)
-	if f == null:
-		return {}
-	var raw: String = f.get_as_text()
-	f.close()
-	var parsed = JSON.parse_string(raw)
-	if parsed is Dictionary:
-		return parsed
-	return {}
-
-
-func _write_save_meta(meta: Dictionary) -> void:
-	var f: FileAccess = FileAccess.open(GAME_SAVE_META_PATH, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify(meta, "\t"))
-	f.close()
+	if GameSaveService:
+		return GameSaveService.commit_save(_build_save_bundle())
+	return false
 
 
 func _notification(what: int) -> void:
