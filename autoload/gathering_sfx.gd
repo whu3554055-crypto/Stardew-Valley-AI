@@ -29,6 +29,25 @@ func _ready() -> void:
 	_foot_player.bus = "SFX"
 	_foot_player.volume_db = -18.0
 	add_child(_foot_player)
+	call_deferred("_connect_world_router_for_sfx_cut")
+
+
+func _connect_world_router_for_sfx_cut() -> void:
+	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_changed_stop_oneshots):
+		WorldRouter.world_changed.connect(_on_world_changed_stop_oneshots)
+
+
+func _on_world_changed_stop_oneshots(_scene_path: String) -> void:
+	stop_active_one_shots()
+
+
+func stop_active_one_shots() -> void:
+	if _player:
+		_player.stop()
+	if _door_player:
+		_door_player.stop()
+	if _foot_player:
+		_foot_player.stop()
 
 func _shop_bell_after_door_sec() -> float:
 	return ImmersionConfig.get_shop_bell_after_door_sec() if ImmersionConfig else 0.18

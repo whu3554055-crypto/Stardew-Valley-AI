@@ -53,6 +53,17 @@ func _ready() -> void:
 		if not GameManager.time_changed.is_connected(_on_game_time_changed):
 			GameManager.time_changed.connect(_on_game_time_changed)
 	call_deferred("_refresh_all")
+	call_deferred("_connect_world_router_ambient_refresh")
+
+
+func _connect_world_router_ambient_refresh() -> void:
+	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_router_scene_changed):
+		WorldRouter.world_changed.connect(_on_world_router_scene_changed)
+
+
+func _on_world_router_scene_changed(_scene_path: String) -> void:
+	_last_region_sample_pos = Vector2(1e12, 1e12)
+	call_deferred("_refresh_all")
 
 
 func _exit_tree() -> void:
