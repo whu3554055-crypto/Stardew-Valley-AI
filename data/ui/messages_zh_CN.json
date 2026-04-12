@@ -68,7 +68,12 @@
     "quest_tag_chain_failed": " [连锁：失败]",
     "quest_tag_chain_active": " [连锁：进行中]",
     "quest_tag_recovery": " [恢复]",
-    "world_feed_empty": "暂无事件。"
+    "world_feed_empty": "暂无事件。",
+    "tab_events": "事件",
+    "tab_quests": "任务",
+    "mine_hint_short": "矿区 — 镐 (E) · 向下走进不同深度",
+    "mine_bands_show": "显示矿带说明",
+    "mine_bands_hide": "隐藏矿带说明"
   },
   "ui": {
     "audio_panel_title": "音频混音（分贝）— 自动保存",

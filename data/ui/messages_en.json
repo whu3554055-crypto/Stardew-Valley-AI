@@ -68,7 +68,12 @@
     "quest_tag_chain_failed": " [Chain: Failed]",
     "quest_tag_chain_active": " [Chain: Active]",
     "quest_tag_recovery": " [Recovery]",
-    "world_feed_empty": "No events yet."
+    "world_feed_empty": "No events yet.",
+    "tab_events": "Events",
+    "tab_quests": "Quests",
+    "mine_hint_short": "Mine — pickaxe (E) · walk down for depth",
+    "mine_bands_show": "Show ore labels",
+    "mine_bands_hide": "Hide ore labels"
   },
   "ui": {
     "audio_panel_title": "Audio mix (dB) — saved automatically",

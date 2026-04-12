@@ -14,7 +14,7 @@ const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 @onready var day_label = $UILayer/DayLabel
 @onready var stamina_label = $UILayer/StaminaLabel
 @onready var ai_config_button = $UILayer/AIConfigButton
-@onready var world_event_feed_label = $UILayer/WorldEventFeed/Content
+@onready var world_event_feed_label = $UILayer/RightJournalTabs/Events/EventScroll/Content
 @onready var quick_tip_label = $UILayer/QuickTipLabel
 @onready var quick_tip_timer = $UILayer/QuickTipTimer
 @onready var activity_zone_label = $UILayer/ActivityZoneLabel
@@ -24,7 +24,7 @@ const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 @onready var almanac_panel = $UILayer/AlmanacPanel
 @onready var recipe_picker = $UILayer/RecipePicker
 @onready var shop_ui = $UILayer/ShopUI
-@onready var quest_log_label = $UILayer/QuestLogScroll/QuestLogLabel
+@onready var quest_log_label = $UILayer/RightJournalTabs/Quests/QuestLogScroll/QuestLogLabel
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -230,7 +230,8 @@ func _ready():
 	_load_combat_weapons_config()
 	_load_combat_enemies_config()
 	_apply_a3_ui_polish()
-	
+	_connect_mine_bands_toggle()
+
 	if not GameManager.player_data.get("profile", {}).get("confirmed", false):
 		call_deferred("_open_player_creation")
 		return
@@ -313,6 +314,8 @@ func _ensure_profile_defaults() -> void:
 
 func _on_locale_changed(_code: String) -> void:
 	update_ui()
+	_apply_journal_tab_titles()
+	_refresh_mine_area_locale()
 	_refresh_quest_log()
 	if audio_mix_panel and audio_mix_panel.has_method("refresh_locale_text"):
 		audio_mix_panel.refresh_locale_text()
@@ -362,26 +365,22 @@ func _apply_a3_ui_polish() -> void:
 		activity_zone_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
 		activity_zone_label.add_theme_constant_override("shadow_offset_x", 1)
 		activity_zone_label.add_theme_constant_override("shadow_offset_y", 1)
-	var wef: Panel = ui_layer.get_node_or_null("WorldEventFeed") as Panel
-	if wef:
-		var wsb := StyleBoxFlat.new()
-		wsb.bg_color = Color(0.05, 0.06, 0.08, 0.88)
-		wsb.set_border_width_all(1)
-		wsb.border_color = Color(0.35, 0.32, 0.22)
-		wsb.content_margin_left = 8
-		wsb.content_margin_top = 6
-		wsb.content_margin_right = 8
-		wsb.content_margin_bottom = 6
-		wef.add_theme_stylebox_override("panel", wsb)
+	var wsb := StyleBoxFlat.new()
+	wsb.bg_color = Color(0.05, 0.06, 0.08, 0.88)
+	wsb.set_border_width_all(1)
+	wsb.border_color = Color(0.35, 0.32, 0.22)
+	wsb.content_margin_left = 6
+	wsb.content_margin_top = 6
+	wsb.content_margin_right = 6
+	wsb.content_margin_bottom = 6
+	for tab_panel_name: String in ["Events", "Quests"]:
+		var tp: Panel = ui_layer.get_node_or_null("RightJournalTabs/%s" % tab_panel_name) as Panel
+		if tp:
+			tp.add_theme_stylebox_override("panel", wsb.duplicate() as StyleBoxFlat)
 	if world_event_feed_label:
 		world_event_feed_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
 		world_event_feed_label.add_theme_constant_override("shadow_offset_x", 1)
 		world_event_feed_label.add_theme_constant_override("shadow_offset_y", 1)
-	var wef_title: Label = ui_layer.get_node_or_null("WorldEventFeed/Title") as Label
-	if wef_title:
-		wef_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
-		wef_title.add_theme_constant_override("shadow_offset_x", 1)
-		wef_title.add_theme_constant_override("shadow_offset_y", 1)
 	if ai_config_button:
 		var bsb := StyleBoxFlat.new()
 		bsb.bg_color = Color(0.11, 0.12, 0.16, 0.92)
@@ -417,7 +416,7 @@ func _apply_a3_ui_polish() -> void:
 		q_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		q_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		q_bg.offset_left = 924.0
-		q_bg.offset_top = 232.0
+		q_bg.offset_top = 44.0
 		q_bg.offset_right = 1276.0
 		q_bg.offset_bottom = 632.0
 		var qsb := StyleBoxFlat.new()
@@ -461,6 +460,7 @@ func _apply_a3_ui_polish() -> void:
 		ui_layer.add_child(qtb)
 		ui_layer.move_child(qtb, quick_tip_label.get_index())
 	_style_world_zone_presentation()
+	_apply_journal_tab_titles()
 	_apply_seasonal_hud_tint()
 	_sync_hud_backdrop_layout()
 
@@ -477,7 +477,7 @@ func _sync_hud_backdrop_layout() -> void:
 	var qb: Panel = ui_layer.get_node_or_null("QuestLogBackdrop") as Panel
 	if qb:
 		qb.offset_left = 924.0
-		qb.offset_top = 232.0
+		qb.offset_top = 44.0
 		qb.offset_right = 1276.0
 		qb.offset_bottom = 632.0
 	var ab: Panel = ui_layer.get_node_or_null("ActivityZoneBackdrop") as Panel
@@ -515,6 +515,16 @@ func _style_world_zone_presentation() -> void:
 	var house_overlay: Polygon2D = get_node_or_null("HouseUpgradeArea/Overlay") as Polygon2D
 	if house_overlay:
 		house_overlay.color = Color(0.66, 0.52, 0.34, 0.24)
+	var mine_tb: Button = get_node_or_null("MineArea/MineBandsToggle") as Button
+	if mine_tb:
+		var msb := StyleBoxFlat.new()
+		msb.bg_color = Color(0.11, 0.12, 0.15, 0.92)
+		msb.set_border_width_all(1)
+		msb.border_color = Color(0.38, 0.34, 0.24)
+		mine_tb.flat = true
+		for st: String in ["normal", "hover", "pressed"]:
+			mine_tb.add_theme_stylebox_override(st, msb.duplicate() as StyleBoxFlat)
+	_refresh_mine_area_locale()
 
 
 func _panel_set_season_border(panel: Panel, accent: Color) -> void:
@@ -585,12 +595,10 @@ func _apply_seasonal_hud_tint() -> void:
 		if asb:
 			asb.border_color = accent
 			a_bg.add_theme_stylebox_override("panel", asb)
-	var wef_season: Panel = ui_layer.get_node_or_null("WorldEventFeed") as Panel
-	if wef_season:
-		var wsb2: StyleBoxFlat = wef_season.get_theme_stylebox("panel") as StyleBoxFlat
-		if wsb2:
-			wsb2.border_color = accent
-			wef_season.add_theme_stylebox_override("panel", wsb2)
+	for tab_panel_name: String in ["Events", "Quests"]:
+		var tp: Panel = ui_layer.get_node_or_null("RightJournalTabs/%s" % tab_panel_name) as Panel
+		if tp:
+			_panel_set_season_border(tp, accent)
 	_panel_set_season_border(dialogue_box, accent)
 	var inv_panel: Panel = ui_layer.get_node_or_null("InventoryUI") as Panel
 	_panel_set_season_border(inv_panel, accent)
@@ -603,6 +611,8 @@ func _apply_seasonal_hud_tint() -> void:
 		_panel_set_season_border(shop_frame, accent)
 		shop_ui.apply_seasonal_accent(accent)
 	_button_set_season_border(ai_config_button, accent)
+	var mine_band_btn: Button = get_node_or_null("MineArea/MineBandsToggle") as Button
+	_button_set_season_border(mine_band_btn, accent)
 	var quick_tip_bg: Panel = ui_layer.get_node_or_null("QuickTipBackdrop") as Panel
 	if quick_tip_bg:
 		var qtp: StyleBoxFlat = quick_tip_bg.get_theme_stylebox("panel") as StyleBoxFlat
@@ -613,9 +623,6 @@ func _apply_seasonal_hud_tint() -> void:
 		quest_log_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.92))
 	if day_label:
 		day_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.95))
-	var wef_title_season: Label = ui_layer.get_node_or_null("WorldEventFeed/Title") as Label
-	if wef_title_season:
-		wef_title_season.add_theme_color_override("font_color", text_col)
 	var inv_ui_accent = ui_layer.get_node_or_null("InventoryUI")
 	if inv_ui_accent and inv_ui_accent.has_method("set_seasonal_accent"):
 		inv_ui_accent.set_seasonal_accent(accent)
@@ -2592,8 +2599,74 @@ func _refresh_world_event_feed_ui() -> void:
 		return
 	if world_event_feed.is_empty():
 		world_event_feed_label.text = UITextCatalog.get_text("hud", "world_feed_empty") if UITextCatalog else "No events yet."
+	else:
+		world_event_feed_label.text = "\n".join(world_event_feed)
+	_fit_world_event_feed_content_height()
+
+
+func _fit_world_event_feed_content_height() -> void:
+	if not world_event_feed_label:
 		return
-	world_event_feed_label.text = "\n".join(world_event_feed)
+	var line_h: int = maxi(12, world_event_feed_label.get_line_height())
+	var lines: int = maxi(1, world_event_feed_label.text.split("\n").size())
+	world_event_feed_label.custom_minimum_size.y = mini(900, maxi(120, lines * line_h + 20))
+
+
+func _apply_journal_tab_titles() -> void:
+	if not ui_layer:
+		return
+	var tabs: TabContainer = ui_layer.get_node_or_null("RightJournalTabs") as TabContainer
+	if tabs == null or tabs.get_tab_count() < 2:
+		return
+	if UITextCatalog:
+		tabs.set_tab_title(0, UITextCatalog.get_text("hud", "tab_events"))
+		tabs.set_tab_title(1, UITextCatalog.get_text("hud", "tab_quests"))
+	else:
+		tabs.set_tab_title(0, "Events")
+		tabs.set_tab_title(1, "Quests")
+
+
+func _connect_mine_bands_toggle() -> void:
+	var mbt: Button = get_node_or_null("MineArea/MineBandsToggle") as Button
+	if mbt == null:
+		return
+	for p: String in ["MineArea/MineLabelSurface", "MineArea/MineLabelIron", "MineArea/MineLabelDeep", "MineArea/MineDivider1", "MineArea/MineDivider2"]:
+		var n: Node = get_node_or_null(p)
+		if n:
+			n.visible = false
+	mbt.set_block_signals(true)
+	mbt.button_pressed = false
+	mbt.set_block_signals(false)
+	_refresh_mine_bands_button_text(false)
+	if not mbt.toggled.is_connected(_on_mine_bands_toggled):
+		mbt.toggled.connect(_on_mine_bands_toggled)
+
+
+func _refresh_mine_bands_button_text(details_on: bool) -> void:
+	var mbt: Button = get_node_or_null("MineArea/MineBandsToggle") as Button
+	if mbt == null:
+		return
+	if UITextCatalog:
+		mbt.text = UITextCatalog.get_text("hud", "mine_bands_hide") if details_on else UITextCatalog.get_text("hud", "mine_bands_show")
+	else:
+		mbt.text = "Hide ore labels" if details_on else "Show ore labels"
+
+
+func _on_mine_bands_toggled(pressed: bool) -> void:
+	for p: String in ["MineArea/MineLabelSurface", "MineArea/MineLabelIron", "MineArea/MineLabelDeep", "MineArea/MineDivider1", "MineArea/MineDivider2"]:
+		var n: Node = get_node_or_null(p)
+		if n:
+			n.visible = pressed
+	_refresh_mine_bands_button_text(pressed)
+
+
+func _refresh_mine_area_locale() -> void:
+	var mh: Label = get_node_or_null("MineArea/MineHint") as Label
+	if mh and UITextCatalog:
+		mh.text = UITextCatalog.get_text("hud", "mine_hint_short")
+	var mbt: Button = get_node_or_null("MineArea/MineBandsToggle") as Button
+	if mbt:
+		_refresh_mine_bands_button_text(mbt.button_pressed)
 
 func _apply_narrative_daily_quest(narrative: Dictionary):
 	if narrative.is_empty():

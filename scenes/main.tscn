@@ -138,16 +138,19 @@ color = Color(0.26, 0.24, 0.32, 0.92)
 polygon = PackedVector2Array(0, 160, 240, 160, 240, 220, 0, 220)
 
 [node name="MineDivider1" type="Polygon2D" parent="MineArea"]
+visible = false
 z_index = 1
 color = Color(0.1, 0.08, 0.1, 0.45)
 polygon = PackedVector2Array(0, 79, 240, 79, 240, 82, 0, 82)
 
 [node name="MineDivider2" type="Polygon2D" parent="MineArea"]
+visible = false
 z_index = 1
 color = Color(0.1, 0.08, 0.1, 0.45)
 polygon = PackedVector2Array(0, 159, 240, 159, 240, 162, 0, 162)
 
 [node name="MineLabelSurface" type="Label" parent="MineArea"]
+visible = false
 z_index = 2
 offset_left = 6.0
 offset_top = 4.0
@@ -158,6 +161,7 @@ text = "Surface drift — Cu / coal / geode"
 vertical_alignment = 1
 
 [node name="MineLabelIron" type="Label" parent="MineArea"]
+visible = false
 z_index = 2
 offset_left = 6.0
 offset_top = 84.0
@@ -168,6 +172,7 @@ text = "Iron seam — iron ore"
 vertical_alignment = 1
 
 [node name="MineLabelDeep" type="Label" parent="MineArea"]
+visible = false
 z_index = 2
 offset_left = 6.0
 offset_top = 164.0
@@ -177,13 +182,24 @@ theme_override_font_sizes/font_size = 10
 text = "Deep vein — gold, silver, quartz (iron pick)"
 vertical_alignment = 1
 
+[node name="MineBandsToggle" type="Button" parent="MineArea"]
+z_index = 4
+offset_left = 8.0
+offset_top = -72.0
+offset_right = 232.0
+offset_bottom = -46.0
+focus_mode = 0
+toggle_mode = true
+theme_override_font_sizes/font_size = 10
+text = "Show ore labels"
+
 [node name="MineHint" type="Label" parent="MineArea"]
 offset_left = 0.0
 offset_top = -40.0
 offset_right = 240.0
 offset_bottom = -2.0
 theme_override_font_sizes/font_size = 12
-text = "Mine — pickaxe (E) · 3 bands, walk down for depth"
+text = "Mine — pickaxe (E) · walk down for depth"
 horizontal_alignment = 1
 autowrap_mode = 2
 
@@ -499,43 +515,57 @@ one_shot = true
 
 [node name="RecipePicker" parent="UILayer" instance=ExtResource("11_rp")]
 
-[node name="WorldEventFeed" type="Panel" parent="UILayer"]
+[node name="RightJournalTabs" type="TabContainer" parent="UILayer"]
 offset_left = 928.0
 offset_top = 48.0
 offset_right = 1272.0
-offset_bottom = 228.0
-
-[node name="Title" type="Label" parent="UILayer/WorldEventFeed"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 6.0
-offset_right = 330.0
-offset_bottom = 26.0
+offset_bottom = 628.0
 theme_override_font_sizes/font_size = 13
-text = "World Event Feed"
+current_tab = 0
 
-[node name="Content" type="Label" parent="UILayer/WorldEventFeed"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 28.0
-offset_right = 332.0
-offset_bottom = 172.0
+[node name="Events" type="Panel" parent="UILayer/RightJournalTabs"]
+layout_mode = 2
+
+[node name="EventScroll" type="ScrollContainer" parent="UILayer/RightJournalTabs/Events"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="Content" type="Label" parent="UILayer/RightJournalTabs/Events/EventScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(300, 200)
 theme_override_font_sizes/font_size = 11
 text = "No events yet."
 autowrap_mode = 2
 
-[node name="ShopUI" parent="UILayer" instance=ExtResource("14_shop")]
-visible = false
+[node name="Quests" type="Panel" parent="UILayer/RightJournalTabs"]
+layout_mode = 2
 
-[node name="QuestLogScroll" type="ScrollContainer" parent="UILayer"]
-offset_left = 928.0
-offset_top = 236.0
-offset_right = 1272.0
-offset_bottom = 628.0
+[node name="QuestLogScroll" type="ScrollContainer" parent="UILayer/RightJournalTabs/Quests"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
-[node name="QuestLogLabel" type="Label" parent="UILayer/QuestLogScroll"]
+[node name="QuestLogLabel" type="Label" parent="UILayer/RightJournalTabs/Quests/QuestLogScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(308, 200)
@@ -543,6 +573,9 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
 text = "Quests"
 autowrap_mode = 2
+
+[node name="ShopUI" parent="UILayer" instance=ExtResource("14_shop")]
+visible = false
 
 [node name="Pierre" parent="." instance=ExtResource("6_pierre")]
 
