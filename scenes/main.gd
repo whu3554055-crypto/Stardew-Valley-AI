@@ -136,7 +136,7 @@ const GAME_SAVE_SLOT_A_PATH := "user://game_save_a.bundle"
 const GAME_SAVE_SLOT_B_PATH := "user://game_save_b.bundle"
 const GAME_SAVE_META_PATH := "user://game_save_meta.json"
 const TAMPER_LOG_PATH := "user://tamper_events.log"
-const SAVE_BUNDLE_VERSION := 5
+const SAVE_BUNDLE_VERSION := 6
 const SAVE_SIGN_SECRET := "sv_save_sign_v1_local_pepper"
 const BASE_STAMINA_MAX := 100.0
 ## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
@@ -259,6 +259,8 @@ func _finish_boot_after_profile() -> void:
 	update_ui()
 	initialize_playable_first_loop()
 	_print_boot_banner()
+	if WorldRouter:
+		WorldRouter.call_deferred("consume_saved_world_after_boot")
 
 
 func _print_boot_banner() -> void:
@@ -842,6 +844,8 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 		active_story_hotspot = (bundle["active_story_hotspot"] as Dictionary).duplicate(true)
 	if bundle.get("gathering_almanac") is Dictionary and GatheringAlmanac:
 		GatheringAlmanac.apply_save_snapshot(bundle["gathering_almanac"])
+	if WorldRouter:
+		WorldRouter.set_world_state_from_bundle(bundle.get("world", {}))
 	_validate_loaded_state()
 
 func _clamp_player_stamina_and_gold() -> void:
@@ -887,9 +891,15 @@ func _migrate_player_data_if_needed(src_version: int) -> void:
 	if src_version < 5:
 		if not GameManager.player_data.has("reward_ledger"):
 			GameManager.player_data["reward_ledger"] = {}
+	if src_version < 6:
+		if not GameManager.player_data.has("last_spawn_id"):
+			GameManager.player_data["last_spawn_id"] = "default"
 
 
 func _build_save_bundle() -> Dictionary:
+	var world_dict: Dictionary = {}
+	if WorldRouter:
+		world_dict = WorldRouter.build_world_save_dict()
 	return {
 		"version": SAVE_BUNDLE_VERSION,
 		"player": GameManager.player_data.duplicate(true),
@@ -898,7 +908,8 @@ func _build_save_bundle() -> Dictionary:
 		"quests": QuestSystem.save_snapshot(),
 		"world_event_feed": world_event_feed.duplicate(),
 		"active_story_hotspot": active_story_hotspot.duplicate(true),
-		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {}
+		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {},
+		"world": world_dict
 	}
 
 
