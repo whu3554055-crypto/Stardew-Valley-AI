@@ -1,7 +1,7 @@
 extends Node
 class_name MineCombatController
 
-## Shared hub (`main`) + `world_mine` / `world_cave` combat. Uses `MiningSystem.can_mine_here` / `get_effective_mine_rect()`; depth from Y unless `fixed_combat_depth` is set.
+## Mine / cave combat only (`world_mine`, `world_cave`). Uses `MiningSystem.can_mine_here` / `get_effective_mine_rect()`; depth from Y unless `fixed_combat_depth` is set.
 
 const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 

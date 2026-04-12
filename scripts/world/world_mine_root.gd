@@ -52,6 +52,9 @@ func _ready() -> void:
 		b.title_text = banner_title
 		add_child(b)
 
+	if GameManager and GameManager.has_signal("day_changed") and not GameManager.day_changed.is_connected(_on_game_day_changed_mine):
+		GameManager.day_changed.connect(_on_game_day_changed_mine)
+
 	_mine_combat = MineCombatControllerT.new()
 	_mine_combat.name = "MineCombatController"
 	_mine_combat.defeat_respawn = defeat_respawn
@@ -72,6 +75,11 @@ func _ready() -> void:
 	if _player:
 		if _player.has_signal("interacted"):
 			_player.interacted.connect(_on_player_interacted)
+
+
+func _on_game_day_changed_mine() -> void:
+	if _mine_combat:
+		_mine_combat.on_game_day_advanced()
 
 
 func _on_defeat_dialog(text: String) -> void:

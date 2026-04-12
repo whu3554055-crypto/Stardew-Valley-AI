@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=20 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
@@ -24,6 +24,15 @@ size = Vector2(72, 120)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mine_hint"]
 size = Vector2(240, 80)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_map_wall_h"]
+size = Vector2(1040, 28)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_map_wall_v"]
+size = Vector2(28, 736)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_solid_house"]
+size = Vector2(120, 80)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -221,6 +230,32 @@ shape = SubResource("RectangleShape2D_player")
 [node name="Camera2D" type="Camera2D" parent="Player"]
 position_smoothing_enabled = true
 position_smoothing_speed = 10.0
+
+[node name="HubBounds" type="Node2D" parent="."]
+
+[node name="WallTop" type="StaticBody2D" parent="HubBounds"]
+position = Vector2(512, 14)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HubBounds/WallTop"]
+shape = SubResource("RectangleShape2D_map_wall_h")
+
+[node name="WallBottom" type="StaticBody2D" parent="HubBounds"]
+position = Vector2(512, 706)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HubBounds/WallBottom"]
+shape = SubResource("RectangleShape2D_map_wall_h")
+
+[node name="WallLeft" type="StaticBody2D" parent="HubBounds"]
+position = Vector2(14, 360)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HubBounds/WallLeft"]
+shape = SubResource("RectangleShape2D_map_wall_v")
+
+[node name="WallRight" type="StaticBody2D" parent="HubBounds"]
+position = Vector2(1010, 360)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HubBounds/WallRight"]
+shape = SubResource("RectangleShape2D_map_wall_v")
 
 [node name="SmelterArea" type="Node2D" parent="."]
 z_index = -1
@@ -459,6 +494,27 @@ theme_override_font_sizes/font_size = 11
 text = "House Upgrade Zone — H"
 horizontal_alignment = 1
 
+[node name="FarmhouseGraphic" type="Node2D" parent="HouseUpgradeArea"]
+z_index = 2
+
+[node name="Walls" type="Polygon2D" parent="HouseUpgradeArea/FarmhouseGraphic"]
+color = Color(0.52, 0.36, 0.26, 0.96)
+polygon = PackedVector2Array(90, 50, 210, 50, 210, 130, 90, 130)
+
+[node name="Roof" type="Polygon2D" parent="HouseUpgradeArea/FarmhouseGraphic"]
+color = Color(0.55, 0.2, 0.16, 0.96)
+polygon = PackedVector2Array(68, 50, 232, 50, 150, 18)
+
+[node name="Door" type="Polygon2D" parent="HouseUpgradeArea/FarmhouseGraphic"]
+color = Color(0.26, 0.17, 0.11, 0.94)
+polygon = PackedVector2Array(132, 130, 168, 130, 168, 88, 132, 88)
+
+[node name="HouseFootprint" type="StaticBody2D" parent="HouseUpgradeArea"]
+position = Vector2(150, 90)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HouseUpgradeArea/HouseFootprint"]
+shape = SubResource("RectangleShape2D_solid_house")
+
 [node name="FXLayer" type="Node2D" parent="."]
 z_index = 4
 
@@ -696,6 +752,8 @@ one_shot = true
 [node name="RecipePicker" parent="UILayer" instance=ExtResource("11_rp")]
 
 [node name="RightJournalTabs" type="TabContainer" parent="UILayer"]
+visible = false
+z_index = 52
 offset_left = 928.0
 offset_top = 48.0
 offset_right = 1272.0

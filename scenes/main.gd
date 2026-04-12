@@ -1,7 +1,5 @@
 extends Node2D
 
-const MineCombatControllerT := preload("res://scripts/combat/mine_combat_controller.gd")
-
 @onready var player = $Player
 @onready var tilemap: TileMap = get_node_or_null("TileMap") as TileMap
 @onready var farm_manager: FarmManager = get_node_or_null("FarmManager") as FarmManager
@@ -26,6 +24,7 @@ const MineCombatControllerT := preload("res://scripts/combat/mine_combat_control
 @onready var recipe_picker = $UILayer/RecipePicker
 @onready var shop_ui = $UILayer/ShopUI
 @onready var quest_log_label = $UILayer/RightJournalTabs/Quests/QuestLogScroll/QuestLogLabel
+@onready var right_journal_tabs: TabContainer = $UILayer/RightJournalTabs
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -44,13 +43,14 @@ var _had_savegame: bool = false
 var _boot_finished: bool = false
 var _stamina_low_latched: bool = false
 var daily_event_budget: Dictionary = {"narrative": 1, "chain_activation": 1, "recovery_hint": 1}
-var _mine_combat: MineCombatControllerT = null
 var _combat_quest_chain: int = 0
 const WORLD_EVENT_FEED_MAX := 6
 const BASE_STAMINA_MAX := 100.0
 ## Throttle keys: "memory", "market", "em_<npc_id>", "rel", "pref"
 var _visible_feed_last: Dictionary = {}
 var _dialogue_hide_timer: Timer
+var _journal_modal_dim: ColorRect = null
+var _journal_popup_open: bool = false
 
 func _ready():
 	# Connect signals
@@ -140,19 +140,9 @@ func _ready():
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
 
-	_mine_combat = MineCombatControllerT.new()
-	_mine_combat.name = "MineCombatController"
-	add_child(_mine_combat)
-	_mine_combat.feedback_tip.connect(show_quick_tip)
-	_mine_combat.feedback_dialog.connect(show_dialogue)
-	_mine_combat.feedback_journal.connect(record_world_event)
-	_mine_combat.feedback_shake.connect(play_screen_shake)
-	_mine_combat.feedback_fx_mine.connect(_play_fx_mine)
-	_mine_combat.feedback_fx_chop.connect(_play_fx_chop)
-	_mine_combat.feedback_ui_refresh.connect(update_ui)
-	_mine_combat.bind_player(player)
 	_apply_a3_ui_polish()
 	_connect_mine_bands_toggle()
+	_set_journal_popup_visible(false)
 
 	if not GameManager.player_data.get("profile", {}).get("confirmed", false):
 		call_deferred("_open_player_creation")
@@ -197,7 +187,7 @@ func _print_boot_banner() -> void:
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | V barn | O journal | F10 audio")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | V barn | L events/quests | O journal | F10 audio")
 	print("======================================")
 
 
@@ -322,6 +312,7 @@ func _apply_a3_ui_polish() -> void:
 		world_event_feed_label.add_theme_constant_override("shadow_offset_x", 1)
 		world_event_feed_label.add_theme_constant_override("shadow_offset_y", 1)
 	if ai_config_button:
+		ai_config_button.tooltip_text = "L: events / quests log"
 		var bsb := StyleBoxFlat.new()
 		bsb.bg_color = Color(0.11, 0.12, 0.16, 0.92)
 		bsb.set_border_width_all(1)
@@ -353,7 +344,9 @@ func _apply_a3_ui_polish() -> void:
 	if ui_layer and ui_layer.get_node_or_null("QuestLogBackdrop") == null:
 		var q_bg := Panel.new()
 		q_bg.name = "QuestLogBackdrop"
+		q_bg.visible = false
 		q_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		q_bg.z_index = 51
 		q_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		q_bg.offset_left = 924.0
 		q_bg.offset_top = 44.0
@@ -366,6 +359,24 @@ func _apply_a3_ui_polish() -> void:
 		q_bg.add_theme_stylebox_override("panel", qsb)
 		ui_layer.add_child(q_bg)
 		ui_layer.move_child(q_bg, 0)
+	if ui_layer and _journal_modal_dim == null:
+		var dim := ColorRect.new()
+		dim.name = "JournalModalDim"
+		dim.visible = false
+		dim.color = Color(0.02, 0.03, 0.05, 0.58)
+		dim.mouse_filter = Control.MOUSE_FILTER_STOP
+		dim.z_index = 50
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim.offset_left = 0.0
+		dim.offset_top = 0.0
+		dim.offset_right = 0.0
+		dim.offset_bottom = 0.0
+		dim.gui_input.connect(_on_journal_modal_dim_gui_input)
+		ui_layer.add_child(dim)
+		ui_layer.move_child(dim, 0)
+		_journal_modal_dim = dim
+	if right_journal_tabs:
+		right_journal_tabs.z_index = 52
 	if ui_layer and ui_layer.get_node_or_null("StoryHotspotHud") == null:
 		var spot_lbl := Label.new()
 		spot_lbl.name = "StoryHotspotHud"
@@ -1313,8 +1324,6 @@ func _on_day_changed(new_day):
 		GameManager.player_data["combat_elites_today"] = 0
 		GameManager.player_data["daily_defeats"] = 0
 		GameManager.player_data["combat_peak_streak_today"] = 0
-		if _mine_combat:
-			_mine_combat.on_game_day_advanced()
 	update_ui()
 	if QuestSystem and QuestSystem.has_method("on_day_passed"):
 		QuestSystem.on_day_passed()
@@ -1950,6 +1959,28 @@ func _fit_world_event_feed_content_height() -> void:
 	world_event_feed_label.custom_minimum_size.y = mini(900, maxi(120, lines * line_h + 20))
 
 
+func _set_journal_popup_visible(open: bool) -> void:
+	_journal_popup_open = open
+	if _journal_modal_dim:
+		_journal_modal_dim.visible = open
+	var q_bg: Panel = ui_layer.get_node_or_null("QuestLogBackdrop") as Panel if ui_layer else null
+	if q_bg:
+		q_bg.visible = open
+	if right_journal_tabs:
+		right_journal_tabs.visible = open
+
+
+func _toggle_event_quest_journal_popup() -> void:
+	_set_journal_popup_visible(not _journal_popup_open)
+
+
+func _on_journal_modal_dim_gui_input(event: InputEvent) -> void:
+	if not _journal_popup_open:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_set_journal_popup_visible(false)
+
+
 func _apply_journal_tab_titles() -> void:
 	if not ui_layer:
 		return
@@ -2409,6 +2440,10 @@ func _check_stamina_low_feedback() -> void:
 	show_quick_tip(msg, tip_sec)
 
 func _unhandled_input(event):
+	if event.is_action_pressed("toggle_event_quest_journal"):
+		_toggle_event_quest_journal_popup()
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("toggle_player_journal"):
 		if player_journal_panel and player_journal_panel.has_method("toggle_panel"):
 			player_journal_panel.toggle_panel()
@@ -2441,6 +2476,10 @@ func _unhandled_input(event):
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()
 	if event.is_action_pressed("ui_cancel"):
+		if _journal_popup_open:
+			_set_journal_popup_visible(false)
+			get_viewport().set_input_as_handled()
+			return
 		save_game()
 
 func toggle_inventory():
