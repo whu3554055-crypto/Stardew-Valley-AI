@@ -10,6 +10,7 @@
 ## 试点
 
 - **`world_playground.tscn`**：1024×720 视口级占位，用于多场景与层次（**C2** 双 `TileMapLayer`、**C3** Y-Sort）试验，不代替主场景尺度目标。
+- **F1 统一地表**：`world_town` / `world_mine` / `world_beach` / `world_forest` 使用同一 `playground_tileset.tres`，铺地逻辑在 `scripts/world/world_tile_backdrop.gd`（`WorldTileBackdrop`）。
 
 ## 关联
 

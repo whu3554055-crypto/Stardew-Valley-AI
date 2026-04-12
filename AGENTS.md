@@ -4,6 +4,8 @@
 
 - 引擎：**Godot 4.6**（GDScript）
 - 主场景：`res://scenes/main.tscn`（**枢纽**，农田在 `scenes/world/world_farm.tscn`）；多场景冒烟：`world_playground` + 薄壳环（`STUB_RING.md`）
+- 玩家四向条带：`player_walk_3.png`（`tools/_make_player_walk_strip.ps1` 从 `player.png` 生成）；`player.gd` 用 `FileAccess` + `load_png_from_buffer` 运行时加载，**无需** `.import`。关闭条带：将 `walk_direction_columns` 设为 `0`。
+- NPC 简单日程：`NpcSimpleScheduleCatalog`（`data/npc/simple_schedules.json`）→ `npc.gd` 对话上下文 + `AdvancedNPC` 空日程合并。
 - 阶段计划：`docs/03-研发管理/09-星露谷向体验与多场景阶段计划.md`
 
 ## 多场景与存档
@@ -15,6 +17,7 @@
 ## Headless 冒烟（无 CI 时本地/Agent 自检）
 
 - 优先：`tools/run_headless_smoke.ps1`（默认 Godot 路径见 `.cursor/rules/godot-headless.mdc`；可用环境变量 `GODOT_CONSOLE` 覆盖）。
+- 五带实体壳连跑：`tools/run_world_shells_smoke.ps1`（会先执行 `_make_player_walk_strip.ps1` 以生成四向条带 PNG）。
 - `--quit-after` 单位为**帧/迭代**，不是秒。
 
 ## 密钥与隐私

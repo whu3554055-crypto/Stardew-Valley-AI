@@ -269,6 +269,10 @@ func build_npc_prompt(
 	var speech_style = personality.get("speech_style", "normal")
 	var interests = personality.get("interests", [])
 	var mood = personality.get("current_mood", "neutral")
+	var schedule_line: String = str(context.get("schedule_hint", "")).strip_edges()
+	var schedule_block: String = ""
+	if not schedule_line.is_empty():
+		schedule_block = "- **Planned routine (data-driven):** %s\n" % schedule_line
 	
 	var prompt = """You are roleplaying as %s, an NPC in a farming simulation game similar to Stardew Valley.
 
@@ -289,6 +293,7 @@ func build_npc_prompt(
 - **Season:** %s
 - **Location:** %s
 - **Relationship with Player:** %d/10 (0=stranger, 10=best friend)
+%s
 
 ## RECENT INTERACTIONS WITH PLAYER
 %s
@@ -311,6 +316,7 @@ Respond with ONLY the dialogue text, no quotes or explanations.""" % [
 		str(traits), speech_style, str(interests), mood,
 		backstory,
 		time_info, weather, season, location, relationship,
+		schedule_block,
 		format_interaction_history(recent_interactions),
 		npc_name,
 		get_speech_style_guide(speech_style)

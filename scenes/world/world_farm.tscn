@@ -27,6 +27,7 @@ script = ExtResource("5_farm")
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(640, 360)
 script = ExtResource("3_player")
+walk_direction_columns = 3
 
 [node name="GroundShadow" type="Polygon2D" parent="Player"]
 z_index = -2

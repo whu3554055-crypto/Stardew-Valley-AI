@@ -19,3 +19,4 @@
 ## 与多场景关系
 
 - 每个 `world_*.tscn` 可使用同一 `TileSet` 源或独立 atlas；请在 `scenes/world/README.md` 备注该场景主 tile 来源。
+- **`playground_tileset.tres`**：`world_playground`、**`world_town`**、**`world_mine`**、**`world_beach`**、**`world_forest`**（F1）共用；`WorldTileBackdrop`（`scripts/world/world_tile_backdrop.gd`）封装各壳铺图。

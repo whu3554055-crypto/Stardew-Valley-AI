@@ -28,6 +28,8 @@ func build_runtime_bundle(
 		"world_event_feed": world_event_feed.duplicate(),
 		"active_story_hotspot": active_story_hotspot.duplicate(true),
 		"gathering_almanac": GatheringAlmanac.get_snapshot() if GatheringAlmanac else {},
+		# NPCTraitSystem 好感/关系；**未**纳入 HMAC 签名载荷，避免破坏旧档校验（见 bundle_signing_payload）。
+		"npc_traits": NPCTraitSystem.save_snapshot() if NPCTraitSystem else {},
 		"world": world_dict
 	}
 

@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://worldforestreal01"]
+[gd_scene load_steps=9 format=3 uid="uid://worldforestreal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_gathering_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="3_player"]
 [ext_resource type="Script" path="res://scripts/world/world_spawn_point.gd" id="4_spawn"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="5_tex"]
+[ext_resource type="TileSet" path="res://assets/tiles/playground_tileset.tres" id="6_tileset"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -21,6 +22,12 @@ banner_title = "森林"
 z_index = -3
 color = Color(0.14, 0.36, 0.19, 1)
 polygon = PackedVector2Array(0, 0, 1024, 0, 1024, 720, 0, 720)
+
+[node name="TileLayers" type="Node2D" parent="."]
+z_index = -2
+
+[node name="LayerGround" type="TileMapLayer" parent="TileLayers"]
+tile_set = ExtResource("6_tileset")
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
@@ -50,6 +57,7 @@ text = "Forest — axe in green band · ← Town · → Beach · Esc: save"
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 360)
 script = ExtResource("3_player")
+walk_direction_columns = 3
 
 [node name="GroundShadow" type="Polygon2D" parent="Player"]
 z_index = -2

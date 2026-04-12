@@ -285,11 +285,16 @@ func build_context() -> Dictionary:
 	if GameManager:
 		season = GameManager.player_data.season
 	
+	var schedule_hint: String = ""
+	if NpcSimpleScheduleCatalog:
+		schedule_hint = NpcSimpleScheduleCatalog.get_activity_line(npc_id)
 	return {
 		"time": time_period,
 		"weather": weather,
 		"season": season,
 		"location": location,
+		"schedule_hint": schedule_hint,
+		"schedule_policy": NpcSimpleScheduleCatalog.get_policy() if NpcSimpleScheduleCatalog else "",
 		"recent_interactions": []
 	}
 

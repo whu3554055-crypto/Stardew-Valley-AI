@@ -520,6 +520,40 @@ func evolve_personality(npc_id: String, life_events: Array):
 			npc_traits[npc_id]["mood"]["volatility"] *= 1.1  # Become more volatile
 
 # ============================================
+# SAVE BUNDLE (E3: 好感 / relationships 与主存档对齐)
+# ============================================
+
+func save_snapshot() -> Dictionary:
+	var raw: Dictionary = npc_traits.duplicate(true)
+	for npc_id in raw.keys():
+		var entry: Variant = raw[npc_id]
+		if not (entry is Dictionary):
+			continue
+		var ent: Dictionary = entry
+		var rels: Variant = ent.get("relationships", {})
+		if not (rels is Dictionary):
+			continue
+		for oid in (rels as Dictionary).keys():
+			var rel: Variant = (rels as Dictionary)[oid]
+			if not (rel is Dictionary):
+				continue
+			var rd: Dictionary = rel
+			var hist: Variant = rd.get("history", [])
+			if hist is Array and hist.size() > 48:
+				rd["history"] = (hist as Array).slice(-48)
+	return raw
+
+
+func load_snapshot(data: Variant) -> void:
+	if not (data is Dictionary):
+		return
+	var d: Dictionary = data as Dictionary
+	if d.is_empty():
+		return
+	npc_traits = d.duplicate(true)
+
+
+# ============================================
 # UTILITY FUNCTIONS
 # ============================================
 

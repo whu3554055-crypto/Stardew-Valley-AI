@@ -109,6 +109,11 @@ func _process(delta):
 
 func build_ai_config():
 	"""构建 AI 配置"""
+	var sched: Dictionary = daily_schedule.duplicate(true)
+	if sched.is_empty() and NpcSimpleScheduleCatalog:
+		sched = NpcSimpleScheduleCatalog.to_advanced_ai_schedule(npc_id)
+	if daily_schedule.is_empty() and not sched.is_empty():
+		daily_schedule = sched
 	ai_config = {
 		"name": npc_name,
 		"age": age,
@@ -124,7 +129,7 @@ func build_ai_config():
 		},
 		"speech_style": speech_style,
 		"interests": interests,
-		"schedule": daily_schedule,
+		"schedule": sched,
 		"life_context": "%s living in %s. Works as %s." % [npc_name, home_location, occupation]
 	}
 

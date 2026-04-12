@@ -3,6 +3,7 @@ extends Node2D
 ## B3: town shell — Pierre + shop (B key), portals, Esc save.
 
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
+const WorldTileBackdrop := preload("res://scripts/world/world_tile_backdrop.gd")
 
 const SHOP_PROXIMITY: float = 112.0
 
@@ -21,6 +22,11 @@ func _ready() -> void:
 
 	if WorldRouter:
 		WorldRouter.apply_pending_spawn_and_clear()
+
+	var tile_ground: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
+	if tile_ground:
+		WorldTileBackdrop.paint_town(tile_ground, 0)
+		WorldTileBackdrop.hide_polygon_ground(self)
 
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "鹈鹕镇"

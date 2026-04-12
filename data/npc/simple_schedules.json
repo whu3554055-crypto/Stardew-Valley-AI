@@ -6,24 +6,24 @@
       "npc_id": "pierre",
       "display_name": "Pierre",
       "blocks": [
-        {"start_hour": 8, "end_hour": 12, "anchor": "town_shop", "note": "placeholder"},
-        {"start_hour": 14, "end_hour": 18, "anchor": "town_square", "note": "placeholder"}
+        {"start_hour": 8, "end_hour": 12, "anchor": "town_shop", "note": "看店备货，接待买种子和杂货的村民"},
+        {"start_hour": 14, "end_hour": 18, "anchor": "town_square", "note": "在广场透气、和熟人打招呼"}
       ]
     },
     {
       "npc_id": "abigail",
       "display_name": "Abigail",
       "blocks": [
-        {"start_hour": 9, "end_hour": 13, "anchor": "forest_edge", "note": "placeholder"},
-        {"start_hour": 16, "end_hour": 20, "anchor": "home", "note": "placeholder"}
+        {"start_hour": 9, "end_hour": 13, "anchor": "forest_edge", "note": "在林子边散步、练笛子或找冒险灵感"},
+        {"start_hour": 16, "end_hour": 20, "anchor": "home", "note": "回家练琴、打游戏或帮家里干活"}
       ]
     },
     {
       "npc_id": "lewis",
       "display_name": "Lewis",
       "blocks": [
-        {"start_hour": 7, "end_hour": 11, "anchor": "town_hall", "note": "placeholder"},
-        {"start_hour": 15, "end_hour": 19, "anchor": "farm_visit", "note": "placeholder"}
+        {"start_hour": 7, "end_hour": 11, "anchor": "town_hall", "note": "处理镇务、批文件、接待来访"},
+        {"start_hour": 15, "end_hour": 19, "anchor": "farm_visit", "note": "下乡看农田与公共设施，和村民聊天"}
       ]
     }
   ]

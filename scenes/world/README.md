@@ -6,10 +6,10 @@
 |--------------|------|------------------------|------|
 | `res://scenes/main.tscn` | **枢纽**：镇区活动、NPC、商店、矿/林/海多边形区、UI 全量（**无**全局 TileMap / FarmManager） | `default`；`playground_return`；`from_farm_stub`；**`from_world_farm`** / **`from_world_town`** / **`from_world_forest`** / **`from_world_beach`** / **`from_world_mine`**；南缘 **↓ Farm / Town / Forest / Beach / Mine** | ✅ 当前默认 |
 | `res://scenes/world/world_farm.tscn` | **B2 实体农场**：`GameTileMap` + `FarmManager` + 玩家 + `FarmHud` 文案提示 | `default`；`from_main`；**`from_world_town`**（镇子南门）；西→`main` **`from_world_farm`**；东→`world_town` **`from_world_farm`** | ✅ 实体 |
-| `res://scenes/world/world_town.tscn` | **B3 镇区壳**：地块 + Pierre（静态对话池）+ `ShopUI`（B 键近 Pierre） | `default`；`from_main`；`from_world_farm`；`from_world_forest`；西→`main` **`from_world_town`**；东→`world_forest`；**南 ↓**→`world_farm` **`from_world_town`** | ✅ 实体壳 |
-| `res://scenes/world/world_forest.tscn` | **B4 森林壳**：`ChoppingSystem` 矩形 override（伐木） | `default`；`from_world_town`；`from_world_beach`；西↔镇、东↔海滩 | ✅ 实体壳 |
-| `res://scenes/world/world_beach.tscn` | **B5 海滩壳**：`FishingSystem` ocean override（海钓） | `default`；`from_world_forest`；`from_world_mine`；西↔林、东↔矿 | ✅ 实体壳 |
-| `res://scenes/world/world_mine.tscn` | **B6 + G2**：矿口壳 + **与 `main` 同逻辑矿洞战斗**（`EnemyLayer`、刷怪、剑击）+ 镐采矿；`MiningSystem.get_effective_mine_rect()` | `default`；`from_world_beach`；`from_main`；西↔滩、东→`main` **`from_world_mine`** | ✅ 实体壳 |
+| `res://scenes/world/world_town.tscn` | **B3 镇区壳**：Pierre + `ShopUI`（B 键）；**F1** `TileMapLayer` + `WorldTileBackdrop.paint_town`（土底 + 石板街带） | `default`；`from_main`；`from_world_farm`；`from_world_forest`；西→`main` **`from_world_town`**；东→`world_forest`；**南 ↓**→`world_farm` **`from_world_town`** | ✅ 实体壳 |
+| `res://scenes/world/world_forest.tscn` | **B4 森林壳**：`ChoppingSystem` 矩形 override（伐木）；**F1 试点** `TileMapLayer` + `playground_tileset.tres` | `default`；`from_world_town`；`from_world_beach`；西↔镇、东↔海滩 | ✅ 实体壳 |
+| `res://scenes/world/world_beach.tscn` | **B5 海滩壳**：`FishingSystem` ocean override（海钓）；**F1 试点** `TileMapLayer` + `playground_tileset.tres` 铺沙 | `default`；`from_world_forest`；`from_world_mine`；西↔林、东↔矿 | ✅ 实体壳 |
+| `res://scenes/world/world_mine.tscn` | **B6 + G2**：矿口壳 + **`MineCombatController`** + **F1** 石质地砖 + 底缘木台示意；镐采矿；`MiningSystem.get_effective_mine_rect()` | `default`；`from_world_beach`；`from_main`；西↔滩、东→`main` **`from_world_mine`** | ✅ 实体壳 |
 | `res://scenes/world/world_playground.tscn` | 多场景冒烟 + **双 TileMapLayer** + **Y-Sort**（`YSortWorld`）试点 | `default` ↔ `main` 的 `PortalToPlayground` / `playground_return` | ✅ 冒烟 |
 | `res://scenes/world/world_farm_stub.tscn` | **薄壳**农场带（传送验证；可与实体农场并存） | `default`；西→`main` `from_farm_stub`；东→`world_town_stub` | ✅ 环 |
 | `res://scenes/world/world_town_stub.tscn` | **薄壳**镇区带 | `default`；西→`main` **`from_world_town`**；东→`world_forest_stub` | ✅ 环 |

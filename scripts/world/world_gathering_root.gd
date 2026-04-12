@@ -3,6 +3,7 @@ extends Node2D
 ## B4/B5/B6 thin shell: one scene script with region override + gather interactions (E).
 
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
+const WorldTileBackdrop := preload("res://scripts/world/world_tile_backdrop.gd")
 
 enum Kind { FOREST, BEACH, MINE }
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 		WorldRouter.apply_pending_spawn_and_clear()
 
 	_apply_region_override()
+	_paint_world_tile_pilot()
 
 	if not banner_title.is_empty():
 		var b: CanvasLayer = WorldRegionBanner.new()
@@ -50,6 +52,22 @@ func _apply_region_override() -> void:
 		Kind.MINE:
 			if MiningSystem:
 				MiningSystem.set_mine_bounds_override(mine_bounds_rect)
+
+
+## F1 试点：`world_beach` 铺沙、`world_forest` 铺草（与 playground 同源 TileSet），隐藏纯色 Ground。
+func _paint_world_tile_pilot() -> void:
+	var layer: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
+	if layer == null or layer.tile_set == null:
+		return
+	match region_kind:
+		Kind.BEACH:
+			WorldTileBackdrop.paint_beach(layer, 0)
+			WorldTileBackdrop.hide_polygon_ground(self)
+		Kind.FOREST:
+			WorldTileBackdrop.paint_forest(layer, 0)
+			WorldTileBackdrop.hide_polygon_ground(self)
+		_:
+			pass
 
 
 func _unhandled_input(event: InputEvent) -> void:
