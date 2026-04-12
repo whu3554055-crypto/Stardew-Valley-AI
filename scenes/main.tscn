@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=19 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://scenes/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/almanac_ui.gd" id="9_almanac"]
@@ -15,9 +15,13 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="13_playertex"]
 [ext_resource type="PackedScene" path="res://scenes/shop_ui.tscn" id="14_shop"]
 [ext_resource type="Script" path="res://scripts/world/world_spawn_point.gd" id="15_spawn"]
+[ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="16_portal"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_portal_pg"]
+size = Vector2(72, 120)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -33,6 +37,27 @@ spawn_id = "default"
 position = Vector2(120, 340)
 script = ExtResource("15_spawn")
 spawn_id = "playground_return"
+
+[node name="PortalToPlayground" type="Area2D" parent="."]
+position = Vector2(1100, 360)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+script = ExtResource("16_portal")
+target_scene = "res://scenes/world/world_playground.tscn"
+target_spawn_id = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToPlayground"]
+shape = SubResource("RectangleShape2D_portal_pg")
+
+[node name="PortalHint" type="Label" parent="PortalToPlayground"]
+offset_left = -100.0
+offset_top = -76.0
+offset_right = 100.0
+offset_bottom = -44.0
+theme_override_font_sizes/font_size = 11
+text = "↓ Playground (test)"
+horizontal_alignment = 1
 
 [node name="TileMap" type="TileMap" parent="."]
 z_index = -3
