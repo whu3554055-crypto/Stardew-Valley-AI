@@ -1,0 +1,104 @@
+[gd_scene load_steps=7 format=3 uid="uid://worldtownstub01"]
+
+[ext_resource type="Script" path="res://scripts/world/world_band_stub_root.gd" id="1_root"]
+[ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
+[ext_resource type="Script" path="res://scripts/player.gd" id="3_player"]
+[ext_resource type="Script" path="res://scripts/world/world_spawn_point.gd" id="4_spawn"]
+[ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="5_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_portal"]
+size = Vector2(72, 96)
+
+[node name="WorldTownStub" type="Node2D"]
+script = ExtResource("1_root")
+banner_title = "镇区带 · 薄壳（stub）"
+
+[node name="Ground" type="Polygon2D" parent="."]
+z_index = -3
+color = Color(0.42, 0.38, 0.35, 1)
+polygon = PackedVector2Array(0, 0, 1024, 0, 1024, 720, 0, 720)
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="Spawn_default" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(512, 360)
+script = ExtResource("4_spawn")
+spawn_id = "default"
+
+[node name="Hint" type="Label" parent="."]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 640.0
+offset_bottom = 48.0
+theme_override_font_sizes/font_size = 11
+text = "Town stub — west: main · east: forest stub"
+
+[node name="Player" type="CharacterBody2D" parent="."]
+position = Vector2(512, 360)
+script = ExtResource("3_player")
+
+[node name="GroundShadow" type="Polygon2D" parent="Player"]
+z_index = -2
+position = Vector2(0, 14)
+color = Color(0.08, 0.06, 0.05, 0.42)
+polygon = PackedVector2Array(-16, -3, 16, -3, 14, 5, 0, 9, -14, 5)
+
+[node name="Sprite2D" type="Sprite2D" parent="Player"]
+z_index = 0
+position = Vector2(0, -2)
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("5_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+shape = SubResource("RectangleShape2D_player")
+
+[node name="InteractionArea" type="Area2D" parent="Player"]
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+position_smoothing_enabled = true
+position_smoothing_speed = 10.0
+
+[node name="PortalToMain" type="Area2D" parent="."]
+position = Vector2(56, 360)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+script = ExtResource("2_portal")
+target_scene = "res://scenes/main.tscn"
+target_spawn_id = "from_town_stub"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMain"]
+shape = SubResource("RectangleShape2D_portal")
+
+[node name="PortalLabel" type="Label" parent="PortalToMain"]
+offset_left = -80.0
+offset_top = -64.0
+offset_right = 80.0
+offset_bottom = -36.0
+theme_override_font_sizes/font_size = 11
+text = "→ Main"
+horizontal_alignment = 1
+
+[node name="PortalToNext" type="Area2D" parent="."]
+position = Vector2(968, 360)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+script = ExtResource("2_portal")
+target_scene = "res://scenes/world/world_forest_stub.tscn"
+target_spawn_id = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToNext"]
+shape = SubResource("RectangleShape2D_portal")
+
+[node name="PortalLabel" type="Label" parent="PortalToNext"]
+offset_left = -100.0
+offset_top = -64.0
+offset_right = 100.0
+offset_bottom = -36.0
+theme_override_font_sizes/font_size = 11
+text = "→ Forest"
+horizontal_alignment = 1
