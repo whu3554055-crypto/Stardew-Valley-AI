@@ -741,13 +741,161 @@ func on_shop_trade(item_id: String, quantity: int, is_purchase_from_shop: bool) 
 # QUEST ↔ ECONOMY (playable-first feedback loop)
 # ============================================
 
+func _normalize_quest_reward_dict(quest_data: Dictionary) -> Dictionary:
+	var rw: Variant = quest_data.get("reward", {})
+	if rw is Dictionary and not (rw as Dictionary).is_empty():
+		return (rw as Dictionary).duplicate(true)
+	var alt: Variant = quest_data.get("rewards", {})
+	if alt is Dictionary:
+		return (alt as Dictionary).duplicate(true)
+	return {}
+
+
+func _quest_gold_from_reward(reward: Dictionary) -> int:
+	var gv: Variant = reward.get("gold", 0)
+	if gv is int or gv is float:
+		return maxi(0, int(gv))
+	var s: String = str(gv).strip_edges()
+	return int(s) if s.is_valid_int() else 0
+
+
+func _economy_hint_add(hint_items: Array, item_id: String) -> void:
+	var id: String = item_id.strip_edges()
+	if id.is_empty():
+		return
+	if not hint_items.has(id):
+		hint_items.append(id)
+
+
+func _pressure_add_items(pressure: Dictionary, item_id: String, qty: int) -> void:
+	var id: String = item_id.strip_edges()
+	if id.is_empty() or qty <= 0:
+		return
+	var items_map: Dictionary = pressure.get("items", {})
+	items_map[id] = int(items_map.get(id, 0)) + qty
+	pressure["items"] = items_map
+
+
+func _apply_reward_item_pulse(item_id: String, qty: int, pressure: Dictionary, hint_items: Array) -> void:
+	var id: String = item_id.strip_edges()
+	if id.is_empty():
+		return
+	var n: int = maxi(1, qty)
+	for _k in range(n):
+		_bump_item_demand(id, 1.05)
+	_pressure_add_items(pressure, id, n)
+	_economy_hint_add(hint_items, id)
+
+
+func _ingest_reward_entries_for_economy(reward: Dictionary, pressure: Dictionary, hint_items: Array) -> void:
+	for ent in reward.get("items", []):
+		if ent is Dictionary:
+			var iid: String = str((ent as Dictionary).get("id", (ent as Dictionary).get("item_id", ""))).strip_edges()
+			var cnt: int = maxi(1, int((ent as Dictionary).get("count", (ent as Dictionary).get("qty", 1))))
+			if not iid.is_empty():
+				_apply_reward_item_pulse(iid, cnt, pressure, hint_items)
+		else:
+			var parts: PackedStringArray = str(ent).split(":")
+			var sid: String = parts[0].strip_edges()
+			if sid.is_empty():
+				continue
+			var scnt: int = int(parts[1]) if parts.size() > 1 and parts[1].strip_edges().is_valid_int() else 1
+			_apply_reward_item_pulse(sid, maxi(1, scnt), pressure, hint_items)
+	var single: String = str(reward.get("item", "")).strip_edges()
+	if not single.is_empty() and single != "null":
+		var sqty: int = maxi(1, int(reward.get("item_count", reward.get("item_qty", 1))))
+		_apply_reward_item_pulse(single, sqty, pressure, hint_items)
+
+
+func _process_quest_objective_for_economy(obj: Dictionary, pressure: Dictionary, hint_items: Array) -> void:
+	var ot: String = str(obj.get("type", ""))
+	if ot == "plant" or (ot == "harvest" and obj.has("crop_id")):
+		var crop_id: String = str(obj.get("crop_id"))
+		if crop_id.is_empty():
+			return
+		_bump_item_demand(crop_id, 1.06)
+		if not crop_id.ends_with("_seeds"):
+			_bump_item_demand("%s_seeds" % crop_id, 1.04)
+		_pressure_add_items(pressure, crop_id, 1)
+		_economy_hint_add(hint_items, crop_id)
+		return
+	if ot == "harvest":
+		_bump_item_demand("parsnip", 1.04)
+		_bump_item_demand("parsnip_seeds", 1.02)
+		_pressure_add_items(pressure, "parsnip", 1)
+		_economy_hint_add(hint_items, "parsnip")
+		return
+	if ot == "collect_item" or ot == "delivery":
+		var iid: String = str(obj.get("item_id", "")).strip_edges()
+		if not iid.is_empty():
+			_bump_item_demand(iid, 1.055)
+			_pressure_add_items(pressure, iid, 1)
+			_economy_hint_add(hint_items, iid)
+		return
+	if ot == "fish_caught":
+		for fid in ["worm_bait", "fish_sardine", "fish_perch"]:
+			_bump_item_demand(fid, 1.03)
+		_pressure_add_items(pressure, "worm_bait", 1)
+		_economy_hint_add(hint_items, "worm_bait")
+		return
+	if ot == "mine_ore":
+		for mid in ["coal", "copper_ore", "iron_ore"]:
+			_bump_item_demand(mid, 1.03)
+		_pressure_add_items(pressure, "coal", 1)
+		_economy_hint_add(hint_items, "coal")
+		return
+	if ot == "chop_wood":
+		_bump_item_demand("wood_log", 1.04)
+		_pressure_add_items(pressure, "wood_log", 1)
+		_economy_hint_add(hint_items, "wood_log")
+		return
+	if ot == "smelt_bar":
+		for sid in ["copper_bar", "iron_bar", "coal"]:
+			_bump_item_demand(sid, 1.03)
+		_pressure_add_items(pressure, "copper_bar", 1)
+		_economy_hint_add(hint_items, "copper_bar")
+		return
+	if ot == "cook_meal":
+		_bump_item_demand("bread", 1.03)
+		_pressure_add_items(pressure, "bread", 1)
+		_economy_hint_add(hint_items, "bread")
+		return
+	if ot == "craft_item":
+		for cid in ["worm_bait", "premium_bait", "wood_log"]:
+			_bump_item_demand(cid, 1.025)
+		_pressure_add_items(pressure, "worm_bait", 1)
+		_economy_hint_add(hint_items, "worm_bait")
+		return
+	if ot == "talk":
+		_bump_item_demand("bread", 1.02)
+		return
+
+
+func _maybe_emit_ai_quest_market_hint(source: String, gold: int, hint_items: Array) -> void:
+	if source != "ai_quest_system":
+		return
+	var labels: PackedStringArray = PackedStringArray()
+	for i in range(mini(3, hint_items.size())):
+		var lab: String = _player_visible_item_label(str(hint_items[i]))
+		if not lab.is_empty():
+			labels.append(lab)
+	if labels.size() > 0:
+		player_visible_market_note.emit(
+			"Market: your contract nudges interest in %s — watch shop tags after sleep." % ", ".join(labels)
+		)
+	elif gold >= 25:
+		player_visible_market_note.emit(
+			"Market: word of your payout spreads — shop prices may shift overnight."
+		)
+
+
 func on_quest_completed(quest_data: Dictionary) -> void:
 	"""Nudge supply/demand when the player completes a quest so the market reacts."""
 	if quest_data.is_empty():
 		return
 	var quest_id: String = str(quest_data.get("id", ""))
-	var reward: Dictionary = quest_data.get("reward", {})
-	var gold: int = int(reward.get("gold", 0))
+	var reward: Dictionary = _normalize_quest_reward_dict(quest_data)
+	var gold: int = _quest_gold_from_reward(reward)
 	var source: String = str(quest_data.get("source", ""))
 	var day_idx: int = _current_day_index()
 	var pressure: Dictionary = _daily_quest_pressure.get(day_idx, {
@@ -755,30 +903,16 @@ func on_quest_completed(quest_data: Dictionary) -> void:
 		"gold": 0,
 		"items": {}
 	})
+	var hint_items: Array = []
 	pressure["count"] = int(pressure.get("count", 0)) + 1
-	pressure["gold"] = int(pressure.get("gold", 0)) + maxi(0, gold)
+	pressure["gold"] = int(pressure.get("gold", 0)) + gold
 
 	for objective in quest_data.get("objectives", []):
 		if typeof(objective) != TYPE_DICTIONARY:
 			continue
-		var obj: Dictionary = objective
-		if obj.get("type") in ["plant", "harvest"] and obj.has("crop_id"):
-			var crop_id: String = str(obj.get("crop_id"))
-			_bump_item_demand(crop_id, 1.06)
-			if not crop_id.ends_with("_seeds"):
-				_bump_item_demand("%s_seeds" % crop_id, 1.04)
-			var items_map: Dictionary = pressure.get("items", {})
-			items_map[crop_id] = int(items_map.get(crop_id, 0)) + 1
-			pressure["items"] = items_map
+		_process_quest_objective_for_economy(objective as Dictionary, pressure, hint_items)
 
-	for item_str in reward.get("items", []):
-		var parts: PackedStringArray = str(item_str).split(":")
-		if parts.size() > 0:
-			var rid: String = str(parts[0])
-			_bump_item_demand(rid, 1.05)
-			var items_map2: Dictionary = pressure.get("items", {})
-			items_map2[rid] = int(items_map2.get(rid, 0)) + 1
-			pressure["items"] = items_map2
+	_ingest_reward_entries_for_economy(reward, pressure, hint_items)
 
 	if gold > 0:
 		_boost_town_commerce_from_quest_reward(gold)
@@ -792,6 +926,7 @@ func on_quest_completed(quest_data: Dictionary) -> void:
 		"source": source
 	})
 	_daily_quest_pressure[day_idx] = pressure
+	_maybe_emit_ai_quest_market_hint(source, gold, hint_items)
 
 func on_day_passed() -> void:
 	var prev_day: int = _current_day_index() - 1

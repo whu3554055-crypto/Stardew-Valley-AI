@@ -60,7 +60,7 @@
 
 - [ ] **A2 — 单系统加深（第二轮）**  
   换另一条系统重复 A1 的标准，避免长期只堆一条线。  
-  *进度：钓鱼新增鲶鱼/鲭鱼与表修正；新增鱼饵分级（`premium_bait` 优先消耗，显著提升鱼类权重），并开放商店购买与工作台制作；咬钩窗口内区分 **过早按 E** / **超时** 提示；挖矿矿层前缀、主题权重、表层 geode；**银矿 / 银锭**（深脉 + 铁镐、熔炉 5 矿+1 煤）；烹饪四条三料复合食谱。*
+  *进度：钓鱼新增鲶鱼/鲭鱼与表修正；新增鱼饵分级（`premium_bait` 优先消耗，显著提升鱼类权重），并开放商店购买与工作台制作；咬钩窗口内区分 **过早按 E** / **超时** 提示；挖矿矿层前缀、主题权重、表层 geode；**银矿 / 银锭**（深脉 + 铁镐、熔炉 5 矿+1 煤）；烹饪四条三料复合食谱。**工艺**：工作台配方 **`sap_sticky_bait`**（`tree_sap` + `wood_log` → 2×`worm_bait`），衔接伐木树液与钓鱼饵。*
 
 - [ ] **A3 — 呈现与资源**  
   补齐或替换占位：**TileMap tileset、玩家/作物/工具相关美术**，让玩法反馈「看得见」（可与 A1/A2 并行，由人力安排）。  
@@ -78,9 +78,9 @@
   补全动态任务奖励与状态：**好感 / 技能经验 / 物品** 等到 `GameManager` 或现有系统；**任务完成条件**与玩家背包、对话记录等一致可验（含后端 `verify` 路径时保证上报字段对齐）。
   *进度：客户端 `AIQuestSystem` 的 AI 增强链路已从占位改为真实调用统一入口 `AIAgentManager.request_text_generation()`，并加入 JSON 校验与失败降级；新增 `_normalize_ai_quest_payload()` 做字段收口（长度裁剪、默认值、显式目标字段）并统一 `objective_type`（`fetch_item` / `deliver_to_npc` / `solve_problem` / `talk_to_npc`）；任务描述会自动追加 `Completion:` 行提示，和实际验证规则对齐；最小目标验证已覆盖 `fetch` / `delivery`（含 `target_npc` 时需与目标 NPC 对话后交付）并扩展 `problem_solving`（与任务发起 NPC 对话后可完成）；奖励写回统一到 `player_data.gold`（修正 `money` 漂移），并补 AI 任务桥接 `QuestSystem.add_quest_from_ai()` 以保持任务 UI/事件一致；AI 任务完成会向 `WorldEventFeed` 写结构化反馈（完成项/金币/市场脉冲）。**奖励扩展**：`grant_quest_rewards` 写入 `GameManager` 的 `npc_friendship` / `skill_xp`（及 `NPCTraitSystem.update_relationship`）、`item`/`items`/`friendship_both` 入包；GUT `tests/unit/test_ai_quest_reward_grant.gd`；验收 **AIA-07**。*
 
-- [ ] **B2 — AI 经济闭环**  
+- [x] **B2 — AI 经济闭环**  
   **任务完成 / 出售行为 / 天气等** → 写入经济状态 → **次日（或刷新点）商店买卖价可见变化**（先简单公式 + 一句 UI 说明即可）。
-  *进度：已接入最小交易反馈环：玩家在商店买入/卖出会即时写入 `AIEconomySystem.on_shop_trade()`，对供需做轻量脉冲（买入偏涨、卖出偏跌），并直接影响 `get_shop_buy_price/get_shop_sell_price`；商店列表已显示 `get_market_brief()` 标签（如 `↑+12%`/`↓-8%`）作为价格变化可见说明；每日换日会将 `get_daily_shop_brief()` 写入 `WorldEventFeed`，且买/卖后追加单条 `Market shift` 反馈。*
+  *进度：已接入最小交易反馈环：玩家在商店买入/卖出会即时写入 `AIEconomySystem.on_shop_trade()`，对供需做轻量脉冲（买入偏涨、卖出偏跌），并直接影响 `get_shop_buy_price/get_shop_sell_price`；商店列表已显示 `get_market_brief()` 标签（如 `↑+12%`/`↓-8%`）作为价格变化可见说明；每日换日会将 `get_daily_shop_brief()` 写入 `WorldEventFeed`，且买/卖后追加单条 `Market shift` 反馈。**任务侧**：`on_quest_completed` 统一 `reward`/`rewards`、解析 `item`/`items`（含字典项）、扩展 `objectives`（`delivery`/`collect_item`/`fish_caught`/`mine_ore`/`chop_wood`/`smelt_bar`/`cook_meal`/`craft_item`/`talk` 等）写入 `_daily_quest_pressure`，与换日 `on_day_passed` 脉冲衔接；**AI 任务**完成可发一条即时 `player_visible_market_note`（次日价签提示）。GUT `tests/unit/test_ai_economy_quest_and_trade.gd`；验收 **AIA-09**。*
 
 - [x] **B3 — 每日叙事可见化**  
   除生成与任务外，增加**当日摘要 UI**，可选 **地图热点 / 弹窗**，让玩家每天「看见」叙事结果。
@@ -130,12 +130,12 @@
 - [x] **钓鱼系统 (Fishing System)**: （MVP 已达）`FishingSystem` 咬钩窗口小游戏、河/海分区、多鱼种与鱼饵分级、成功/失败反馈与简报；继续加深见阶段 **A1 / A2** 进度说明。
 - [x] **挖矿与战斗 (Mining & Combat)**: （MVP 已达）`MiningSystem` 条带矿区、稀有掉落与文案分层、`MineCombatController` 共享战斗循环（主场景与 `world_mine`）；**大型洞穴/多层 Roguelike** 仍属扩展目标，见 **A4**。
 - [x] **建筑升级 (Building Upgrades)**: （MVP 已达）`data/buildings/upgrades.json` 驱动；地图 **房屋升级区 H** 交互；`player_data.house_level` 持久化并影响体力上限/恢复倍率（含多级房屋）。**谷仓/扩建全建筑树**仍为扩展目标，见阶段 **A4** 进度。
-- [ ] **畜牧系统 (Animal Husbandry)**: 养鸡、养牛、产奶与产蛋。
+- [x] **畜牧系统 (Animal Husbandry)**: （**MVP 已达**，见阶段 **A4**）养鸡/牛、`LivestockManager`、`zones.barn` **V** 交互、鸡蛋牛奶入包与厨房衔接；**高级动物 AI / 多种牲畜 / 自动饲喂** 仍属扩展。
 - [x] **烹饪系统 (Cooking System)**: （MVP 已达）`CookingSystem` + `data/recipes/cooking.json`；厨房制作、多配方与体力回报；与任务链/托管迭代中的食谱加深（见 **A1 / A2**）。**全量「学习食谱」引导与教科书式 UI** 可继续迭代。
 - [x] **工艺制作 (Crafting)**: （MVP 已达）`CraftingSystem` + `data/recipes/crafting.json`；工作台制作（如鱼饵分级）、与背包/采集闭环衔接。**洒水器、栅栏、加工机**等优先做表驱动增量即可，不必阻塞主循环。
 
 ### AI 系统深度增强 (Advanced AI Enhancements)
-- [x] **AI 经济系统 (AI Economy)**: （MVP 已达）`AIEconomySystem` 接入商店买卖（`ShopSystem` → `on_shop_trade` 轻量供需脉冲）、即时买/卖价与 `get_market_brief()` 标签、换日 `WorldEventFeed` 市场简报；与任务完成脉冲联动见 **B2** 进度。**完全由 LLM 预测曲线主导物价**仍属增强项，当前以**可解释、可回滚的规则脉冲**为主。
+- [x] **AI 经济系统 (AI Economy)**: （MVP 已达）`AIEconomySystem` 接入商店买卖（`ShopSystem` → `on_shop_trade` 轻量供需脉冲）、即时买/卖价与 `get_market_brief()` 标签、换日 `WorldEventFeed` 市场简报；**任务完成**经 `on_quest_completed` 写入当日压力并与 `on_day_passed` 衔接（**B2** / **AIA-09**）。**完全由 LLM 预测曲线主导物价**仍属增强项，当前以**可解释、可回滚的规则脉冲**为主。
 - [x] **AI 任务系统 (AI Quest System)**: 基于 NPC 当前需求动态生成任务。
   - [x] 基础异步任务生成框架
   - [x] LLM 创意增强接口 (LLM-enhanced quest details)

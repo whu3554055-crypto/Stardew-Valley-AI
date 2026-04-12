@@ -1219,6 +1219,28 @@ func add_story_daily_quest(event_data: Dictionary):
 	start_quest(quest_id)
 	last_story_quest_day_key = day_key
 
+func _flatten_ai_quest_reward_items(ai_quest: Dictionary) -> Array:
+	var out: Array = []
+	var rw: Variant = ai_quest.get("rewards", {})
+	if not rw is Dictionary:
+		return out
+	var rd: Dictionary = rw as Dictionary
+	if rd.has("items") and rd.items is Array:
+		for ent in rd.items:
+			if ent is Dictionary:
+				var iid: String = str((ent as Dictionary).get("id", (ent as Dictionary).get("item_id", ""))).strip_edges()
+				var cnt: int = maxi(1, int((ent as Dictionary).get("count", (ent as Dictionary).get("qty", 1))))
+				if not iid.is_empty():
+					out.append("%s:%d" % [iid, cnt])
+			else:
+				out.append(str(ent))
+	var single: String = str(rd.get("item", "")).strip_edges()
+	if not single.is_empty() and single != "null":
+		var sqty: int = maxi(1, int(rd.get("item_count", rd.get("item_qty", 1))))
+		out.append("%s:%d" % [single, sqty])
+	return out
+
+
 func add_quest_from_ai(ai_quest: Dictionary) -> void:
 	"""
 	Bridge AIQuestSystem quest into QuestSystem tracking so UI/events stay unified.
@@ -1229,7 +1251,9 @@ func add_quest_from_ai(ai_quest: Dictionary) -> void:
 		return
 	if quests.has(quest_id):
 		return
-	var reward_gold: int = int(ai_quest.get("rewards", {}).get("gold", 0))
+	var rw: Dictionary = ai_quest.get("rewards", {}) if ai_quest.get("rewards") is Dictionary else {}
+	var reward_gold: int = int(rw.get("gold", 0))
+	var reward_items: Array = _flatten_ai_quest_reward_items(ai_quest)
 	var target_count: int = int(ai_quest.get("target_count", 1))
 	var qtype: String = str(ai_quest.get("type", "fetch"))
 	var objective_type: String = "collect_item"
@@ -1251,7 +1275,7 @@ func add_quest_from_ai(ai_quest: Dictionary) -> void:
 		"npc_id": str(ai_quest.get("target_npc", ai_quest.get("quest_giver", ""))),
 		"objectives": [objective],
 		"status": QuestStatus.IN_PROGRESS,
-		"reward": {"gold": reward_gold, "items": []},
+		"reward": {"gold": reward_gold, "items": reward_items},
 		"source": "ai_quest_system",
 	}
 	if not active_quests.has(quest_id):

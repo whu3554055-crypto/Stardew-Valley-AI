@@ -31,7 +31,7 @@
 4. [环境与生态 ENV-01～05](#acc-env)
 5. [性能 Phase1 PERF-01～03](#acc-perf)
 6. [玩法扩展 PLAY-01～05](#acc-play)
-7. [AI 系统深度增强 AIA-01～08](#acc-aia)（含 AI 任务子项 / B1–B3 对齐项）
+7. [AI 系统深度增强 AIA-01～09](#acc-aia)（含 AI 任务子项 / B1–B3 对齐项）
 
 ---
 
@@ -134,13 +134,14 @@
 | ID | 条目 | 验收要点 | 自动化 | 手动抽检 |
 |----|------|----------|--------|----------|
 | <a id="acc-aia-01"></a>**AIA-01** | AI 经济 | `AIEconomySystem` + `ShopSystem.on_shop_trade`、市价标签、换日简报 | BATCH-A | 买卖后看价签与简报 |
-| <a id="acc-aia-02"></a>**AIA-02** | AI 任务（总） | 生成、入 `QuestSystem`、完成反馈 | BATCH-A（headless 日志可见分配） | 任务面板看 AI 任务 |
+| <a id="acc-aia-02"></a>**AIA-02** | AI 任务（总） | 生成、入 `QuestSystem`、完成反馈；奖励与任务面板 `reward.items` 与 AI `rewards` 对齐 | BATCH-A（headless 日志可见分配） | 任务面板看 AI 任务与物品奖励预览 |
 | <a id="acc-aia-03"></a>**AIA-03** | 任务·异步框架 | 模板与分配 | BATCH-A | 同上 |
 | <a id="acc-aia-04"></a>**AIA-04** | 任务·LLM 增强 | `AIAgentManager.request_text_generation` 链路 | BATCH-A | 关网看降级文案 |
 | <a id="acc-aia-05"></a>**AIA-05** | 任务·目标验证 | `verify_active_objectives` | GUT [`test_ai_quest_objective_verify.gd`](../../tests/unit/test_ai_quest_objective_verify.gd) + [`test_ai_quest_system.gd`](../../tests/unit/test_ai_quest_system.gd) | 交付类对话后完成 |
 | <a id="acc-aia-06"></a>**AIA-06** | 社交动力学 | `register_npc` → `auto_load_plugins_for_npc`；换日「镇上闲语」 | BATCH-A（插件初始化日志） | 睡到下一天多次看简报 |
 | <a id="acc-aia-07"></a>**AIA-07** | B1 · AI 任务奖励落地 | `grant_quest_rewards` → `player_data.gold`、`GameManager` 的 `npc_friendship` / `skill_xp`、背包物品（`item` / `items` / `friendship_both`） | GUT [`test_ai_quest_reward_grant.gd`](../../tests/unit/test_ai_quest_reward_grant.gd) | 完成一条含多类奖励的 AI 任务看数值与背包 |
 | <a id="acc-aia-08"></a>**AIA-08** | B3 · 当日叙事可见化 | 日记 **今日** 页读 `daily_narrative_snapshot`；主场景 `StoryHotspotHud` 热点行（`UITextCatalog` `journal.hotspot_hud_line`） | BATCH-A（字符串表存在） | 换日后开日记「今日」；有热点时看右上提示 |
+| <a id="acc-aia-09"></a>**AIA-09** | B2 · 任务↔经济闭环 | `AIEconomySystem.on_quest_completed` 统一 `reward`/`rewards`、奖励物品与多类 `objectives`（钓鱼/挖矿/交付等）写入当日压力；商店买卖 `on_shop_trade`；换日 `on_day_passed` 简报；AI 任务完成可触发即时市场提示 | GUT [`test_ai_economy_quest_and_trade.gd`](../../tests/unit/test_ai_economy_quest_and_trade.gd) | 完成任务后睡到下一天看 `WorldEventFeed` 市场行；商店买卖看价签变化 |
 
 ### 关联单测（命令行）
 

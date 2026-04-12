@@ -1,5 +1,12 @@
 [
   {
+    "id": "sap_sticky_bait",
+    "output_id": "worm_bait",
+    "output_qty": 2,
+    "inputs": { "tree_sap": 1, "wood_log": 1 },
+    "stamina": 2
+  },
+  {
     "id": "worm_bait_bundle",
     "output_id": "worm_bait",
     "output_qty": 5,
