@@ -1,6 +1,34 @@
 extends Node
 
+## When set (world_forest scene), overrides hub `GameZones.rect_forest` hit-test.
+var _forest_bounds_override: Rect2 = Rect2(0.0, 0.0, -1.0, -1.0)
+
+
+func _ready() -> void:
+	call_deferred("_hook_world_router")
+
+
+func _hook_world_router() -> void:
+	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_changed_clear_forest):
+		WorldRouter.world_changed.connect(_on_world_changed_clear_forest)
+
+
+func _on_world_changed_clear_forest(scene_path: String) -> void:
+	if not String(scene_path).ends_with("world_forest.tscn"):
+		clear_forest_bounds_override()
+
+
+func set_forest_bounds_override(r: Rect2) -> void:
+	_forest_bounds_override = r
+
+
+func clear_forest_bounds_override() -> void:
+	_forest_bounds_override = Rect2(0.0, 0.0, -1.0, -1.0)
+
+
 func can_chop_here(player_pos: Vector2) -> bool:
+	if _forest_bounds_override.size.x > 0.0 and _forest_bounds_override.size.y > 0.0:
+		return _forest_bounds_override.has_point(player_pos)
 	return GameZones.contains_forest(player_pos)
 
 func try_chop_one() -> Dictionary:

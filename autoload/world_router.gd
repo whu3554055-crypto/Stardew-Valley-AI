@@ -5,6 +5,10 @@ extends Node
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const WORLD_FARM_SCENE := "res://scenes/world/world_farm.tscn"
+const WORLD_TOWN_SCENE := "res://scenes/world/world_town.tscn"
+const WORLD_FOREST_SCENE := "res://scenes/world/world_forest.tscn"
+const WORLD_BEACH_SCENE := "res://scenes/world/world_beach.tscn"
+const WORLD_MINE_SCENE := "res://scenes/world/world_mine.tscn"
 const PLAYGROUND_SCENE := "res://scenes/world/world_playground.tscn"
 const FARM_STUB_SCENE := "res://scenes/world/world_farm_stub.tscn"
 const TOWN_STUB_SCENE := "res://scenes/world/world_town_stub.tscn"

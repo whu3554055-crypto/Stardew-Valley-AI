@@ -2,6 +2,9 @@ extends Node
 
 const GT := preload("res://scripts/gathering_tables.gd")
 
+## When set (`world_beach`), adds an **ocean** hit-test before hub river/ocean rects.
+var _ocean_bounds_override: Rect2 = Rect2(0.0, 0.0, -1.0, -1.0)
+
 const CAST_COOLDOWN_SEC := 1.45
 const HOOK_WINDOW_SEC := 1.78
 const HOOK_EARLY_MIN_SEC := 0.22
@@ -16,7 +19,33 @@ var _hook_deadline: float = 0.0
 var _hook_start_time: float = 0.0
 var _bait_tier: int = 0
 
+
+func _ready() -> void:
+	call_deferred("_hook_world_router")
+
+
+func _hook_world_router() -> void:
+	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_changed_clear_ocean):
+		WorldRouter.world_changed.connect(_on_world_changed_clear_ocean)
+
+
+func _on_world_changed_clear_ocean(scene_path: String) -> void:
+	if not String(scene_path).ends_with("world_beach.tscn"):
+		clear_ocean_bounds_override()
+
+
+func set_ocean_bounds_override(r: Rect2) -> void:
+	_ocean_bounds_override = r
+
+
+func clear_ocean_bounds_override() -> void:
+	_ocean_bounds_override = Rect2(0.0, 0.0, -1.0, -1.0)
+
+
 func get_fish_zone(player_pos: Vector2) -> String:
+	if _ocean_bounds_override.size.x > 0.0 and _ocean_bounds_override.size.y > 0.0:
+		if _ocean_bounds_override.has_point(player_pos):
+			return "ocean"
 	return GameZones.get_fish_zone_id(player_pos)
 
 func can_fish_here(player_pos: Vector2) -> bool:

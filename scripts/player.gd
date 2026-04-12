@@ -70,7 +70,7 @@ func _physics_process(delta):
 	move_and_slide()
 
 func _footstep_surface_kind() -> String:
-	if GameZones.can_mine_here(global_position):
+	if MiningSystem and MiningSystem.can_mine_here(global_position):
 		return "mine"
 	if GameZones.is_indoor_station(global_position):
 		return "wood"

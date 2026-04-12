@@ -3,14 +3,56 @@ extends Node
 const GT := preload("res://scripts/gathering_tables.gd")
 
 ## Bounds / depth breaks: `data/presentation/immersion_config.json` → `zones.mine` (`GameZones`). Keep `main.tscn` MineArea aligned.
+## Override used by `world_mine.tscn` (rect + relative depth bands).
+
+var _mine_bounds_override: Rect2 = Rect2(0.0, 0.0, -1.0, -1.0)
 
 var _last_swing_time: float = -100.0
 const SWING_COOLDOWN_SEC := 1.2
 
+
+func _ready() -> void:
+	call_deferred("_hook_world_router")
+
+
+func _hook_world_router() -> void:
+	if WorldRouter and not WorldRouter.world_changed.is_connected(_on_world_changed_clear_mine):
+		WorldRouter.world_changed.connect(_on_world_changed_clear_mine)
+
+
+func _on_world_changed_clear_mine(scene_path: String) -> void:
+	if not String(scene_path).ends_with("world_mine.tscn"):
+		clear_mine_bounds_override()
+
+
+func set_mine_bounds_override(r: Rect2) -> void:
+	_mine_bounds_override = r
+
+
+func clear_mine_bounds_override() -> void:
+	_mine_bounds_override = Rect2(0.0, 0.0, -1.0, -1.0)
+
+
+func _mine_override_active() -> bool:
+	return _mine_bounds_override.size.x > 0.0 and _mine_bounds_override.size.y > 0.0
+
+
 func can_mine_here(player_pos: Vector2) -> bool:
+	if _mine_override_active():
+		return _mine_bounds_override.has_point(player_pos)
 	return GameZones.can_mine_here(player_pos)
 
 func depth_from_global_y(global_y: float) -> int:
+	if _mine_override_active():
+		var y0: float = _mine_bounds_override.position.y
+		var h: float = _mine_bounds_override.size.y
+		var d1: float = y0 + h * 0.33
+		var d2: float = y0 + h * 0.66
+		if global_y < d1:
+			return 0
+		if global_y < d2:
+			return 1
+		return 2
 	return GameZones.mine_depth_from_global_y(global_y)
 
 func _pickaxe_tier(pickaxe_id: String) -> int:
@@ -38,7 +80,7 @@ func try_swing(player_pos: Vector2, pickaxe_id: String) -> Dictionary:
 	if GatheringSfx:
 		GatheringSfx.play_mine_swing()
 
-	var depth: int = GameZones.mine_depth_from_global_y(player_pos.y)
+	var depth: int = depth_from_global_y(player_pos.y)
 	var weights: Dictionary = GT.mining_ore_weights(depth, tier)
 	var item_id: String = _weighted_pick(weights)
 	if item_id.is_empty():
