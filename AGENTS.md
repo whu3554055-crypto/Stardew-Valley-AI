@@ -3,7 +3,7 @@
 ## 技术栈
 
 - 引擎：**Godot 4.6**（GDScript）
-- 主场景：`res://scenes/main.tscn`；多场景冒烟：`world_playground` + **五带薄壳环**（`STUB_RING.md`，不拆 `main` 内农场/矿体逻辑）
+- 主场景：`res://scenes/main.tscn`（**枢纽**，农田在 `scenes/world/world_farm.tscn`）；多场景冒烟：`world_playground` + 薄壳环（`STUB_RING.md`）
 - 阶段计划：`docs/03-研发管理/09-星露谷向体验与多场景阶段计划.md`
 
 ## 多场景与存档
