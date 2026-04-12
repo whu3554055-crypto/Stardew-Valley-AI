@@ -65,6 +65,7 @@ CookingSystem="*res://autoload/cooking_system.gd"
 ChoppingSystem="*res://autoload/chopping_system.gd"
 CraftingSystem="*res://autoload/crafting_system.gd"
 WorldRouter="*res://autoload/world_router.gd"
+DataOverrides="*res://autoload/data_overrides.gd"
 
 [display]
 
