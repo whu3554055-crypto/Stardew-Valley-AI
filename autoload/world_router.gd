@@ -4,6 +4,7 @@ extends Node
 ## See `scenes/world/ARCHITECTURE.md`.
 
 const MAIN_SCENE := "res://scenes/main.tscn"
+const WORLD_FARM_SCENE := "res://scenes/world/world_farm.tscn"
 const PLAYGROUND_SCENE := "res://scenes/world/world_playground.tscn"
 const FARM_STUB_SCENE := "res://scenes/world/world_farm_stub.tscn"
 const TOWN_STUB_SCENE := "res://scenes/world/world_town_stub.tscn"
@@ -62,6 +63,7 @@ func consume_saved_world_after_boot() -> void:
 		_apply_spawn_to_player()
 		pending_spawn_id = ""
 		return
+	_autosave_before_leave_if_needed()
 	var err: Error = get_tree().change_scene_to_file(target)
 	if err != OK:
 		push_error("WorldRouter: change_scene_to_file failed: %s (err %d)" % [target, err])
@@ -71,6 +73,7 @@ func consume_saved_world_after_boot() -> void:
 
 
 func change_world(scene_path: String, spawn_id: String = "default") -> void:
+	_autosave_before_leave_if_needed()
 	if GameManager and GameManager.player_data:
 		GameManager.player_data["last_spawn_id"] = spawn_id
 	pending_spawn_id = spawn_id
@@ -102,6 +105,25 @@ func _apply_spawn_to_player() -> void:
 func apply_pending_spawn_and_clear() -> void:
 	_apply_spawn_to_player()
 	pending_spawn_id = ""
+
+
+func _autosave_before_leave_if_needed() -> void:
+	var cur: Node = get_tree().current_scene
+	if cur == null:
+		return
+	var fm: FarmManager = cur.get_node_or_null("FarmManager") as FarmManager
+	if fm == null:
+		return
+	if FarmStateCache:
+		FarmStateCache.sync_from_manager(fm)
+	if GameSaveService and GameManager:
+		GameSaveService.commit_save(
+			GameSaveService.build_runtime_bundle(
+				FarmStateCache.get_snapshot(),
+				GameManager.journal_world_event_feed,
+				GameManager.journal_active_story_hotspot
+			)
+		)
 
 
 func find_spawn_point(spawn_id: String) -> Node2D:
