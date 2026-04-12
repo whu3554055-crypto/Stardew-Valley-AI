@@ -127,18 +127,18 @@
 ### 核心玩法扩展 (Gameplay Expansion)
 - [x] **钓鱼系统 (Fishing System)**: （MVP 已达）`FishingSystem` 咬钩窗口小游戏、河/海分区、多鱼种与鱼饵分级、成功/失败反馈与简报；继续加深见阶段 **A1 / A2** 进度说明。
 - [x] **挖矿与战斗 (Mining & Combat)**: （MVP 已达）`MiningSystem` 条带矿区、稀有掉落与文案分层、`MineCombatController` 共享战斗循环（主场景与 `world_mine`）；**大型洞穴/多层 Roguelike** 仍属扩展目标，见 **A4**。
-- [ ] **建筑升级 (Building Upgrades)**: 扩建房屋，建造谷仓等。
+- [x] **建筑升级 (Building Upgrades)**: （MVP 已达）`data/buildings/upgrades.json` 驱动；地图 **房屋升级区 H** 交互；`player_data.house_level` 持久化并影响体力上限/恢复倍率（含多级房屋）。**谷仓/扩建全建筑树**仍为扩展目标，见阶段 **A4** 进度。
 - [ ] **畜牧系统 (Animal Husbandry)**: 养鸡、养牛、产奶与产蛋。
-- [ ] **烹饪系统 (Cooking System)**: 食谱学习与体力恢复。
-- [ ] **工艺制作 (Crafting)**: 制作洒水器、栅栏、加工机等。
+- [x] **烹饪系统 (Cooking System)**: （MVP 已达）`CookingSystem` + `data/recipes/cooking.json`；厨房制作、多配方与体力回报；与任务链/托管迭代中的食谱加深（见 **A1 / A2**）。**全量「学习食谱」引导与教科书式 UI** 可继续迭代。
+- [x] **工艺制作 (Crafting)**: （MVP 已达）`CraftingSystem` + `data/recipes/crafting.json`；工作台制作（如鱼饵分级）、与背包/采集闭环衔接。**洒水器、栅栏、加工机**等优先做表驱动增量即可，不必阻塞主循环。
 
 ### AI 系统深度增强 (Advanced AI Enhancements)
-- [ ] **AI 经济系统 (AI Economy)**: 根据 AI 预测动态调整物价。
+- [x] **AI 经济系统 (AI Economy)**: （MVP 已达）`AIEconomySystem` 接入商店买卖（`ShopSystem` → `on_shop_trade` 轻量供需脉冲）、即时买/卖价与 `get_market_brief()` 标签、换日 `WorldEventFeed` 市场简报；与任务完成脉冲联动见 **B2** 进度。**完全由 LLM 预测曲线主导物价**仍属增强项，当前以**可解释、可回滚的规则脉冲**为主。
 - [x] **AI 任务系统 (AI Quest System)**: 基于 NPC 当前需求动态生成任务。
   - [x] 基础异步任务生成框架
   - [x] LLM 创意增强接口 (LLM-enhanced quest details)
   - [x] 任务目标自动验证逻辑 (Objective verification)：客户端 `verify_active_objectives()`（`fetch` / `delivery` / `talk` / `problem_solving`，交付型依赖 `track_event("talk")`）；回归 `tests/unit/test_ai_quest_objective_verify.gd`。
-- [ ] **社交动力学插件 (Social Dynamics)**: NPC 之间的复杂互动（争吵、合作、流言）。
+- [x] **社交动力学插件 (Social Dynamics)**: （MVP/骨架已达）`NPCPluginManager` 注册 `social_dynamics_plugin.gd`（群组、影响度、共情等状态与 API，可随 NPC 存档）。**争吵 / 合作 / 流言的强演出 + 统一世界简报（与总纲「玩家可见后果」）**仍属加深项，需在 B4 与叙事/任务侧对齐验收。
 
 - [ ] **语音集成 (NPC Audio/TTS)**: 为 NPC 对话集成文本转语音。
 
