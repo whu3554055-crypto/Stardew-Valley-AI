@@ -7,7 +7,12 @@
     "mine_band_0": "Shallow",
     "mine_band_1": "Iron band",
     "mine_band_2": "Deep vein",
-    "chop_forest": "Chopping · Forest"
+    "chop_forest": "Chopping · Forest",
+    "barn": "Barn · V collect / buy when empty"
+  },
+  "barn": {
+    "chicken": "Chicken",
+    "cow": "Cow"
   },
   "quick_tip": {
     "eat_food_energy": "Ate {item} (+{energy} energy)",
@@ -32,7 +37,12 @@
     "fertilizer_apply_needs_empty_tilled": "Fertilize only empty tilled tiles (no crop, no sprinkler).",
     "fertilizer_apply_needs_tilled": "Fertilizer requires tilled soil.",
     "plant_wrong_season": "This crop cannot be planted in the current season.",
-    "stamina_low": "Low stamina — eat food or rest until tomorrow."
+    "stamina_low": "Low stamina — eat food or rest until tomorrow.",
+    "barn_nothing_ready": "Nothing to collect yet — come back another day.",
+    "barn_inventory_full": "Inventory full — make room to collect.",
+    "barn_bought": "Bought a {animal} (−{cost}g).",
+    "barn_cant_afford": "Can't afford the next animal ({cost}g).",
+    "barn_all_full": "Barn is full — no more animals to buy."
   },
   "weather": {
     "sunny": "Sunny",
@@ -207,6 +217,8 @@
     "game_start": "Year {year} · {season} · Day {day}: adventure begins.",
     "achievement_unlocked": "Achievement unlocked: {title} (Y{year} {season} D{day})",
     "first_harvest": "First crop harvested.",
-    "narrative_seed": "Today's story: {title}"
+    "narrative_seed": "Today's story: {title}",
+    "barn_collected": "Barn: collected {item} ×{qty} ({animal}).",
+    "barn_bought": "Barn: bought a {animal} (−{cost}g)."
   }
 }

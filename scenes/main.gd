@@ -195,7 +195,7 @@ func _print_boot_banner() -> void:
 	print("======================================")
 	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
 	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | O journal | F10 audio")
+	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | V barn | O journal | F10 audio")
 	print("======================================")
 
 
@@ -567,6 +567,73 @@ func _apply_seasonal_hud_tint() -> void:
 		season_label.add_theme_color_override("font_color", text_col)
 	_sync_hud_backdrop_layout()
 
+func _record_barn_collect_line(entry: Dictionary) -> void:
+	var item_id: String = str(entry.get("item_id", ""))
+	var qty: int = int(entry.get("qty", 1))
+	var animal_type: String = str(entry.get("animal_type", ""))
+	var tpl: Dictionary = ItemDatabase.get_item(item_id) if ItemDatabase else {}
+	var item_name: String = str(tpl.get("name", item_id))
+	var animal_label: String = UITextCatalog.get_text("barn", animal_type)
+	if animal_label.is_empty():
+		animal_label = animal_type
+	record_world_event(UITextCatalog.format_text("history", "barn_collected", {
+		"item": item_name,
+		"qty": qty,
+		"animal": animal_label
+	}))
+
+
+func _handle_barn_interact() -> void:
+	if not LivestockManager or not player:
+		return
+	var col: Dictionary = LivestockManager.try_collect_all()
+	if bool(col.get("inventory_full", false)):
+		var tip_inv: String = UITextCatalog.get_text("quick_tip", "barn_inventory_full")
+		if not tip_inv.is_empty():
+			show_quick_tip(tip_inv)
+		for ent in col.get("collected", []):
+			if ent is Dictionary:
+				_record_barn_collect_line(ent as Dictionary)
+		return
+	if bool(col.get("ok", false)):
+		for ent2 in col.get("collected", []):
+			if ent2 is Dictionary:
+				_record_barn_collect_line(ent2 as Dictionary)
+		var tip_parts: PackedStringArray = col.get("tips", PackedStringArray())
+		if tip_parts.size() > 0:
+			show_quick_tip(", ".join(tip_parts))
+		return
+	if bool(col.get("empty", false)):
+		var buy: Dictionary = LivestockManager.try_buy_next_type()
+		var why: String = str(buy.get("message", ""))
+		if bool(buy.get("ok", false)):
+			var tid: String = str(buy.get("type", ""))
+			var animal_label2: String = UITextCatalog.get_text("barn", tid)
+			if animal_label2.is_empty():
+				animal_label2 = tid
+			var cost: int = int(buy.get("cost", 0))
+			record_world_event(UITextCatalog.format_text("history", "barn_bought", {
+				"animal": animal_label2,
+				"cost": cost
+			}))
+			show_quick_tip(UITextCatalog.format_text("quick_tip", "barn_bought", {
+				"animal": animal_label2,
+				"cost": cost
+			}))
+		elif why == "cant_afford":
+			show_quick_tip(UITextCatalog.format_text("quick_tip", "barn_cant_afford", {
+				"cost": int(buy.get("cost", 0))
+			}))
+		elif why == "all_full":
+			var tip_full: String = UITextCatalog.get_text("quick_tip", "barn_all_full")
+			if not tip_full.is_empty():
+				show_quick_tip(tip_full)
+		return
+	var tip_wait: String = UITextCatalog.get_text("quick_tip", "barn_nothing_ready")
+	if not tip_wait.is_empty():
+		show_quick_tip(tip_wait)
+
+
 func _update_activity_zone_label() -> void:
 	if not activity_zone_label or not player:
 		return
@@ -595,6 +662,9 @@ func _update_activity_zone_label() -> void:
 		return
 	if sid == "axe" and ChoppingSystem and ChoppingSystem.can_chop_here(player.global_position):
 		activity_zone_label.text = UITextCatalog.get_activity_text("chop_forest")
+		return
+	if GameZones.contains_barn(player.global_position):
+		activity_zone_label.text = UITextCatalog.get_activity_text("barn")
 		return
 	if farm_manager and FarmTierCatalog:
 		var fr: Rect2 = GameZones.rect_farm_upgrade()
@@ -2294,6 +2364,10 @@ func _unhandled_input(event):
 		return
 	if event.is_action_pressed("house_upgrade"):
 		_try_house_upgrade()
+		return
+	if event.is_action_pressed("barn_interact") and player and GameZones.contains_barn(player.global_position):
+		_handle_barn_interact()
+		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("inventory"):
 		toggle_inventory()

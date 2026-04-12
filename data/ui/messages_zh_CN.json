@@ -7,7 +7,12 @@
     "mine_band_0": "表层",
     "mine_band_1": "铁矿带",
     "mine_band_2": "深脉",
-    "chop_forest": "伐木 · 森林"
+    "chop_forest": "伐木 · 森林",
+    "barn": "畜栏 · V 收取 / 空栏时购买"
+  },
+  "barn": {
+    "chicken": "鸡",
+    "cow": "牛"
   },
   "quick_tip": {
     "eat_food_energy": "食用了 {item}（+{energy} 体力）",
@@ -32,7 +37,12 @@
     "fertilizer_apply_needs_empty_tilled": "只能对空的已锄地块施肥（无作物、无洒水器）。",
     "fertilizer_apply_needs_tilled": "施肥需要已锄过的土壤。",
     "plant_wrong_season": "当前季节不能种植该作物。",
-    "stamina_low": "体力过低——进食或休息到明天。"
+    "stamina_low": "体力过低——进食或休息到明天。",
+    "barn_nothing_ready": "暂无可收取产物——改天再来。",
+    "barn_inventory_full": "背包已满，无法收取。",
+    "barn_bought": "购买了{animal}（花费 {cost} 金币）。",
+    "barn_cant_afford": "金币不足，下一只动物需 {cost} 金币。",
+    "barn_all_full": "畜栏已满，无法继续购买。"
   },
   "weather": {
     "sunny": "晴",
@@ -207,6 +217,8 @@
     "game_start": "第 {year} 年 · {season} · 第 {day} 天：开始冒险。",
     "achievement_unlocked": "解锁成就：{title}（{year} 年 {season} 第 {day} 天）",
     "first_harvest": "第一次收获作物。",
-    "narrative_seed": "今日故事：{title}"
+    "narrative_seed": "今日故事：{title}",
+    "barn_collected": "畜栏：收取 {item} ×{qty}（{animal}）。",
+    "barn_bought": "畜栏：购买 {animal}（花费 {cost} 金币）。"
   }
 }

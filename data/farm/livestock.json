@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "barn_zone": [920.0, 285.0, 200.0, 140.0],
+  "animal_types": {
+    "chicken": {
+      "produce_item_id": "farm_fresh_egg",
+      "produce_amount": 1,
+      "days_between": 1,
+      "buy_gold": 400,
+      "max_owned": 4
+    },
+    "cow": {
+      "produce_item_id": "milk_pail",
+      "produce_amount": 1,
+      "days_between": 1,
+      "buy_gold": 1500,
+      "max_owned": 2
+    }
+  },
+  "buy_order": ["chicken", "cow"]
+}

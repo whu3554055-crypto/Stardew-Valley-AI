@@ -201,6 +201,13 @@ func get_station_rect(key: String) -> Rect2:
 	}
 	return fb.get(key, Rect2())
 
+func get_barn_rect() -> Rect2:
+	var a: Variant = get_nested("zones.barn", [])
+	if a is Array and (a as Array).size() >= 4:
+		var ar: Array = a as Array
+		return Rect2(float(ar[0]), float(ar[1]), float(ar[2]), float(ar[3]))
+	return Rect2(920.0, 285.0, 200.0, 140.0)
+
 func get_mine_bounds() -> Dictionary:
 	var d: Variant = get_nested("zones.mine", {})
 	if d is Dictionary:

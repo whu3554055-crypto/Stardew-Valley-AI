@@ -56,7 +56,7 @@
 
 - [ ] **A1 — 单系统加深（第一轮）**  
   在钓鱼 / 挖矿 / 烹饪 / 农场扩展中**选定一条**已有入口的系统，做一轮闭环：**更多内容或规则 + 数值 + 失败/成功提示与反馈**（比开新系统优先）。  
-  *进度：已加深钓鱼 / 挖矿 / 烹饪各一轮；农场：夏季玉米、季节播种、`crop_id`、基础肥料；新增 **Farm Tier 配置**（`data/farm/tiers.json`）与升级（U），并支持可配置收获加成（`harvest_bonus_chance` / `harvest_bonus_max`）；作物库迁移到 `data/farm/crops.json`，新增秋季作物 **pumpkin** 与 `roasted_pumpkin`；商店库存迁移到 `data/shop/stock.json`，种子按季节上架。钓鱼：**狗鱼（河，夜/冬/暴雨偏重）**、**比目鱼（海，秋冬与清晨偏重）**、暴风雨微调；新烤制 `grilled_pike` / `grilled_halibut`。伐木：**树液**随机掉落（约 12%）、装备斧头时活动区 HUD「伐木 · 森林」。烹饪：**树液闭环** — `sap_glazed_toast`（面包+树液）、`sap_glazed_catfish`（鲶鱼+树液）；托管迭代本轮 **`hearty_pumpkin_bowl`**（南瓜+土豆+面包）。挖矿：**深脉** 稀有掉落 `amethyst_shard`（铁镐权重略加成）；煤/铜/铁/石 成功文案区分；熔炉新增 `amethyst_glass`（2 碎块 + 1 煤）。**最新**：新增厨房配方 **`corn_potato_hash`**（玉米+土豆，`data/recipes/cooking.json`）。*
+  *进度：已加深钓鱼 / 挖矿 / 烹饪各一轮；农场：夏季玉米、季节播种、`crop_id`、基础肥料；新增 **Farm Tier 配置**（`data/farm/tiers.json`）与升级（U），并支持可配置收获加成（`harvest_bonus_chance` / `harvest_bonus_max`）；作物库迁移到 `data/farm/crops.json`，新增秋季作物 **pumpkin** 与 `roasted_pumpkin`；商店库存迁移到 `data/shop/stock.json`，种子按季节上架。钓鱼：**狗鱼（河，夜/冬/暴雨偏重）**、**比目鱼（海，秋冬与清晨偏重）**、暴风雨微调；新烤制 `grilled_pike` / `grilled_halibut`。伐木：**树液**随机掉落（约 12%）、装备斧头时活动区 HUD「伐木 · 森林」。烹饪：**树液闭环** — `sap_glazed_toast`（面包+树液）、`sap_glazed_catfish`（鲶鱼+树液）；托管迭代本轮 **`hearty_pumpkin_bowl`**（南瓜+土豆+面包）。挖矿：**深脉** 稀有掉落 `amethyst_shard`（铁镐权重略加成）；煤/铜/铁/石 成功文案区分；熔炉新增 `amethyst_glass`（2 碎块 + 1 煤）。**最新**：新增厨房配方 **`corn_potato_hash`**（玉米+土豆，`data/recipes/cooking.json`）；**`fried_egg`**（`farm_fresh_egg`，畜栏鸡蛋闭环）。*
 
 - [ ] **A2 — 单系统加深（第二轮）**  
   换另一条系统重复 A1 的标准，避免长期只堆一条线。  
@@ -68,7 +68,7 @@
 
 - [ ] **A4 — 长线玩法 MVP（按需排期）**  
   从下列中选做最小可用版本（不必一次全做）：**建筑升级** / **畜牧** / **洞穴与战斗**（若目标超出当前「矿区条带式」挖矿）。
-  *进度：建筑升级 MVP（房屋）已落地：`data/buildings/upgrades.json` 配置升级成本与收益；地图内房屋区域按 **H** 升级；`player_data.house_level` 持久化并驱动 `stamina_max` / `stamina_regen_mult`。新增 **Lv3 Family House**（上限与恢复倍率进一步提升）。*
+  *进度：建筑升级 MVP（房屋）已落地：`data/buildings/upgrades.json` 配置升级成本与收益；地图内房屋区域按 **H** 升级；`player_data.house_level` 持久化并驱动 `stamina_max` / `stamina_regen_mult`。新增 **Lv3 Family House**（上限与恢复倍率进一步提升）。**畜牧 MVP**：`data/farm/livestock.json` + `LivestockManager`；畜栏区（与 `immersion_config.json` `zones.barn` 对齐）**V** 收取产物；栏内无动物时 **V** 按顺序购买鸡/牛（扣金、`player_data.livestock_animals` 持久化）；产物 **鸡蛋/牛奶** 入包，鸡蛋可厨房做 **煎蛋**。*
 
 ### 阶段 B — AI（玩法阶段目标达成后再做）
 

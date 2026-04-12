@@ -76,6 +76,17 @@ static func contains_farm_upgrade_zone(pos: Vector2) -> bool:
 static func contains_house_upgrade_zone(pos: Vector2) -> bool:
 	return rect_house_upgrade().has_point(pos)
 
+## Barn / livestock zone — rect from `LivestockManager` (`data/farm/livestock.json`).
+static func rect_barn() -> Rect2:
+	if LivestockManager:
+		return LivestockManager.barn_rect()
+	return Rect2(920, 285, 200, 140)
+
+static func contains_barn(pos: Vector2) -> bool:
+	if LivestockManager:
+		return LivestockManager.contains_barn(pos)
+	return rect_barn().has_point(pos)
+
 static func mine_bounds_dict() -> Dictionary:
 	return ImmersionConfig.get_mine_bounds() if ImmersionConfig else {}
 

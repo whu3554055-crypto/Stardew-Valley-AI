@@ -147,6 +147,39 @@ func initialize_items():
 		"stamina_restore": 45.0
 	}
 
+	items["farm_fresh_egg"] = {
+		"id": "farm_fresh_egg",
+		"name": "Farm Egg",
+		"description": "Collected from a coop hen.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 50,
+		"stamina_restore": 22.0
+	}
+
+	items["milk_pail"] = {
+		"id": "milk_pail",
+		"name": "Milk",
+		"description": "Fresh milk from the barn.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 125,
+		"stamina_restore": 32.0
+	}
+
+	items["fried_egg"] = {
+		"id": "fried_egg",
+		"name": "Fried Egg",
+		"description": "Simple pan-fried egg from the kitchen.",
+		"type": "food",
+		"stack": 1,
+		"max_stack": 99,
+		"sell_price": 72,
+		"stamina_restore": 38.0
+	}
+
 	items["fish_sandwich"] = {
 		"id": "fish_sandwich",
 		"name": "Fish Sandwich",
@@ -858,6 +891,9 @@ func resolve_icon_path(item_id: String) -> String:
 		"amethyst_glass":
 			if ResourceLoader.exists("res://assets/sprites/items/resources/silver_bar.png"):
 				return "res://assets/sprites/items/resources/silver_bar.png"
+		"farm_fresh_egg", "milk_pail", "fried_egg":
+			if ResourceLoader.exists("res://assets/sprites/items/consumables/bread.png"):
+				return "res://assets/sprites/items/consumables/bread.png"
 	return ""
 
 func get_item(item_id: String) -> Dictionary:
