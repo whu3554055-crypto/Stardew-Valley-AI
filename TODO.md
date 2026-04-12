@@ -125,8 +125,8 @@
 ## 🟡 进行中 / 期望项 (In Progress & Desired Features)
 
 ### 核心玩法扩展 (Gameplay Expansion)
-- [ ] **钓鱼系统 (Fishing System)**: 包含小游戏机制。
-- [ ] **挖矿与战斗 (Mining & Combat)**: 洞穴系统、怪物、生命值与武器。
+- [x] **钓鱼系统 (Fishing System)**: （MVP 已达）`FishingSystem` 咬钩窗口小游戏、河/海分区、多鱼种与鱼饵分级、成功/失败反馈与简报；继续加深见阶段 **A1 / A2** 进度说明。
+- [x] **挖矿与战斗 (Mining & Combat)**: （MVP 已达）`MiningSystem` 条带矿区、稀有掉落与文案分层、`MineCombatController` 共享战斗循环（主场景与 `world_mine`）；**大型洞穴/多层 Roguelike** 仍属扩展目标，见 **A4**。
 - [ ] **建筑升级 (Building Upgrades)**: 扩建房屋，建造谷仓等。
 - [ ] **畜牧系统 (Animal Husbandry)**: 养鸡、养牛、产奶与产蛋。
 - [ ] **烹饪系统 (Cooking System)**: 食谱学习与体力恢复。
@@ -137,7 +137,7 @@
 - [x] **AI 任务系统 (AI Quest System)**: 基于 NPC 当前需求动态生成任务。
   - [x] 基础异步任务生成框架
   - [x] LLM 创意增强接口 (LLM-enhanced quest details)
-  - [ ] 任务目标自动验证逻辑 (Objective verification)
+  - [x] 任务目标自动验证逻辑 (Objective verification)：客户端 `verify_active_objectives()`（`fetch` / `delivery` / `talk` / `problem_solving`，交付型依赖 `track_event("talk")`）；回归 `tests/unit/test_ai_quest_objective_verify.gd`。
 - [ ] **社交动力学插件 (Social Dynamics)**: NPC 之间的复杂互动（争吵、合作、流言）。
 
 - [ ] **语音集成 (NPC Audio/TTS)**: 为 NPC 对话集成文本转语音。
