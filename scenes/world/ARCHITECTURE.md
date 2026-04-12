@@ -12,7 +12,7 @@
 ## 出生点
 
 - 使用 `WorldSpawnPoint`（`Marker2D` + 组 `world_spawn` + `spawn_id`）。
-- 场景加载后由 `WorldRouter.apply_pending_spawn()` 将 `group("player")` 的节点对齐到目标点。
+- 场景加载后由 `WorldRouter.apply_pending_spawn_and_clear()`（或 `apply_pending_spawn_to_player()`）将 `group("player")` 的节点对齐到目标点。
 
 ## 存档中的世界字段
 
@@ -24,4 +24,4 @@
 1. 游戏加载存档 → `WorldRouter.set_world_state_from_bundle(world)`。
 2. `Main` 完成角色档案引导后 → `call_deferred` → `WorldRouter.consume_saved_world_after_boot()`。
 3. 若 `path` 与当前场景一致 → 仅应用出生点；否则 `change_scene_to_file`。
-4. 新场景 `_ready` 末尾调用 `WorldRouter.apply_pending_spawn(player)`。
+4. 新场景根节点 `_ready` 末尾调用 `WorldRouter.apply_pending_spawn_and_clear()`（示例：`world_playground_root.gd`）。
