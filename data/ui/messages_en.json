@@ -209,7 +209,12 @@
   "journal": {
     "tab_achievements": "Achievements",
     "tab_history": "History",
+    "tab_daily_story": "Today",
     "history_empty": "No entries yet — farm, fish, and complete quests!",
+    "daily_story_empty": "No daily story yet — sleep to a new day or trigger the narrative loop.",
+    "daily_story_meta": "Source: {source} · Day {day}",
+    "daily_story_hotspot": "Clue: visit {location}{npc}",
+    "hotspot_hud_line": "Story · {location} · {npc} ({day})",
     "close": "Close",
     "hint_toggle": "Press O to toggle"
   },

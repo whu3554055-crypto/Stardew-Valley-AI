@@ -124,3 +124,50 @@ func get_time_string_localized(locale_code: String) -> String:
 	if locale_code == "en":
 		return get_time_string()
 	return "%02d:%02d" % [hours, minutes]
+
+
+func ensure_progression_subtrees() -> void:
+	if not player_data.has("npc_friendship") or not (player_data["npc_friendship"] is Dictionary):
+		player_data["npc_friendship"] = {}
+	if not player_data.has("skill_xp") or not (player_data["skill_xp"] is Dictionary):
+		player_data["skill_xp"] = {}
+	if not player_data.has("daily_narrative_snapshot") or not (player_data["daily_narrative_snapshot"] is Dictionary):
+		player_data["daily_narrative_snapshot"] = {}
+
+
+func get_npc_friendship(npc_id: String) -> int:
+	ensure_progression_subtrees()
+	var d: Dictionary = player_data["npc_friendship"] as Dictionary
+	return int(d.get(npc_id, 0))
+
+
+func add_npc_friendship(npc_id: String, delta: int) -> int:
+	if npc_id.is_empty() or delta == 0:
+		return get_npc_friendship(npc_id)
+	ensure_progression_subtrees()
+	var d: Dictionary = player_data["npc_friendship"] as Dictionary
+	var next: int = int(d.get(npc_id, 0)) + delta
+	d[npc_id] = next
+	return next
+
+
+func get_skill_xp(skill_id: String) -> int:
+	ensure_progression_subtrees()
+	var sid: String = skill_id.strip_edges().to_lower()
+	if sid.is_empty():
+		sid = "general"
+	var d: Dictionary = player_data["skill_xp"] as Dictionary
+	return int(d.get(sid, 0))
+
+
+func add_skill_xp(skill_id: String, delta: int) -> int:
+	if delta == 0:
+		return get_skill_xp(skill_id)
+	ensure_progression_subtrees()
+	var sid: String = skill_id.strip_edges().to_lower()
+	if sid.is_empty():
+		sid = "general"
+	var d: Dictionary = player_data["skill_xp"] as Dictionary
+	var next: int = int(d.get(sid, 0)) + delta
+	d[sid] = next
+	return next

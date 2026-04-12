@@ -161,6 +161,7 @@ func _ready():
 	_finish_boot_after_profile()
 	if WorldRouter:
 		WorldRouter.apply_pending_spawn_and_clear()
+	call_deferred("_refresh_story_hotspot_hud")
 
 
 func _open_player_creation() -> void:
@@ -174,6 +175,7 @@ func _on_player_creation_done() -> void:
 	_finish_boot_after_profile()
 	if WorldRouter:
 		WorldRouter.apply_pending_spawn_and_clear()
+	call_deferred("_refresh_story_hotspot_hud")
 
 
 func _finish_boot_after_profile() -> void:
@@ -234,6 +236,7 @@ func _on_achievement_unlocked_history(achievement_id: String) -> void:
 func _ensure_profile_defaults() -> void:
 	if not GameManager:
 		return
+	GameManager.ensure_progression_subtrees()
 	if not GameManager.player_data.has("history_log"):
 		GameManager.player_data["history_log"] = []
 	if not GameManager.player_data.has("profile"):
@@ -363,6 +366,24 @@ func _apply_a3_ui_polish() -> void:
 		q_bg.add_theme_stylebox_override("panel", qsb)
 		ui_layer.add_child(q_bg)
 		ui_layer.move_child(q_bg, 0)
+	if ui_layer and ui_layer.get_node_or_null("StoryHotspotHud") == null:
+		var spot_lbl := Label.new()
+		spot_lbl.name = "StoryHotspotHud"
+		spot_lbl.visible = false
+		spot_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		spot_lbl.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		spot_lbl.offset_left = -300.0
+		spot_lbl.offset_top = 130.0
+		spot_lbl.offset_right = -10.0
+		spot_lbl.offset_bottom = 196.0
+		spot_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		spot_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		spot_lbl.add_theme_font_size_override("font_size", 11)
+		spot_lbl.add_theme_color_override("font_color", Color(0.92, 0.88, 0.72, 0.96))
+		spot_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+		spot_lbl.add_theme_constant_override("shadow_offset_x", 1)
+		spot_lbl.add_theme_constant_override("shadow_offset_y", 1)
+		ui_layer.add_child(spot_lbl)
 	if ui_layer and ui_layer.get_node_or_null("ActivityZoneBackdrop") == null:
 		var a_bg := Panel.new()
 		a_bg.name = "ActivityZoneBackdrop"
@@ -804,6 +825,7 @@ func _apply_save_bundle(bundle: Dictionary) -> void:
 	if WorldRouter:
 		WorldRouter.set_world_state_from_bundle(bundle.get("world", {}))
 	_validate_loaded_state()
+	call_deferred("_refresh_story_hotspot_hud")
 
 func _clamp_player_stamina_and_gold() -> void:
 	if not GameManager:
@@ -2012,6 +2034,19 @@ func _on_daily_narrative_generated(_narrative_id: String, narrative_data: Dictio
 	if not summary.is_empty():
 		line += " — " + summary
 	record_world_event(line)
+	if GameManager:
+		GameManager.ensure_progression_subtrees()
+		GameManager.player_data["daily_narrative_snapshot"] = {
+			"title": title,
+			"summary": summary,
+			"source": source,
+			"id": nid,
+			"day_key": "%d-%s-%d" % [
+				int(GameManager.player_data.get("year", 1)),
+				str(GameManager.player_data.get("season", "spring")),
+				int(GameManager.player_data.get("day", 1))
+			]
+		}
 	_emit_narrative_hotspot_hint(narrative_data)
 
 func _on_narrative_backend_fallback(reason: String) -> void:
@@ -2022,6 +2057,11 @@ func _emit_narrative_hotspot_hint(narrative_data: Dictionary) -> void:
 	if hotspot.is_empty():
 		return
 	active_story_hotspot = hotspot.duplicate(true)
+	if GameManager and GameManager.player_data.get("daily_narrative_snapshot") is Dictionary:
+		var snap: Dictionary = GameManager.player_data["daily_narrative_snapshot"] as Dictionary
+		snap["hotspot_location"] = str(hotspot.get("location", ""))
+		snap["hotspot_npc_id"] = str(hotspot.get("npc_id", ""))
+		snap["hotspot_npc_name"] = str(hotspot.get("npc_name", ""))
 	var place: String = str(hotspot.get("location", "town_square"))
 	var npc_name: String = str(hotspot.get("npc_name", ""))
 	var line: String = "Story clue: check %s." % place
@@ -2029,6 +2069,35 @@ func _emit_narrative_hotspot_hint(narrative_data: Dictionary) -> void:
 		line = "Story clue: check %s and talk to %s." % [place, npc_name]
 	record_world_event(line)
 	show_quick_tip(line, 2.0)
+	_refresh_story_hotspot_hud()
+
+
+func _refresh_story_hotspot_hud() -> void:
+	if not ui_layer:
+		return
+	var sh: Label = ui_layer.get_node_or_null("StoryHotspotHud") as Label
+	if sh == null:
+		return
+	if active_story_hotspot.is_empty():
+		sh.visible = false
+		sh.text = ""
+		return
+	var loc: String = str(active_story_hotspot.get("location", ""))
+	var nn: String = str(active_story_hotspot.get("npc_name", ""))
+	var dayk: String = str(active_story_hotspot.get("day_key", ""))
+	var line: String = ""
+	if UITextCatalog:
+		line = UITextCatalog.format_text("journal", "hotspot_hud_line", {
+			"location": loc,
+			"npc": nn,
+			"day": dayk
+		})
+	if line.is_empty():
+		line = "Story · %s" % loc
+		if not nn.is_empty():
+			line += " · %s" % nn
+	sh.text = line
+	sh.visible = true
 
 func _resolve_narrative_hotspot(narrative_data: Dictionary) -> Dictionary:
 	var events: Array = narrative_data.get("events", [])

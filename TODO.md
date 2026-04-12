@@ -74,17 +74,17 @@
 
 > **范式节奏（与 AI/Agentic 大纲对齐）**：每季度至少完成 **一项** 与 `docs/03-研发管理/04-AI与Agentic开发指导大纲.md` **§6 下一步计划** 可对应的工作（例如：确定性字段清单、一条端到端校验链路、客户端 LLM 入口划界、或 B1–B3 中一项可验收闭环），并在该大纲 **§7 阶段性反思清单** 或团队记录中简要留痕。
 
-- [ ] **B1 — AI 任务落地**  
+- [x] **B1 — AI 任务落地**  
   补全动态任务奖励与状态：**好感 / 技能经验 / 物品** 等到 `GameManager` 或现有系统；**任务完成条件**与玩家背包、对话记录等一致可验（含后端 `verify` 路径时保证上报字段对齐）。
-  *进度：客户端 `AIQuestSystem` 的 AI 增强链路已从占位改为真实调用统一入口 `AIAgentManager.request_text_generation()`，并加入 JSON 校验与失败降级；新增 `_normalize_ai_quest_payload()` 做字段收口（长度裁剪、默认值、显式目标字段）并统一 `objective_type`（`fetch_item` / `deliver_to_npc` / `solve_problem` / `talk_to_npc`）；任务描述会自动追加 `Completion:` 行提示，和实际验证规则对齐；最小目标验证已覆盖 `fetch` / `delivery`（含 `target_npc` 时需与目标 NPC 对话后交付）并扩展 `problem_solving`（与任务发起 NPC 对话后可完成）；奖励写回统一到 `player_data.gold`（修正 `money` 漂移），并补 AI 任务桥接 `QuestSystem.add_quest_from_ai()` 以保持任务 UI/事件一致；AI 任务完成会向 `WorldEventFeed` 写结构化反馈（完成项/金币/市场脉冲）。*
+  *进度：客户端 `AIQuestSystem` 的 AI 增强链路已从占位改为真实调用统一入口 `AIAgentManager.request_text_generation()`，并加入 JSON 校验与失败降级；新增 `_normalize_ai_quest_payload()` 做字段收口（长度裁剪、默认值、显式目标字段）并统一 `objective_type`（`fetch_item` / `deliver_to_npc` / `solve_problem` / `talk_to_npc`）；任务描述会自动追加 `Completion:` 行提示，和实际验证规则对齐；最小目标验证已覆盖 `fetch` / `delivery`（含 `target_npc` 时需与目标 NPC 对话后交付）并扩展 `problem_solving`（与任务发起 NPC 对话后可完成）；奖励写回统一到 `player_data.gold`（修正 `money` 漂移），并补 AI 任务桥接 `QuestSystem.add_quest_from_ai()` 以保持任务 UI/事件一致；AI 任务完成会向 `WorldEventFeed` 写结构化反馈（完成项/金币/市场脉冲）。**奖励扩展**：`grant_quest_rewards` 写入 `GameManager` 的 `npc_friendship` / `skill_xp`（及 `NPCTraitSystem.update_relationship`）、`item`/`items`/`friendship_both` 入包；GUT `tests/unit/test_ai_quest_reward_grant.gd`；验收 **AIA-07**。*
 
 - [ ] **B2 — AI 经济闭环**  
   **任务完成 / 出售行为 / 天气等** → 写入经济状态 → **次日（或刷新点）商店买卖价可见变化**（先简单公式 + 一句 UI 说明即可）。
   *进度：已接入最小交易反馈环：玩家在商店买入/卖出会即时写入 `AIEconomySystem.on_shop_trade()`，对供需做轻量脉冲（买入偏涨、卖出偏跌），并直接影响 `get_shop_buy_price/get_shop_sell_price`；商店列表已显示 `get_market_brief()` 标签（如 `↑+12%`/`↓-8%`）作为价格变化可见说明；每日换日会将 `get_daily_shop_brief()` 写入 `WorldEventFeed`，且买/卖后追加单条 `Market shift` 反馈。*
 
-- [ ] **B3 — 每日叙事可见化**  
+- [x] **B3 — 每日叙事可见化**  
   除生成与任务外，增加**当日摘要 UI**，可选 **地图热点 / 弹窗**，让玩家每天「看见」叙事结果。
-  *进度：`DailyNarrativeSystem` 的后端日叙事请求已改为统一入口 `AIAgentManager.request_text_generation(use_backend)`，与 AI 任务链路一致，减少分散 HTTP 客户端实现；`main.gd` 已接 `DailyNarrativeSystem.narrative_generated`，将当日标题/来源/摘要写入 `WorldEventFeed`，并在叙事任务落地时附带 `narrative_id/narrative_day_key` 索引；`QuestLog` 对日叙事任务显示 `[Story <day_key>]` 标签；`QuestSystem.add_story_daily_quest()` 已加同日同源强去重（按 `narrative_day_key` 刷新而非重复新增）并限制活跃叙事任务数。*
+  *进度：`DailyNarrativeSystem` 的后端日叙事请求已改为统一入口 `AIAgentManager.request_text_generation(use_backend)`，与 AI 任务链路一致，减少分散 HTTP 客户端实现；`main.gd` 已接 `DailyNarrativeSystem.narrative_generated`，将当日标题/来源/摘要写入 `WorldEventFeed`，并在叙事任务落地时附带 `narrative_id/narrative_day_key` 索引；`QuestLog` 对日叙事任务显示 `[Story <day_key>]` 标签；`QuestSystem.add_story_daily_quest()` 已加同日同源强去重（按 `narrative_day_key` 刷新而非重复新增）并限制活跃叙事任务数。**可见化**：`player_data.daily_narrative_snapshot` + 日记「今日」页（`player_journal_panel`）；主场景右上 `StoryHotspotHud`（`journal.hotspot_hud_line`）；验收 **AIA-08**。*
 
 - [ ] **B4 — AI 增强（后排）**  
   **NPC↔NPC 社交**、**真实 TTS 与语音队列** 等，见本文「实施中发现（防遗漏）」中的 TTS/社交条目；在 B1–B3 稳定后再展开。

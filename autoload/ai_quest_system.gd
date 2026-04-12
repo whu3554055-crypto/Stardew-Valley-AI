@@ -739,6 +739,8 @@ func fill_quest_template(quest: Dictionary, template: Dictionary, opportunity: D
 			quest.objective_type = OBJECTIVE_SOLVE
 			quest.description = quest.description.replace("{problem}", quest.problem)
 	quest.description = _append_completion_hint(quest)
+	if str(quest.get("quest_giver", "")).is_empty():
+		quest["quest_giver"] = str(npc_id)
 	return quest
 
 func generate_target_item(opportunity: Dictionary) -> String:
@@ -929,29 +931,83 @@ func complete_quest(quest_id: String, success: bool = true, extra_data: Dictiona
 
 func grant_quest_rewards(quest: Dictionary):
 	"""Grant rewards to player"""
-	var rewards = quest.rewards
-	
-	if rewards.has("gold") and rewards.gold > 0:
-		if GameManager and GameManager.player_data:
-			GameManager.player_data.gold = int(GameManager.player_data.get("gold", 0)) + int(rewards.gold)
-	
+	var rewards: Dictionary = quest.rewards if quest.get("rewards") is Dictionary else {}
+	var giver: String = str(quest.get("quest_giver", quest.get("opportunity_source_npc", ""))).strip_edges()
+
+	if rewards.has("gold"):
+		var gv: Variant = rewards.gold
+		var g: int = int(gv) if gv is int or gv is float else (int(str(gv)) if str(gv).is_valid_int() else 0)
+		if g > 0 and GameManager and GameManager.player_data:
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + g
+
 	if rewards.has("friendship"):
-		# Add friendship to quest giver
-		pass
-	
+		var fh: int = maxi(0, int(rewards.friendship))
+		if fh > 0:
+			_apply_ai_friendship_reward(giver, fh)
+
+	if rewards.has("friendship_both"):
+		var fb: int = maxi(0, int(rewards.friendship_both))
+		if fb > 0:
+			var n1: String = str(quest.get("npc1", giver)).strip_edges()
+			var n2: String = str(quest.get("npc2", "")).strip_edges()
+			if not n1.is_empty() and n1 != "unknown":
+				_apply_ai_friendship_reward(n1, fb)
+			if not n2.is_empty():
+				_apply_ai_friendship_reward(n2, fb)
+
 	if rewards.has("skill_xp"):
-		# Grant skill experience
-		pass
-	
+		var sx: int = maxi(0, int(rewards.skill_xp))
+		if sx > 0 and GameManager:
+			var sk: String = str(rewards.get("skill", quest.get("reward_skill", "general"))).strip_edges()
+			GameManager.add_skill_xp(sk, sx)
+
 	if rewards.has("item") and rewards.item != null:
 		var item_id: String = str(rewards.item)
-		var tpl: Dictionary = ItemDatabase.get_item(item_id) if ItemDatabase else {}
-		if not tpl.is_empty() and InventoryManager:
-			InventoryManager.add_item(tpl.duplicate(true))
+		if not item_id.is_empty() and item_id != "null":
+			var qty: int = maxi(1, int(rewards.get("item_count", rewards.get("item_qty", 1))))
+			_grant_reward_item_stack(item_id, qty)
+
+	if rewards.has("items") and rewards.items is Array:
+		for ent in rewards.items:
+			if ent is Dictionary:
+				var iid: String = str(ent.get("id", ent.get("item_id", ""))).strip_edges()
+				var cnt: int = maxi(1, int(ent.get("count", ent.get("qty", 1))))
+				if not iid.is_empty():
+					_grant_reward_item_stack(iid, cnt)
+			elif ent is String:
+				var parts: PackedStringArray = (ent as String).split(":")
+				var sid: String = parts[0].strip_edges()
+				var scnt: int = int(parts[1]) if parts.size() > 1 and parts[1].strip_edges().is_valid_int() else 1
+				if not sid.is_empty():
+					_grant_reward_item_stack(sid, maxi(1, scnt))
+
+
+func _apply_ai_friendship_reward(npc_id: String, heart_units: int) -> void:
+	if heart_units <= 0:
+		return
+	var nid: String = npc_id.strip_edges()
+	if nid.is_empty() or nid == "unknown":
+		return
+	if GameManager:
+		GameManager.add_npc_friendship(nid, heart_units)
+	if NPCTraitSystem:
+		NPCTraitSystem.update_relationship(nid, "player", heart_units * 10, "ai_quest_reward")
+
+
+func _grant_reward_item_stack(item_id: String, count: int) -> void:
+	if count <= 0 or ItemDatabase == null or InventoryManager == null:
+		return
+	var tpl: Dictionary = ItemDatabase.get_item(item_id)
+	if tpl.is_empty():
+		return
+	for _i in count:
+		InventoryManager.add_item(tpl.duplicate(true))
 
 func _emit_structured_completion_feedback(quest_id: String, quest: Dictionary) -> void:
 	var title: String = str(quest.get("name", quest_id))
-	var gold: int = int(quest.get("rewards", {}).get("gold", 0))
+	var rw: Dictionary = quest.get("rewards", {}) as Dictionary
+	var gpv: Variant = rw.get("gold", 0)
+	var gold: int = int(gpv) if gpv is int or gpv is float else 0
 	var target_item: String = str(quest.get("target_item", ""))
 	var market_note: String = ""
 	if AIEconomySystem and not target_item.is_empty():
@@ -959,6 +1015,17 @@ func _emit_structured_completion_feedback(quest_id: String, quest: Dictionary) -
 	var line: String = "AI Quest done: %s | gold +%d" % [title, gold]
 	if not market_note.is_empty():
 		line += " | market %s" % market_note
+	var giver: String = str(quest.get("quest_giver", "")).strip_edges()
+	var fh: int = int(rw.get("friendship", 0))
+	if fh > 0 and not giver.is_empty():
+		line += " | friendship %+d (%s)" % [fh, giver]
+	var sx: int = int(rw.get("skill_xp", 0))
+	if sx > 0:
+		var sk: String = str(rw.get("skill", quest.get("reward_skill", "general")))
+		line += " | skill_xp %+d (%s)" % [sx, sk]
+	if rw.has("item") and str(rw.item).strip_edges() != "" and str(rw.item) != "null":
+		var q: int = maxi(1, int(rw.get("item_count", rw.get("item_qty", 1))))
+		line += " | item %s x%d" % [str(rw.item), q]
 	if get_tree() and get_tree().current_scene and get_tree().current_scene.has_method("record_world_event"):
 		get_tree().current_scene.call("record_world_event", line)
 

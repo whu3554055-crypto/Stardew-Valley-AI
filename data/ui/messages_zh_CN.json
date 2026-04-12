@@ -209,7 +209,12 @@
   "journal": {
     "tab_achievements": "成就",
     "tab_history": "历程",
+    "tab_daily_story": "今日故事",
     "history_empty": "暂无记录。去种田、钓鱼、完成任务吧！",
+    "daily_story_empty": "暂无当日故事——换日或触发叙事流程后会显示。",
+    "daily_story_meta": "来源：{source} · 日序 {day}",
+    "daily_story_hotspot": "线索：前往 {location}{npc}",
+    "hotspot_hud_line": "故事 · {location} · {npc}（{day}）",
     "close": "关闭",
     "hint_toggle": "按 O 打开 / 关闭"
   },
