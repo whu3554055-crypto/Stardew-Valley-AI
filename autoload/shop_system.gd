@@ -228,7 +228,7 @@ func _fallback_stock() -> Dictionary:
 		"potato_seeds": {"price": 50, "stock": 99, "seasons": ["spring"]},
 		"corn_seeds": {"price": 150, "stock": 99, "seasons": ["summer"]},
 		"pumpkin_seeds": {"price": 120, "stock": 99, "seasons": ["fall"]},
-		"basic_fertilizer": {"price": 35, "stock": 99},
+		"basic_fertilizer": {"price": 35, "stock": 99, "seasons": ["spring"]},
 		"bread": {"price": 50, "stock": 99},
 		"fishing_rod": {"price": 120, "stock": 10},
 		"worm_bait": {"price": 8, "stock": 99},

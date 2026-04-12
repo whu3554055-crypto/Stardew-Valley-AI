@@ -6,7 +6,7 @@
     { "id": "potato_seeds", "price": 50, "stock": 99, "seasons": ["spring"] },
     { "id": "corn_seeds", "price": 150, "stock": 99, "seasons": ["summer"] },
     { "id": "pumpkin_seeds", "price": 120, "stock": 99, "seasons": ["fall"] },
-    { "id": "basic_fertilizer", "price": 35, "stock": 99 },
+    { "id": "basic_fertilizer", "price": 35, "stock": 99, "seasons": ["spring"] },
     { "id": "bread", "price": 50, "stock": 99 },
     { "id": "fishing_rod", "price": 120, "stock": 10 },
     { "id": "worm_bait", "price": 8, "stock": 99 },
