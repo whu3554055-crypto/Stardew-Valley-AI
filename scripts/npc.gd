@@ -40,6 +40,7 @@ signal ai_thinking_started()
 signal ai_thinking_finished()
 
 func _ready():
+	add_to_group("npc_villager")
 	# Set default npc_id if not set
 	if npc_id == "npc_default":
 		npc_id = name.to_lower().replace(" ", "_")
@@ -199,6 +200,10 @@ func _on_ai_error(response_npc_id: String, error: String):
 	dialogue_ready.emit(fallback + " (AI unavailable)")
 
 func get_static_dialogue() -> String:
+	if NpcDialogueCatalog:
+		var pooled: String = NpcDialogueCatalog.pick_line_for_interact(npc_id)
+		if not pooled.is_empty():
+			return pooled
 	if dialogue_lines.size() > 0:
 		current_dialogue_index = randi() % dialogue_lines.size()
 		return dialogue_lines[current_dialogue_index]

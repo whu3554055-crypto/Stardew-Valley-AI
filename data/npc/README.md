@@ -1,5 +1,10 @@
 # NPC 数据（占位）
 
+## `dialogue_pools.json`（E2）
+
+- **用途**：可重复闲聊 `lines[]` + 单条 `quest_line`（进行中任务相关 NPC 时约 35% 替换）。
+- **运行时**：Autoload `NpcDialogueCatalog` 加载；`NPC.get_static_dialogue()` 优先池化文案，再回落 `dialogue_lines`。
+
 ## `simple_schedules.json`（E1）
 
 - **用途**：2–3 名 NPC 的**时间段 + 锚点占位**，供后续「仅当前场景实例化 NPC」或「全局日程 + 场景内刷新」接入。

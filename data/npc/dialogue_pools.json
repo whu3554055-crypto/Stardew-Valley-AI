@@ -1,0 +1,32 @@
+{
+  "pierre": {
+    "lines": [
+      "Welcome — seeds and tools are stocked for the season.",
+      "Rain or shine, the store opens when you need it.",
+      "If you run low on energy, grab something simple to eat.",
+      "Parsnip is a forgiving first crop — good for learning the rhythm.",
+      "Caroline says hi — we're both rooting for your farm."
+    ],
+    "quest_line": "Check your journal for town requests — deliveries pay well."
+  },
+  "abigail": {
+    "lines": [
+      "The woods feel different after rain. Kind of electric.",
+      "Sometimes I practice flute by the cliffs. Want to listen sometime?",
+      "Dad worries, but I've got my own compass.",
+      "If you find weird stones in the mine, tell me — I collect oddities.",
+      "Ever tried fishing at night? Different bites, different mood."
+    ],
+    "quest_line": "If a journal quest points to me, I'm probably around town or the forest edge."
+  },
+  "lewis": {
+    "lines": [
+      "Morning, farmer. The valley keeps us all busy.",
+      "Town projects move faster when folks pitch in.",
+      "Seasons turn quick — plan your upgrades before winter bites.",
+      "We measure a good year in small kindnesses, not just gold.",
+      "The community center could use steady hands — think about it."
+    ],
+    "quest_line": "Official notices go through the journal — complete them to lift town morale."
+  }
+}
