@@ -80,13 +80,18 @@ position = Vector2(120, 360)
 script = ExtResource("4_spawn")
 spawn_id = "from_main"
 
+[node name="Spawn_from_world_town" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(900, 360)
+script = ExtResource("4_spawn")
+spawn_id = "from_world_town"
+
 [node name="Hint" type="Label" parent="."]
 offset_left = 16.0
 offset_top = 12.0
 offset_right = 720.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Farm — ← Main hub · → Town · Esc: save"
+text = "Farm — ← Main · → Town · Town also has ↓ Farm · Esc: save"
 
 [node name="PortalToMain" type="Area2D" parent="."]
 position = Vector2(56, 360)

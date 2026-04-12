@@ -15,8 +15,9 @@
 1. 新游戏或读档进入 `main`。
 2. 走通：**↓ Farm** → 东口 **Town** → … → **Mine** → **→ Main**。
 3. 在 `world_forest` / `world_beach` / `world_mine` 内用斧 / 竿 / 镐各试一次（应在彩色逻辑带内成功）。
-4. `world_town`：靠近 Pierre 按 **B** 打开商店；**E** 对话应出现 `dialogue_pools.json` 文案。
-5. 存档再读档：`world.path` + `spawn_id` 落地（B8）。
+4. **`world_mine`**：在矿区内停留数秒应刷出史莱姆；**鼠标左键（use_tool）** 挥剑击杀；任务 `enemy_kill` 应计数。
+5. `world_town`：**↓ Farm** 直达农场；靠近 Pierre 按 **B** 打开商店；**E** 对话应出现 `dialogue_pools.json` 文案。
+6. 存档再读档：`world.path` + `spawn_id` 落地（B8）。
 
 ## 资源路径（薄壳）
 

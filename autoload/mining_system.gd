@@ -37,6 +37,13 @@ func _mine_override_active() -> bool:
 	return _mine_bounds_override.size.x > 0.0 and _mine_bounds_override.size.y > 0.0
 
 
+## Random enemy spawn positions inside the active mine AABB (hub `GameZones` or `world_mine` override).
+func get_effective_mine_rect() -> Rect2:
+	if _mine_override_active():
+		return _mine_bounds_override
+	return GameZones.mine_world_rect()
+
+
 func can_mine_here(player_pos: Vector2) -> bool:
 	if _mine_override_active():
 		return _mine_bounds_override.has_point(player_pos)
