@@ -5,7 +5,7 @@
   - Required data/script paths exist
   - World shell headless smokes
   - Main scene headless smoke
-  - GUT subset (stable unit scripts only; excludes known-broken season tests)
+  - Full GUT over res://tests/unit (same as tools/run_gut.ps1: -gdir + -ginclude_subdirs)
 
 .PARAMETER SkipGut
   Skip GUT step (smokes only).
@@ -60,30 +60,8 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 if (-not $SkipGut) {
-	$gutScript = Join-Path $root "addons\gut\gut_cmdln.gd"
-	if (-not (Test-Path -LiteralPath $gutScript)) {
-		Write-Error "GUT not found at $gutScript"
-	}
-	$gutTests = @(
-		"res://tests/unit/test_ai_quest_objective_verify.gd",
-		"res://tests/unit/test_ai_quest_system.gd",
-		"res://tests/unit/test_item_database_reward_items.gd",
-		"res://tests/unit/test_managed_chain_system.gd",
-		"res://tests/unit/test_quest_system.gd"
-	)
-	$argList = @(
-		"--headless",
-		"--path", $root,
-		"-s", "res://addons/gut/gut_cmdln.gd",
-		"--",
-		"-gconfig="
-	)
-	foreach ($t in $gutTests) {
-		$argList += "-gtest=$t"
-	}
-	$argList += "-gexit"
-	Write-Host "Running GUT subset: $($gutTests.Count) scripts"
-	& $exe @argList
+	# Same scope as run_gut.ps1 (all GutTest scripts under tests/unit, including season/weather).
+	& (Join-Path $PSScriptRoot "run_gut.ps1") -GodotExe $exe -ProjectPath $root
 	if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 

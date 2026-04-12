@@ -98,8 +98,13 @@ static func from_json(data: Dictionary) -> SeasonConfig:
 	config.fog_density = data.get("fog_density", 0.0)
 	
 	config.ambient_soundtrack_path = data.get("ambient_soundtrack", "")
-	config.special_events = data.get("special_events", [])
-	
+	var raw_events: Variant = data.get("special_events", [])
+	var ev_out: Array[String] = []
+	if raw_events is Array:
+		for e in raw_events:
+			ev_out.append(str(e))
+	config.special_events = ev_out
+
 	return config
 
 ## 序列化为JSON字典

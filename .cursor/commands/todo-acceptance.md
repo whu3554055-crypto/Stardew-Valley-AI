@@ -7,4 +7,5 @@
 .\tools\run_todo_acceptance.ps1
 ```
 
+（GUT 步调用 `run_gut.ps1`，覆盖 `res://tests/unit` 及子目录。）  
 仅冒烟、跳过 GUT：`.\tools\run_todo_acceptance.ps1 -SkipGut`

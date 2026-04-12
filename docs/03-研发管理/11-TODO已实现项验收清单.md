@@ -13,13 +13,13 @@
 .\tools\run_todo_acceptance.ps1
 ```
 
-含：关键路径存在性校验 → `run_world_shells_smoke.ps1` → `run_headless_smoke.ps1`（默认主场景若干帧）→ GUT 稳定子集（AI 任务、任务链、物品白名单等）。仅跑冒烟可：
+含：关键路径存在性校验 → `run_world_shells_smoke.ps1` → `run_headless_smoke.ps1`（默认主场景若干帧）→ **全量 GUT**（与 [`tools/run_gut.ps1`](../../tools/run_gut.ps1) 相同：`res://tests/unit` + `-ginclude_subdirs`，含 `test_season_manager.gd`、`test_weather_controller.gd` 等）。仅跑冒烟可：
 
 ```powershell
 .\tools\run_todo_acceptance.ps1 -SkipGut
 ```
 
-全量 GUT（含已知不稳定用例）仍用 [`tools/run_gut.ps1`](../../tools/run_gut.ps1)，见 [`docs/RUNTIME_VERIFICATION.md`](../RUNTIME_VERIFICATION.md)。
+日志：`tools/last_gut_log.txt`（由 `run_gut.ps1` 写入）。更多说明见 [`docs/RUNTIME_VERIFICATION.md`](../RUNTIME_VERIFICATION.md)。
 
 ---
 
@@ -93,8 +93,8 @@
 
 | ID | 条目 | 验收要点 | 自动化 | 手动抽检 |
 |----|------|----------|--------|----------|
-| <a id="acc-env-01"></a>**ENV-01** | 季节管理 | 四季循环影响作物/NPC | BATCH-A | 换季 + 作物表 |
-| <a id="acc-env-02"></a>**ENV-02** | 动态天气 | 马尔可夫链 | BATCH-A | `WeatherSystem` 切天气 |
+| <a id="acc-env-01"></a>**ENV-01** | 季节管理 | 四季循环影响作物/NPC | BATCH-A + GUT [`test_season_manager.gd`](../../tests/unit/test_season_manager.gd) | 换季 + 作物表 |
+| <a id="acc-env-02"></a>**ENV-02** | 动态天气 | 马尔可夫链 / `WeatherController` | BATCH-A + GUT [`test_weather_controller.gd`](../../tests/unit/test_weather_controller.gd) | `WeatherSystem` / 天气壳切天气 |
 | <a id="acc-env-03"></a>**ENV-03** | 环境物品 | 壁炉/空调/植物局部影响 | BATCH-A | 靠近壁炉/空调看局部效果；脚本自测见 [`test_environment_item.gd`](../../tests/unit/test_environment_item.gd)（非 GutTest，默认不纳入 GUT 批跑） |
 | <a id="acc-env-04"></a>**ENV-04** | 自动浇水 | 雨天浇灌农田 | BATCH-A | 雨天看地块湿润 |
 | <a id="acc-env-05"></a>**ENV-05** | 视觉效果 | 灯光/天空随时间天气 | BATCH-A | 昼夜+天气组合 |
@@ -142,23 +142,25 @@
 
 ### 关联单测（命令行）
 
+BATCH-A 与单独跑单元测试均可用：
+
 ```powershell
 .\tools\run_gut.ps1
 ```
 
-定向（与 BATCH-A 子集一致）：
+定向单个脚本（调试）：
 
 ```powershell
 $env:GODOT_CONSOLE = "D:\path\to\Godot_*_console.exe"
 & $env:GODOT_CONSOLE --headless --path . -s res://addons/gut/gut_cmdln.gd -- -gconfig= -gtest=res://tests/unit/test_ai_quest_objective_verify.gd -gexit
 ```
 
-托管链 / 任务链：[`test_managed_chain_system.gd`](../../tests/unit/test_managed_chain_system.gd)、[`test_quest_system.gd`](../../tests/unit/test_quest_system.gd)。
+托管链 / 任务链：[`test_managed_chain_system.gd`](../../tests/unit/test_managed_chain_system.gd)、[`test_quest_system.gd`](../../tests/unit/test_quest_system.gd)。季节 / 天气：`test_season_manager.gd`、`test_weather_controller.gd`（已纳入 BATCH-A 全量 GUT）。
 
 ---
 
 ## 维护说明
 
 - 在 [TODO.md](../../TODO.md) 新增或取消 `[x]` 时，**同步**本文件对应行（或整段删除/改为 `[ ]` 指引）。  
-- 为某条增加专属自动化时：在「自动化」列写脚本或 `res://tests/...` 路径，并尽量挂进 `run_todo_acceptance.ps1` 或注明排除原因。  
+- 为某条增加专属自动化时：在「自动化」列写脚本或 `res://tests/...` 路径；`run_todo_acceptance.ps1` 的 GUT 步已对齐 **全量** `tests/unit`（`extends GutTest`），非 GUT 脚本（如仅 `extends Node` 的自跑测）须注明排除原因或另挂入口。  
 - **版本**：随仓库迭代更新；引擎版本以 `project.godot` 为准。

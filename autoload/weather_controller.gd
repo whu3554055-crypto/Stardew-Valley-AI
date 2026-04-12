@@ -103,7 +103,7 @@ func _initialize() -> void:
 
 	# 连接到季节管理器（如果存在）
 	if Engine.has_singleton("SeasonManager"):
-		SeasonManager.day_progressed.connect(_on_new_day)
+		Engine.get_singleton("SeasonManager").day_progressed.connect(_on_new_day)
 
 	print("[WeatherController] Initialized - Current: %s" % get_weather_name(_current_weather))
 
@@ -289,6 +289,22 @@ func _load_weather_configs() -> void:
 	if data.has("duration_range"):
 		_duration_range = data.duration_range
 
+func reset_builtin_weather_data() -> void:
+	"""GUT / 工具：载入内置天气表与季节概率。"""
+	_load_default_weather_configs()
+	_current_weather = WeatherType.SUNNY
+	_weather_timer = 0.0
+	_storm_active = false
+
+
+func weather_type_from_name(name: String) -> WeatherType:
+	return _get_weather_type_from_name(name)
+
+
+func roll_weather_duration_hours() -> float:
+	return _generate_weather_duration()
+
+
 func _load_default_weather_configs() -> void:
 	"""加载默认天气配置"""
 	print("[WeatherController] Loading default weather configurations")
@@ -354,7 +370,7 @@ func _generate_new_weather() -> void:
 	"""根据季节概率生成新天气"""
 	var season = "spring"
 	if Engine.has_singleton("SeasonManager"):
-		season = SeasonManager.get_current_season()
+		season = Engine.get_singleton("SeasonManager").get_current_season()
 
 	var probabilities = get_season_weather_probabilities(season)
 
@@ -407,7 +423,9 @@ func _apply_weather_effects(with_transition: bool = true) -> void:
 
 	# 2. 更新NPC行为
 	if Engine.has_singleton("NPCBehaviorController"):
-		NPCBehaviorController.update_weather_behavior(_current_weather)
+		var npc = Engine.get_singleton("NPCBehaviorController")
+		if npc.has_method("update_weather_behavior"):
+			npc.update_weather_behavior(_current_weather)
 
 	# 3. 更新视觉效果
 	if with_transition:
@@ -441,7 +459,9 @@ func _remove_weather_effects(old_weather: WeatherType) -> void:
 func _auto_water_crops() -> void:
 	"""自动浇灌所有作物"""
 	if Engine.has_singleton("FarmManager"):
-		FarmManager.auto_water_all_crops()
+		var fm = Engine.get_singleton("FarmManager")
+		if fm.has_method("auto_water_all_crops"):
+			fm.auto_water_all_crops()
 		emit_signal("crop_watered_by_rain")
 		print("[WeatherController] Crops watered by rain")
 
@@ -492,7 +512,7 @@ func _update_audio_effects(config: Dictionary) -> void:
 		return
 
 	if Engine.has_singleton("AudioManager"):
-		AudioManager.play_ambient(audio_override)
+		Engine.get_singleton("AudioManager").play_ambient(audio_override)
 	else:
 		print("[WeatherController] AudioManager not found. Skipping audio update.")
 
@@ -503,7 +523,8 @@ func _update_audio_effects(config: Dictionary) -> void:
 func _load_saved_state() -> void:
 	"""加载保存的天气状态"""
 	if Engine.has_singleton("GameStateManager"):
-		var save_data = GameStateManager.load_section("weather")
+		var gsm = Engine.get_singleton("GameStateManager")
+		var save_data = gsm.load_section("weather")
 		if save_data:
 			_current_weather = save_data.get(SAVE_KEY_WEATHER, WeatherType.SUNNY)
 			_weather_timer = save_data.get(SAVE_KEY_WEATHER_TIMER, 0.0)
@@ -523,7 +544,7 @@ func _save_state() -> void:
 	}
 
 	if Engine.has_singleton("GameStateManager"):
-		GameStateManager.save_section("weather", save_data)
+		Engine.get_singleton("GameStateManager").save_section("weather", save_data)
 
 # ============================================
 # 信号处理器

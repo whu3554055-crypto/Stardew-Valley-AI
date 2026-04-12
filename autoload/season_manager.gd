@@ -278,6 +278,12 @@ func _load_season_configs() -> void:
 		])
 		_fill_missing_default_seasons()
 
+func reset_builtin_season_data() -> void:
+	"""GUT / 工具：清空并载入内置四季表（不依赖 JSON 文件）。"""
+	_season_configs.clear()
+	_load_default_seasons()
+
+
 func _load_default_seasons() -> void:
 	"""加载默认季节配置（当配置文件缺失时）"""
 	print("[SeasonManager] Loading default season configurations")
@@ -349,7 +355,8 @@ func _load_saved_state() -> void:
 	"""从存档系统加载季节状态"""
 	# 尝试使用GameStateManager（如果存在）
 	if Engine.has_singleton("GameStateManager"):
-		var save_data = GameStateManager.load_section("season")
+		var gsm = Engine.get_singleton("GameStateManager")
+		var save_data = gsm.load_section("season")
 		if save_data:
 			_current_season_index = save_data.get(SAVE_KEY_SEASON, 0)
 			_current_total_day = save_data.get(SAVE_KEY_DAY, 1)
@@ -379,7 +386,7 @@ func _save_state() -> void:
 	}
 
 	if Engine.has_singleton("GameStateManager"):
-		GameStateManager.save_section("season", save_data)
+		Engine.get_singleton("GameStateManager").save_section("season", save_data)
 	else:
 		# Fallback: 使用ConfigFile
 		var config = ConfigFile.new()
@@ -434,14 +441,18 @@ func _apply_season_effects(with_transition: bool = true) -> void:
 
 	# 1. 更新农场系统生长倍率
 	if Engine.has_singleton("FarmManager"):
-		FarmManager.set_global_growth_multiplier(config.crop_growth_multiplier)
+		var fm = Engine.get_singleton("FarmManager")
+		if fm.has_method("set_global_growth_multiplier"):
+			fm.set_global_growth_multiplier(config.crop_growth_multiplier)
 
 	# 2. 更新NPC行为控制器
 	if Engine.has_singleton("NPCBehaviorController"):
-		NPCBehaviorController.update_seasonal_parameters({
-			"energy_regen": config.npc_energy_regen_modifier,
-			"mood_base": config.npc_mood_base_delta
-		})
+		var npc = Engine.get_singleton("NPCBehaviorController")
+		if npc.has_method("update_seasonal_parameters"):
+			npc.update_seasonal_parameters({
+				"energy_regen": config.npc_energy_regen_modifier,
+				"mood_base": config.npc_mood_base_delta
+			})
 
 	# 3. 更新视觉效果
 	if with_transition:
@@ -458,7 +469,9 @@ func _remove_season_effects(season_name: String) -> void:
 
 	# 重置农场生长倍率
 	if Engine.has_singleton("FarmManager"):
-		FarmManager.set_global_growth_multiplier(1.0)
+		var fm = Engine.get_singleton("FarmManager")
+		if fm.has_method("set_global_growth_multiplier"):
+			fm.set_global_growth_multiplier(1.0)
 
 	# 注意：其他效果会在应用新季节时自动覆盖，无需显式移除
 
@@ -502,7 +515,7 @@ func _update_audio_effects(config: SeasonConfig) -> void:
 		return
 
 	if Engine.has_singleton("AudioManager"):
-		AudioManager.fade_to_track(config.ambient_soundtrack_path, 3.0)
+		Engine.get_singleton("AudioManager").fade_to_track(config.ambient_soundtrack_path, 3.0)
 	else:
 		print("[SeasonManager] AudioManager not found. Skipping audio update.")
 

@@ -228,7 +228,7 @@ func _apply_season_modifiers(effects: Dictionary) -> void:
 	if not Engine.has_singleton("SeasonManager"):
 		return
 
-	var current_season = SeasonManager.get_current_season()
+	var current_season = Engine.get_singleton("SeasonManager").get_current_season()
 	if not _season_modifiers.has(current_season):
 		return
 
@@ -258,7 +258,7 @@ func _apply_weather_modifiers(effects: Dictionary) -> void:
 	if not Engine.has_singleton("WeatherController"):
 		return
 
-	var current_weather = WeatherController.get_current_weather_name()
+	var current_weather = Engine.get_singleton("WeatherController").get_current_weather_name()
 	if not _weather_modifiers.has(current_weather):
 		return
 

@@ -144,7 +144,7 @@ func calculate_mood_bonus(npc_base_mood: float) -> float:
 
 	# Season affects mood impact
 	if Engine.has_singleton("SeasonManager"):
-		var season = SeasonManager.get_current_season()
+		var season = Engine.get_singleton("SeasonManager").get_current_season()
 		if season == "spring":
 			base_bonus *= 1.2  # Spring plants are more uplifting
 		elif season == "winter":
@@ -179,7 +179,7 @@ func _process(delta: float) -> void:
 
 	# Apply seasonal health regeneration/degradation
 	if Engine.has_singleton("SeasonManager"):
-		var season = SeasonManager.get_current_season()
+		var season = Engine.get_singleton("SeasonManager").get_current_season()
 		if _season_modifiers.has(season) and _season_modifiers[season].has("health_regeneration"):
 			var regen = float(_season_modifiers[season]["health_regeneration"])
 			if regen != 0.0:

@@ -80,7 +80,7 @@
 
 ### 与 `TODO.md` 对齐的批处理
 
-根目录 [`TODO.md`](../TODO.md) 中 `[x]` 条目的**可跳转验收表**见 [`docs/03-研发管理/11-TODO已实现项验收清单.md`](03-研发管理/11-TODO已实现项验收清单.md)。一键跑关键路径 + world 壳 + 主场景 + GUT 稳定子集：
+根目录 [`TODO.md`](../TODO.md) 中 `[x]` 条目的**可跳转验收表**见 [`docs/03-研发管理/11-TODO已实现项验收清单.md`](03-研发管理/11-TODO已实现项验收清单.md)。一键跑关键路径 + world 壳 + 主场景 + **全量 GUT**（与 `run_gut.ps1` 相同，`tests/unit` 含子目录）：
 
 ```powershell
 .\tools\run_todo_acceptance.ps1

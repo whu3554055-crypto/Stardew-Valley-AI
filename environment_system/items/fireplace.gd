@@ -81,7 +81,7 @@ func _ready() -> void:
 func get_fire_type() -> String:
 	"""Get the type of fire based on season and weather."""
 	if Engine.has_singleton("SeasonManager"):
-		var season = SeasonManager.get_current_season()
+		var season = Engine.get_singleton("SeasonManager").get_current_season()
 		if season == "winter":
 			return "roaring"
 		elif season == "fall":
@@ -96,7 +96,7 @@ func get_fuel_efficiency() -> float:
 
 	# Season affects efficiency
 	if Engine.has_singleton("SeasonManager"):
-		var season = SeasonManager.get_current_season()
+		var season = Engine.get_singleton("SeasonManager").get_current_season()
 		match season:
 			"winter":
 				base_efficiency *= 1.2  # More efficient in cold
@@ -105,7 +105,7 @@ func get_fuel_efficiency() -> float:
 
 	# Weather affects efficiency
 	if Engine.has_singleton("WeatherController"):
-		var weather = WeatherController.get_current_weather_name()
+		var weather = Engine.get_singleton("WeatherController").get_current_weather_name()
 		if weather in ["rainy", "stormy", "snowy"]:
 			base_efficiency *= 1.1
 

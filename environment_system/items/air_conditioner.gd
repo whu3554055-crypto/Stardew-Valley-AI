@@ -113,7 +113,8 @@ func _get_ambient_temperature() -> float:
 	if not Engine.has_singleton("SeasonManager"):
 		return 20.0  # Default room temperature
 
-	var config = SeasonManager.get_current_season_config()
+	var sm = Engine.get_singleton("SeasonManager")
+	var config = sm.get_current_season_config()
 	if config:
 		# Use average of min and max temperature
 		return (config.temperature_range.x + config.temperature_range.y) / 2.0
@@ -127,7 +128,7 @@ func get_energy_efficiency_ratio() -> float:
 
 	# Season affects efficiency
 	if Engine.has_singleton("SeasonManager"):
-		var season = SeasonManager.get_current_season()
+		var season = Engine.get_singleton("SeasonManager").get_current_season()
 		match season:
 			"summer":
 				base_eer *= 0.9  # Less efficient in extreme heat
@@ -136,7 +137,7 @@ func get_energy_efficiency_ratio() -> float:
 
 	# Weather affects efficiency
 	if Engine.has_singleton("WeatherController"):
-		var weather = WeatherController.get_current_weather_name()
+		var weather = Engine.get_singleton("WeatherController").get_current_weather_name()
 		if weather == "sunny":
 			base_eer *= 0.95
 		elif weather in ["rainy", "cloudy"]:

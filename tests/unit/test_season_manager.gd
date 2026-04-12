@@ -2,22 +2,33 @@
 extends GutTest
 ## SeasonManager单元测试套件
 
-var season_manager = null
+var _season_sig_received: bool = false
+var _season_sig_old: String = ""
+var _season_sig_new: String = ""
+
+var _day_sig_received: bool = false
+var _day_sig_day: int = 0
+
+func _on_season_changed_for_test(old_s: String, new_s: String) -> void:
+	_season_sig_received = true
+	_season_sig_old = old_s
+	_season_sig_new = new_s
+
+func _on_day_progressed_for_test(day: int, _season: String, _year: int) -> void:
+	_day_sig_received = true
+	_day_sig_day = day
 
 func before_all():
 	"""测试套件初始化"""
 	print("=== SeasonManager Test Suite Starting ===")
 
 func before_each():
-	"""每个测试前的设置"""
-	# 创建SeasonManager实例进行测试
-	season_manager = preload("res://autoload/season_manager.gd").new()
-
-func after_each():
-	"""每个测试后的清理"""
-	if season_manager:
-		season_manager.queue_free()
-		season_manager = null
+	"""每个测试前重置内置表（与 autoload 单例配合；preload 脚本已注册为单例时无法 .new()）。"""
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_index = 0
+	SeasonManager._current_season_day = 1
+	SeasonManager._current_total_day = 1
+	SeasonManager._current_year = 1
 
 # ============================================
 # 配置加载测试
@@ -25,13 +36,13 @@ func after_each():
 
 func test_load_default_seasons():
 	"""测试默认季节配置加载"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
-	assert_eq(season_manager._season_configs.size(), 4, "Should load 4 seasons")
-	assert_true(season_manager._season_configs.has("spring"), "Should have spring")
-	assert_true(season_manager._season_configs.has("summer"), "Should have summer")
-	assert_true(season_manager._season_configs.has("fall"), "Should have fall")
-	assert_true(season_manager._season_configs.has("winter"), "Should have winter")
+	assert_eq(SeasonManager._season_configs.size(), 4, "Should load 4 seasons")
+	assert_true(SeasonManager._season_configs.has("spring"), "Should have spring")
+	assert_true(SeasonManager._season_configs.has("summer"), "Should have summer")
+	assert_true(SeasonManager._season_configs.has("fall"), "Should have fall")
+	assert_true(SeasonManager._season_configs.has("winter"), "Should have winter")
 
 func test_season_config_validation():
 	"""测试季节配置验证"""
@@ -51,40 +62,42 @@ func test_season_config_validation():
 	invalid_config.temperature_range = Vector2(30, 20)  # Invalid range
 	assert_false(invalid_config.validate(), "Invalid temp range should fail validation")
 
+	assert_push_error(2, "expected validation push_error calls")
+
 # ============================================
 # 状态查询测试
 # ============================================
 
 func test_get_current_season_initial():
 	"""测试初始季节状态"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_index = 0
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_index = 0
 
-	assert_eq(season_manager.get_current_season(), "spring", "Initial season should be spring")
-	assert_eq(season_manager.get_current_season_index(), 0, "Initial index should be 0")
+	assert_eq(SeasonManager.get_current_season(), "spring", "Initial season should be spring")
+	assert_eq(SeasonManager.get_current_season_index(), 0, "Initial index should be 0")
 
 func test_get_season_day():
 	"""测试季节天数查询"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_day = 15
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_day = 15
 
-	assert_eq(season_manager.get_season_day(), 15, "Season day should be 15")
+	assert_eq(SeasonManager.get_season_day(), 15, "Season day should be 15")
 
 func test_get_days_until_next_season():
 	"""测试距离下一季节的天数"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_day = 10
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_day = 10
 
-	var days_left = season_manager.get_days_until_next_season()
+	var days_left = SeasonManager.get_days_until_next_season()
 	assert_eq(days_left, 18, "Should have 18 days left (28-10)")
 
 func test_is_season():
 	"""测试季节检查"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_index = 1  # Summer
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_index = 1  # Summer
 
-	assert_true(season_manager.is_season("summer"), "Should be summer")
-	assert_false(season_manager.is_season("winter"), "Should not be winter")
+	assert_true(SeasonManager.is_season("summer"), "Should be summer")
+	assert_false(SeasonManager.is_season("winter"), "Should not be winter")
 
 # ============================================
 # 季节修正系数测试
@@ -92,28 +105,28 @@ func test_is_season():
 
 func test_get_season_modifier_crop_growth():
 	"""测试作物生长修正系数"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
 	# Spring
-	season_manager._current_season_index = 0
-	assert_eq(season_manager.get_season_modifier("crop_growth"), 1.0, "Spring growth should be 1.0x")
+	SeasonManager._current_season_index = 0
+	assert_eq(SeasonManager.get_season_modifier("crop_growth"), 1.0, "Spring growth should be 1.0x")
 
 	# Summer
-	season_manager._current_season_index = 1
-	assert_eq(season_manager.get_season_modifier("crop_growth"), 1.5, "Summer growth should be 1.5x")
+	SeasonManager._current_season_index = 1
+	assert_eq(SeasonManager.get_season_modifier("crop_growth"), 1.5, "Summer growth should be 1.5x")
 
 	# Winter
-	season_manager._current_season_index = 3
-	assert_eq(season_manager.get_season_modifier("crop_growth"), 0.0, "Winter growth should be 0.0x")
+	SeasonManager._current_season_index = 3
+	assert_eq(SeasonManager.get_season_modifier("crop_growth"), 0.0, "Winter growth should be 0.0x")
 
 func test_get_temperature_range():
 	"""测试温度范围查询"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_index = 0  # Spring
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_index = 0  # Spring
 
-	var range = season_manager.get_temperature_range()
-	assert_eq(range.x, 10, "Spring min temp should be 10")
-	assert_eq(range.y, 25, "Spring max temp should be 25")
+	var temp_rng: Vector2 = SeasonManager.get_temperature_range()
+	assert_eq(temp_rng.x, 10, "Spring min temp should be 10")
+	assert_eq(temp_rng.y, 25, "Spring max temp should be 25")
 
 # ============================================
 # 时间推进测试
@@ -121,42 +134,44 @@ func test_get_temperature_range():
 
 func test_advance_day_same_season():
 	"""测试同季节内推进一天"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_day = 10
-	season_manager._current_total_day = 10
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_day = 10
+	SeasonManager._current_total_day = 10
 
-	season_manager.advance_day()
+	SeasonManager.advance_day()
 
-	assert_eq(season_manager._current_season_day, 11, "Season day should increment")
-	assert_eq(season_manager._current_total_day, 11, "Total day should increment")
+	assert_eq(SeasonManager._current_season_day, 11, "Season day should increment")
+	assert_eq(SeasonManager._current_total_day, 11, "Total day should increment")
 
 func test_advance_day_season_change():
 	"""测试跨季节推进"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_index = 0  # Spring
-	season_manager._current_season_day = 28  # Last day of spring
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_index = 0  # Spring
+	SeasonManager._current_season_day = 28  # Last day of spring
 
-	var old_season = season_manager.get_current_season()
-	season_manager.advance_day()
+	var old_season = SeasonManager.get_current_season()
+	SeasonManager.advance_day()
 
-	assert_eq(season_manager.get_current_season(), "summer", "Should change to summer")
-	assert_eq(season_manager._current_season_day, 1, "New season should start at day 1")
+	assert_eq(SeasonManager.get_current_season(), "summer", "Should change to summer")
+	assert_eq(SeasonManager._current_season_day, 1, "New season should start at day 1")
 
 func test_set_season_valid():
 	"""测试有效季节设置"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
-	var result = season_manager.set_season("winter")
+	var result = SeasonManager.set_season("winter")
 	assert_true(result, "Setting valid season should succeed")
-	assert_eq(season_manager.get_current_season(), "winter", "Season should be winter")
-	assert_eq(season_manager._current_season_day, 1, "Season day should reset to 1")
+	assert_eq(SeasonManager.get_current_season(), "winter", "Season should be winter")
+	assert_eq(SeasonManager._current_season_day, 1, "Season day should reset to 1")
 
 func test_set_season_invalid():
 	"""测试无效季节设置"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
-	var result = season_manager.set_season("invalid_season")
+	var result = SeasonManager.set_season("invalid_season")
 	assert_false(result, "Setting invalid season should fail")
+
+	assert_push_error(1, "expected invalid season push_error")
 
 # ============================================
 # 信号测试
@@ -164,43 +179,36 @@ func test_set_season_invalid():
 
 func test_season_changed_signal():
 	"""测试季节切换信号"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
-	var signal_received = false
-	var old_season_received = ""
-	var new_season_received = ""
+	_season_sig_received = false
+	_season_sig_old = ""
+	_season_sig_new = ""
+	SeasonManager.season_changed.connect(_on_season_changed_for_test)
 
-	season_manager.season_changed.connect(func(old_s, new_s):
-		signal_received = true
-		old_season_received = old_s
-		new_season_received = new_s
-	)
+	SeasonManager._current_season_index = 0
+	SeasonManager._current_season_day = 28
+	SeasonManager.advance_day()
 
-	season_manager._current_season_index = 0
-	season_manager._current_season_day = 28
-	season_manager.advance_day()
-
-	assert_true(signal_received, "season_changed signal should be emitted")
-	assert_eq(old_season_received, "spring", "Old season should be spring")
-	assert_eq(new_season_received, "summer", "New season should be summer")
+	assert_true(_season_sig_received, "season_changed signal should be emitted")
+	assert_eq(_season_sig_old, "spring", "Old season should be spring")
+	assert_eq(_season_sig_new, "summer", "New season should be summer")
+	SeasonManager.season_changed.disconnect(_on_season_changed_for_test)
 
 func test_day_progressed_signal():
 	"""测试日推进信号"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
-	var signal_received = false
-	var day_received = 0
+	_day_sig_received = false
+	_day_sig_day = 0
+	SeasonManager.day_progressed.connect(_on_day_progressed_for_test)
 
-	season_manager.day_progressed.connect(func(day, season, year):
-		signal_received = true
-		day_received = day
-	)
+	SeasonManager._current_total_day = 5
+	SeasonManager.advance_day()
 
-	season_manager._current_total_day = 5
-	season_manager.advance_day()
-
-	assert_true(signal_received, "day_progressed signal should be emitted")
-	assert_eq(day_received, 6, "Day should be 6")
+	assert_true(_day_sig_received, "day_progressed signal should be emitted")
+	assert_eq(_day_sig_day, 6, "Day should be 6")
+	SeasonManager.day_progressed.disconnect(_on_day_progressed_for_test)
 
 # ============================================
 # 边界情况测试
@@ -208,22 +216,22 @@ func test_day_progressed_signal():
 
 func test_year_advance():
 	"""测试年份推进"""
-	season_manager._load_default_seasons()
-	season_manager._current_year = 1
-	season_manager._current_season_index = 3  # Winter
-	season_manager._current_season_day = 28
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_year = 1
+	SeasonManager._current_season_index = 3  # Winter
+	SeasonManager._current_season_day = 28
 
-	season_manager.advance_day()  # Should trigger new year
+	SeasonManager.advance_day()  # Should trigger new year
 
-	assert_eq(season_manager._current_year, 2, "Year should advance to 2")
-	assert_eq(season_manager.get_current_season(), "spring", "Should reset to spring")
+	assert_eq(SeasonManager._current_year, 2, "Year should advance to 2")
+	assert_eq(SeasonManager.get_current_season(), "spring", "Should reset to spring")
 
 func test_get_days_until_next_season_last_day():
 	"""测试季节最后一天的剩余天数"""
-	season_manager._load_default_seasons()
-	season_manager._current_season_day = 28
+	SeasonManager.reset_builtin_season_data()
+	SeasonManager._current_season_day = 28
 
-	var days_left = season_manager.get_days_until_next_season()
+	var days_left = SeasonManager.get_days_until_next_season()
 	assert_eq(days_left, 0, "Should have 0 days left on last day")
 
 # ============================================
@@ -269,12 +277,12 @@ func test_season_config_from_json():
 
 func test_performance_multiple_advances():
 	"""测试多次推进的性能"""
-	season_manager._load_default_seasons()
+	SeasonManager.reset_builtin_season_data()
 
 	var start_time = Time.get_ticks_msec()
 
 	for i in range(100):
-		season_manager.advance_day()
+		SeasonManager.advance_day()
 
 	var elapsed = Time.get_ticks_msec() - start_time
 
