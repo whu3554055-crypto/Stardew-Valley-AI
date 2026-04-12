@@ -104,6 +104,13 @@ func _ready():
 	initialize_zone_data()
 
 
+func _cell_randf(cx: int, cy: int, salt: int = 0) -> float:
+	"""Deterministic 0..1 value per tile so maps stay stable across runs."""
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector3i(cx, cy, salt))
+	return rng.randf()
+
+
 func _create_main_tileset() -> TileSet:
 	## 11 tiles in one row (see TileType) — built from `assets/tiles/terrain_atlas_32.png`.
 	var ts := TileSet.new()
@@ -178,21 +185,21 @@ func get_recreational_tile(zone_name: String, x: int, y: int) -> int:
 		"town_square", "town_square_stage":
 			return TileType.Cobblestone
 		"park":
-			if randf() < 0.1:  # 10% flowers
+			if _cell_randf(x, y, 11) < 0.1:  # 10% flowers
 				return TileType.FLOWER_BED
 			return TileType.GRASS
 		"forest":
-			if randf() < 0.3:  # 30% trees
+			if _cell_randf(x, y, 21) < 0.3:  # 30% trees
 				return TileType.TREE
 			return TileType.GRASS
 		"beach":
 			return TileType.SAND
 		"fishing_spot":
-			if randf() < 0.7:  # 70% water
+			if _cell_randf(x, y, 31) < 0.7:  # 70% water
 				return TileType.WATER
 			return TileType.SAND
 		"mountains":
-			if randf() < 0.4:  # 40% stone
+			if _cell_randf(x, y, 41) < 0.4:  # 40% stone
 				return TileType.STONE
 			return TileType.GRASS
 		"garden_plots":
@@ -212,7 +219,7 @@ func get_special_tile(zone_name: String, x: int, y: int) -> int:
 		"mine_entrance":
 			return TileType.STONE
 		"cemetery":
-			if randf() < 0.2:
+			if _cell_randf(x, y, 51) < 0.2:
 				return TileType.STONE  # Headstones
 			return TileType.GRASS
 		"library", "museum", "hospital", "school":

@@ -24,7 +24,7 @@ const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 @onready var almanac_panel = $UILayer/AlmanacPanel
 @onready var recipe_picker = $UILayer/RecipePicker
 @onready var shop_ui = $UILayer/ShopUI
-@onready var quest_log_label = $UILayer/QuestLogLabel
+@onready var quest_log_label = $UILayer/QuestLogScroll/QuestLogLabel
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -402,8 +402,8 @@ func _apply_a3_ui_polish() -> void:
 		hud_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		hud_bg.offset_left = 4.0
 		hud_bg.offset_top = 4.0
-		hud_bg.offset_right = 428.0
-		hud_bg.offset_bottom = 188.0
+		hud_bg.offset_right = 432.0
+		hud_bg.offset_bottom = 124.0
 		var hsb := StyleBoxFlat.new()
 		hsb.bg_color = Color(0.04, 0.05, 0.075, 0.58)
 		hsb.set_border_width_all(1)
@@ -417,9 +417,9 @@ func _apply_a3_ui_polish() -> void:
 		q_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		q_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		q_bg.offset_left = 924.0
-		q_bg.offset_top = 262.0
-		q_bg.offset_right = 1266.0
-		q_bg.offset_bottom = 436.0
+		q_bg.offset_top = 232.0
+		q_bg.offset_right = 1276.0
+		q_bg.offset_bottom = 632.0
 		var qsb := StyleBoxFlat.new()
 		qsb.bg_color = Color(0.04, 0.06, 0.08, 0.56)
 		qsb.set_border_width_all(1)
@@ -433,9 +433,9 @@ func _apply_a3_ui_polish() -> void:
 		a_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		a_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		a_bg.offset_left = 8.0
-		a_bg.offset_top = 194.0
-		a_bg.offset_right = 270.0
-		a_bg.offset_bottom = 224.0
+		a_bg.offset_top = 128.0
+		a_bg.offset_right = 416.0
+		a_bg.offset_bottom = 158.0
 		var asb := StyleBoxFlat.new()
 		asb.bg_color = Color(0.03, 0.05, 0.075, 0.54)
 		asb.set_border_width_all(1)
@@ -462,6 +462,30 @@ func _apply_a3_ui_polish() -> void:
 		ui_layer.move_child(qtb, quick_tip_label.get_index())
 	_style_world_zone_presentation()
 	_apply_seasonal_hud_tint()
+	_sync_hud_backdrop_layout()
+
+
+func _sync_hud_backdrop_layout() -> void:
+	if not ui_layer:
+		return
+	var h: Panel = ui_layer.get_node_or_null("HUDBackdrop") as Panel
+	if h:
+		h.offset_left = 4.0
+		h.offset_top = 4.0
+		h.offset_right = 432.0
+		h.offset_bottom = 124.0
+	var qb: Panel = ui_layer.get_node_or_null("QuestLogBackdrop") as Panel
+	if qb:
+		qb.offset_left = 924.0
+		qb.offset_top = 232.0
+		qb.offset_right = 1276.0
+		qb.offset_bottom = 632.0
+	var ab: Panel = ui_layer.get_node_or_null("ActivityZoneBackdrop") as Panel
+	if ab:
+		ab.offset_left = 8.0
+		ab.offset_top = 128.0
+		ab.offset_right = 416.0
+		ab.offset_bottom = 158.0
 
 
 func _style_world_zone_presentation() -> void:
@@ -587,6 +611,8 @@ func _apply_seasonal_hud_tint() -> void:
 			quick_tip_bg.add_theme_stylebox_override("panel", qtp)
 	if quest_log_label:
 		quest_log_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.92))
+	if day_label:
+		day_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.95))
 	var wef_title_season: Label = ui_layer.get_node_or_null("WorldEventFeed/Title") as Label
 	if wef_title_season:
 		wef_title_season.add_theme_color_override("font_color", text_col)
@@ -595,6 +621,7 @@ func _apply_seasonal_hud_tint() -> void:
 		inv_ui_accent.set_seasonal_accent(accent)
 	if season_label:
 		season_label.add_theme_color_override("font_color", text_col)
+	_sync_hud_backdrop_layout()
 
 func _update_activity_zone_label() -> void:
 	if not activity_zone_label or not player:
@@ -1906,6 +1933,7 @@ func _refresh_quest_log() -> void:
 		if not managed_chain_status_banner.is_empty():
 			idle_text += "\n" + managed_chain_status_banner
 		quest_log_label.text = idle_text
+		_fit_quest_log_content_height()
 		return
 	var lines: PackedStringArray = []
 	var regular_lines: PackedStringArray = []
@@ -1971,6 +1999,16 @@ func _refresh_quest_log() -> void:
 	if not managed_chain_status_banner.is_empty():
 		title_text += managed_chain_status_banner + "\n"
 	quest_log_label.text = title_text + "\n".join(lines)
+	_fit_quest_log_content_height()
+
+
+func _fit_quest_log_content_height() -> void:
+	if not quest_log_label:
+		return
+	var line_h: int = maxi(12, quest_log_label.get_line_height())
+	var lines: int = maxi(1, quest_log_label.text.split("\n").size())
+	var pad: int = 20
+	quest_log_label.custom_minimum_size.y = mini(520, maxi(120, lines * line_h + pad))
 
 
 func _try_farm_tier_upgrade() -> void:
@@ -2779,13 +2817,16 @@ func update_ui():
 			]
 		var wname: String = WeatherSystem.get_weather_name() if WeatherSystem else ""
 		var wdisp: String = UITextCatalog.localized_weather_name(wname)
-		weather_label.text = UITextCatalog.format_text("hud", "weather", {"name": wdisp})
+		if weather_label:
+			weather_label.text = UITextCatalog.format_text("hud", "weather", {"name": wdisp})
 		var season_key: String = str(GameManager.player_data.get("season", "spring"))
-		season_label.text = UITextCatalog.format_text("hud", "season", {"name": UITextCatalog.localized_season_name(season_key)})
-		day_label.text = UITextCatalog.format_text("hud", "day_year", {
+		if season_label:
+			season_label.text = UITextCatalog.format_text("hud", "season", {"name": UITextCatalog.localized_season_name(season_key)})
+		var day_part: String = UITextCatalog.format_text("hud", "day_year", {
 			"day": GameManager.player_data.day,
 			"year": GameManager.player_data.year
 		})
+		day_label.text = "%s  ·  %s  ·  %s" % [day_part, UITextCatalog.localized_season_name(season_key), wdisp]
 	else:
 		gold_label.text = "Gold: %d" % GameManager.player_data.gold
 		if stamina_label:
@@ -2794,9 +2835,17 @@ func update_ui():
 			var hp2: float = float(GameManager.player_data.get("hp", 100.0))
 			var hpm2: float = float(GameManager.player_data.get("hp_max", 100.0))
 			stamina_label.text = "Stamina: %d / %d | HP: %d / %d" % [int(s2), int(sm2), int(hp2), int(hpm2)]
-		weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
-		season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
-		day_label.text = "Day %d, Year %d" % [GameManager.player_data.day, GameManager.player_data.year]
+		if weather_label:
+			weather_label.text = "Weather: %s" % WeatherSystem.get_weather_name()
+		if season_label:
+			season_label.text = "Season: %s" % GameManager.player_data.season.capitalize()
+		var wn2: String = WeatherSystem.get_weather_name() if WeatherSystem else ""
+		day_label.text = "Day %d, Year %d  ·  %s  ·  %s" % [
+			GameManager.player_data.day,
+			GameManager.player_data.year,
+			str(GameManager.player_data.season).capitalize(),
+			wn2
+		]
 	_refresh_quest_log()
 
 func show_dialogue(text: String):

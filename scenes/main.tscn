@@ -29,8 +29,16 @@ script = ExtResource("12_gtmap")
 position = Vector2(640, 360)
 script = ExtResource("2_player")
 
+[node name="GroundShadow" type="Polygon2D" parent="Player"]
+z_index = -2
+position = Vector2(0, 14)
+color = Color(0.08, 0.06, 0.05, 0.42)
+polygon = PackedVector2Array(-16, -3, 16, -3, 14, 5, 0, 9, -14, 5)
+
 [node name="Sprite2D" type="Sprite2D" parent="Player"]
-scale = Vector2(0.5, 0.5)
+z_index = 0
+position = Vector2(0, -2)
+scale = Vector2(0.55, 0.55)
 texture = ExtResource("13_playertex")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
@@ -296,34 +304,40 @@ gravity = Vector2(0, 120)
 [node name="UILayer" type="CanvasLayer" parent="."]
 
 [node name="TimeLabel" type="Label" parent="UILayer"]
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 200.0
-offset_bottom = 40.0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 130.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 17
 text = "06:00 AM"
 
 [node name="GoldLabel" type="Label" parent="UILayer"]
-offset_left = 10.0
-offset_top = 45.0
-offset_right = 200.0
-offset_bottom = 75.0
+offset_left = 132.0
+offset_top = 8.0
+offset_right = 420.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 14
 text = "Gold: 500"
 
 [node name="StaminaLabel" type="Label" parent="UILayer"]
-offset_left = 210.0
-offset_top = 45.0
+offset_left = 12.0
+offset_top = 38.0
 offset_right = 420.0
-offset_bottom = 75.0
+offset_bottom = 64.0
+theme_override_font_sizes/font_size = 12
 text = "Stamina: 100 / 100"
 
 [node name="DayLabel" type="Label" parent="UILayer"]
-offset_left = 10.0
-offset_top = 80.0
-offset_right = 200.0
-offset_bottom = 110.0
+offset_left = 12.0
+offset_top = 66.0
+offset_right = 420.0
+offset_bottom = 118.0
+theme_override_font_sizes/font_size = 12
 text = "Day 1, Year 1"
+autowrap_mode = 2
 
 [node name="SeasonLabel" type="Label" parent="UILayer"]
+visible = false
 offset_left = 10.0
 offset_top = 115.0
 offset_right = 200.0
@@ -331,6 +345,7 @@ offset_bottom = 145.0
 text = "Season: Spring"
 
 [node name="WeatherLabel" type="Label" parent="UILayer"]
+visible = false
 offset_left = 10.0
 offset_top = 150.0
 offset_right = 200.0
@@ -460,9 +475,9 @@ text = "AI Config"
 
 [node name="ActivityZoneLabel" type="Label" parent="UILayer"]
 offset_left = 280.0
-offset_top = 568.0
-offset_right = 1000.0
-offset_bottom = 596.0
+offset_top = 548.0
+offset_right = 920.0
+offset_bottom = 578.0
 theme_override_colors/font_color = Color(0.82, 0.86, 0.9, 0.78)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
@@ -485,36 +500,45 @@ one_shot = true
 [node name="RecipePicker" parent="UILayer" instance=ExtResource("11_rp")]
 
 [node name="WorldEventFeed" type="Panel" parent="UILayer"]
-offset_left = 930.0
-offset_top = 50.0
-offset_right = 1270.0
-offset_bottom = 260.0
+offset_left = 928.0
+offset_top = 48.0
+offset_right = 1272.0
+offset_bottom = 228.0
 
 [node name="Title" type="Label" parent="UILayer/WorldEventFeed"]
 layout_mode = 0
 offset_left = 8.0
 offset_top = 6.0
 offset_right = 330.0
-offset_bottom = 28.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 13
 text = "World Event Feed"
 
 [node name="Content" type="Label" parent="UILayer/WorldEventFeed"]
 layout_mode = 0
 offset_left = 8.0
-offset_top = 30.0
-offset_right = 330.0
-offset_bottom = 204.0
+offset_top = 28.0
+offset_right = 332.0
+offset_bottom = 172.0
+theme_override_font_sizes/font_size = 11
 text = "No events yet."
 autowrap_mode = 2
 
 [node name="ShopUI" parent="UILayer" instance=ExtResource("14_shop")]
 visible = false
 
-[node name="QuestLogLabel" type="Label" parent="UILayer"]
-offset_left = 930.0
-offset_top = 268.0
-offset_right = 1260.0
-offset_bottom = 430.0
+[node name="QuestLogScroll" type="ScrollContainer" parent="UILayer"]
+offset_left = 928.0
+offset_top = 236.0
+offset_right = 1272.0
+offset_bottom = 628.0
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="QuestLogLabel" type="Label" parent="UILayer/QuestLogScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(308, 200)
 theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
 text = "Quests"
