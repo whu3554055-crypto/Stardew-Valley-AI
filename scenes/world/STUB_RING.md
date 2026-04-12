@@ -1,19 +1,24 @@
-# 区域薄壳环形冒烟（B9 试点）
+# 区域环形冒烟（B9）
 
-> **不迁移 `main` 内逻辑**：仅独立 `world_*_stub.tscn` + `main` 上传送点/出生点。
+## 主环（实体 B2–B6）
 
-## 环序
+`main` 南缘：**↓ Farm**（`world_farm`）→ 东口 **Town**（`world_town`）→ **Forest**（`world_forest`）→ **Beach**（`world_beach`）→ **Mine**（`world_mine`）→ 东口回 **`main`**（落地 `from_world_mine` 等）。
 
-`main` 南缘第一格为 **实体农场** `world_farm.tscn`（B2）；农场东口进入 **town stub** → **forest** → **beach** → **mine** → `main`（`default`）或各 `from_*_stub` / **`from_world_farm`** 回枢纽。
+枢纽亦可从南缘直接进入 **Town / Forest / Beach / Mine**（`default` 出生点）。
+
+## 薄壳备用环
+
+`world_*_stub.tscn` 链仍可用来**仅验证传送**；自 `main` 返回时的 `spawn_id` 已与实体环对齐（`from_world_town` … `from_world_mine`）。
 
 ## 手动冒烟清单
 
 1. 新游戏或读档进入 `main`。
-2. 依次走入：**↓ Farm**（实体农场）→ 东口到 `Town` stub → … → `Mine` → 东口回 `main`。
-3. 每段西口应能回到 `main` 对应 `from_*_stub` 标记附近。
-4. 存档再读档：应在 `world.path` 对应场景落地（已有 B8）。
+2. 走通：**↓ Farm** → 东口 **Town** → … → **Mine** → **→ Main**。
+3. 在 `world_forest` / `world_beach` / `world_mine` 内用斧 / 竿 / 镐各试一次（应在彩色逻辑带内成功）。
+4. `world_town`：靠近 Pierre 按 **B** 打开商店；**E** 对话应出现 `dialogue_pools.json` 文案。
+5. 存档再读档：`world.path` + `spawn_id` 落地（B8）。
 
-## 资源路径
+## 资源路径（薄壳）
 
 | 场景 | 路径 |
 |------|------|
@@ -23,8 +28,6 @@
 | Beach stub | `res://scenes/world/world_beach_stub.tscn` |
 | Mine stub | `res://scenes/world/world_mine_stub.tscn` |
 
-常量亦在 `WorldRouter`（`FARM_STUB_SCENE` …）。
-
 ## 与 B2–B6 关系
 
-**B2** 已迁出实体 `world_farm.tscn`；薄壳 stub 仍可单独测传送。其余区域迁出见 `MIGRATION.md`。
+**B2** `world_farm` 为实体农场；**B3–B6** 为带玩法 override 的薄壳实体场景（非 stub）；stub 保留作传送回归测试。

@@ -68,7 +68,7 @@ collision_mask = 1
 monitoring = true
 script = ExtResource("2_portal")
 target_scene = "res://scenes/main.tscn"
-target_spawn_id = "from_forest_stub"
+target_spawn_id = "from_world_forest"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMain"]
 shape = SubResource("RectangleShape2D_portal")

@@ -86,7 +86,7 @@ offset_top = 12.0
 offset_right = 720.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Farm — ← Main hub · → Town stub (ring) · Esc: save"
+text = "Farm — ← Main hub · → Town · Esc: save"
 
 [node name="PortalToMain" type="Area2D" parent="."]
 position = Vector2(56, 360)
@@ -109,23 +109,23 @@ theme_override_font_sizes/font_size = 11
 text = "→ Main hub"
 horizontal_alignment = 1
 
-[node name="PortalToTownStub" type="Area2D" parent="."]
+[node name="PortalToTown" type="Area2D" parent="."]
 position = Vector2(968, 360)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("2_portal")
-target_scene = "res://scenes/world/world_town_stub.tscn"
-target_spawn_id = "default"
+target_scene = "res://scenes/world/world_town.tscn"
+target_spawn_id = "from_world_farm"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToTownStub"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToTown"]
 shape = SubResource("RectangleShape2D_portal")
 
-[node name="PortalLabel" type="Label" parent="PortalToTownStub"]
+[node name="PortalLabel" type="Label" parent="PortalToTown"]
 offset_left = -100.0
 offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "→ Town (stub)"
+text = "→ Town"
 horizontal_alignment = 1

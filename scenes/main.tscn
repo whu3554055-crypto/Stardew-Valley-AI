@@ -48,22 +48,22 @@ spawn_id = "from_farm_stub"
 [node name="Spawn_from_town_stub" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(300, 580)
 script = ExtResource("15_spawn")
-spawn_id = "from_town_stub"
+spawn_id = "from_world_town"
 
 [node name="Spawn_from_forest_stub" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(460, 580)
 script = ExtResource("15_spawn")
-spawn_id = "from_forest_stub"
+spawn_id = "from_world_forest"
 
 [node name="Spawn_from_beach_stub" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(620, 580)
 script = ExtResource("15_spawn")
-spawn_id = "from_beach_stub"
+spawn_id = "from_world_beach"
 
 [node name="Spawn_from_mine_stub" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(780, 580)
 script = ExtResource("15_spawn")
-spawn_id = "from_mine_stub"
+spawn_id = "from_world_mine"
 
 [node name="Spawn_from_world_farm" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(140, 520)
@@ -112,88 +112,88 @@ theme_override_font_sizes/font_size = 10
 text = "↓ Farm"
 horizontal_alignment = 1
 
-[node name="PortalToTownStub" type="Area2D" parent="."]
+[node name="PortalToWorldTown" type="Area2D" parent="."]
 position = Vector2(300, 660)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("16_portal")
-target_scene = "res://scenes/world/world_town_stub.tscn"
+target_scene = "res://scenes/world/world_town.tscn"
 target_spawn_id = "default"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToTownStub"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToWorldTown"]
 shape = SubResource("RectangleShape2D_portal_pg")
 
-[node name="PortalHint" type="Label" parent="PortalToTownStub"]
+[node name="PortalHint" type="Label" parent="PortalToWorldTown"]
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "↓ Town stub"
+text = "↓ Town"
 horizontal_alignment = 1
 
-[node name="PortalToForestStub" type="Area2D" parent="."]
+[node name="PortalToWorldForest" type="Area2D" parent="."]
 position = Vector2(460, 660)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("16_portal")
-target_scene = "res://scenes/world/world_forest_stub.tscn"
+target_scene = "res://scenes/world/world_forest.tscn"
 target_spawn_id = "default"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToForestStub"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToWorldForest"]
 shape = SubResource("RectangleShape2D_portal_pg")
 
-[node name="PortalHint" type="Label" parent="PortalToForestStub"]
+[node name="PortalHint" type="Label" parent="PortalToWorldForest"]
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "↓ Forest stub"
+text = "↓ Forest"
 horizontal_alignment = 1
 
-[node name="PortalToBeachStub" type="Area2D" parent="."]
+[node name="PortalToWorldBeach" type="Area2D" parent="."]
 position = Vector2(620, 660)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("16_portal")
-target_scene = "res://scenes/world/world_beach_stub.tscn"
+target_scene = "res://scenes/world/world_beach.tscn"
 target_spawn_id = "default"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToBeachStub"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToWorldBeach"]
 shape = SubResource("RectangleShape2D_portal_pg")
 
-[node name="PortalHint" type="Label" parent="PortalToBeachStub"]
+[node name="PortalHint" type="Label" parent="PortalToWorldBeach"]
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "↓ Beach stub"
+text = "↓ Beach"
 horizontal_alignment = 1
 
-[node name="PortalToMineStub" type="Area2D" parent="."]
+[node name="PortalToWorldMine" type="Area2D" parent="."]
 position = Vector2(780, 660)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("16_portal")
-target_scene = "res://scenes/world/world_mine_stub.tscn"
+target_scene = "res://scenes/world/world_mine.tscn"
 target_spawn_id = "default"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMineStub"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToWorldMine"]
 shape = SubResource("RectangleShape2D_portal_pg")
 
-[node name="PortalHint" type="Label" parent="PortalToMineStub"]
+[node name="PortalHint" type="Label" parent="PortalToWorldMine"]
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "↓ Mine stub"
+text = "↓ Mine"
 horizontal_alignment = 1
 
 [node name="Player" type="CharacterBody2D" parent="."]
