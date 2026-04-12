@@ -22,11 +22,11 @@ func _ready() -> void:
 	panel.add_child(lab)
 	margin.add_child(panel)
 	add_child(margin)
-	modulate.a = 0.0
+	margin.modulate.a = 0.0
 	var tw := create_tween()
 	tw.set_ease(Tween.EASE_OUT)
 	tw.set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(self, "modulate:a", 1.0, fade_sec)
+	tw.tween_property(margin, "modulate:a", 1.0, fade_sec)
 	tw.tween_interval(hold_sec)
-	tw.tween_property(self, "modulate:a", 0.0, fade_sec)
+	tw.tween_property(margin, "modulate:a", 0.0, fade_sec)
 	tw.finished.connect(queue_free)

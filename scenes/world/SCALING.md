@@ -9,7 +9,7 @@
 
 ## 试点
 
-- **`world_playground.tscn`**：1024×720 视口级占位，用于多场景与层次（C2/C3）试验，不代替主场景尺度目标。
+- **`world_playground.tscn`**：1024×720 视口级占位，用于多场景与层次（**C2** 双 `TileMapLayer`、**C3** Y-Sort）试验，不代替主场景尺度目标。
 
 ## 关联
 
