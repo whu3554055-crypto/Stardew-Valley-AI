@@ -5,7 +5,7 @@
 | 场景资源路径 | 用途 | 邻接/入口（spawn_id） | 状态 |
 |--------------|------|------------------------|------|
 | `res://scenes/main.tscn` | 现行主场景（农场+镇区+林+海+矿等逻辑区聚合） | `default`（推荐主出生点）；其它出生点见场景内 `WorldSpawnPoint` | ✅ 当前默认 |
-| `res://scenes/world/world_playground.tscn` | 多场景切换冒烟测试（小空地） | `default` ↔ `main` 经传送区 | 🔄 接入中 |
+| `res://scenes/world/world_playground.tscn` | 多场景切换冒烟测试（小空地） | `default` ↔ `main` 的 `PortalToPlayground` / `playground_return` | ✅ 冒烟 |
 
 ## spawn_id 约定
 
