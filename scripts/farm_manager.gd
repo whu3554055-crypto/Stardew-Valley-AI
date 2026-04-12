@@ -76,17 +76,19 @@ func load_crop_database():
 			var d: Dictionary = row.duplicate(true)
 			var cid: String = str(d.get("id", ""))
 			if not cid.is_empty():
+				if not d.has("watering"):
+					d["watering"] = "daily"
 				crops_db[cid] = d
 	if crops_db.is_empty():
 		_load_default_crops()
 
 
 func _load_default_crops() -> void:
-	crops_db["parsnip"] = {"id": "parsnip", "name": "Parsnip", "growth_days": 4, "harvest_product": "parsnip", "harvest_count": 1, "regrows": false, "seasons": ["spring"]}
-	crops_db["cauliflower"] = {"id": "cauliflower", "name": "Cauliflower", "growth_days": 12, "harvest_product": "cauliflower", "harvest_count": 1, "regrows": false, "seasons": ["spring"]}
-	crops_db["potato"] = {"id": "potato", "name": "Potato", "growth_days": 6, "harvest_product": "potato", "harvest_count": 1, "regrows": false, "seasons": ["spring"]}
-	crops_db["corn"] = {"id": "corn", "name": "Corn", "growth_days": 14, "regrow_days": 4, "harvest_product": "corn", "harvest_count": 1, "regrows": true, "seasons": ["summer"]}
-	crops_db["pumpkin"] = {"id": "pumpkin", "name": "Pumpkin", "growth_days": 11, "harvest_product": "pumpkin", "harvest_count": 1, "regrows": false, "seasons": ["fall"]}
+	crops_db["parsnip"] = {"id": "parsnip", "name": "Parsnip", "growth_days": 4, "harvest_product": "parsnip", "harvest_count": 1, "regrows": false, "seasons": ["spring"], "watering": "daily"}
+	crops_db["cauliflower"] = {"id": "cauliflower", "name": "Cauliflower", "growth_days": 12, "harvest_product": "cauliflower", "harvest_count": 1, "regrows": false, "seasons": ["spring"], "watering": "daily"}
+	crops_db["potato"] = {"id": "potato", "name": "Potato", "growth_days": 6, "harvest_product": "potato", "harvest_count": 1, "regrows": false, "seasons": ["spring"], "watering": "daily"}
+	crops_db["corn"] = {"id": "corn", "name": "Corn", "growth_days": 14, "regrow_days": 4, "harvest_product": "corn", "harvest_count": 1, "regrows": true, "seasons": ["summer"], "watering": "daily"}
+	crops_db["pumpkin"] = {"id": "pumpkin", "name": "Pumpkin", "growth_days": 11, "harvest_product": "pumpkin", "harvest_count": 1, "regrows": false, "seasons": ["fall"], "watering": "daily"}
 
 func till_soil(position: Vector2i):
 	if sprinkler_tiles.has(position):
@@ -181,12 +183,16 @@ func water_plant(position: Vector2i):
 
 func _on_day_changed(new_day):
 	_sprinkler_water_neighbor_tiles()
-	# Grow all crops
+	# Grow all crops (`watering`: daily | none — from crops.json / D1)
 	for position in planted_crops:
 		var crop = planted_crops[position]
+		var wmode: String = str(crop.get("watering", "daily"))
+		if wmode == "none":
+			crop.days_grown += 1
+			continue
 		if crop.watered:
 			crop.days_grown += 1
-			crop.watered = false  # Reset water status
+			crop.watered = false
 	_refresh_crop_visuals()
 
 func get_growth_stage(crop: Dictionary) -> int:

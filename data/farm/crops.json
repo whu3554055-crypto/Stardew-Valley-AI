@@ -6,7 +6,8 @@
     "harvest_product": "parsnip",
     "harvest_count": 1,
     "regrows": false,
-    "seasons": ["spring"]
+    "seasons": ["spring"],
+    "watering": "daily"
   },
   {
     "id": "cauliflower",
@@ -15,7 +16,8 @@
     "harvest_product": "cauliflower",
     "harvest_count": 1,
     "regrows": false,
-    "seasons": ["spring"]
+    "seasons": ["spring"],
+    "watering": "daily"
   },
   {
     "id": "potato",
@@ -24,7 +26,8 @@
     "harvest_product": "potato",
     "harvest_count": 1,
     "regrows": false,
-    "seasons": ["spring"]
+    "seasons": ["spring"],
+    "watering": "daily"
   },
   {
     "id": "corn",
@@ -34,7 +37,8 @@
     "harvest_product": "corn",
     "harvest_count": 1,
     "regrows": true,
-    "seasons": ["summer"]
+    "seasons": ["summer"],
+    "watering": "daily"
   },
   {
     "id": "pumpkin",
@@ -43,6 +47,7 @@
     "harvest_product": "pumpkin",
     "harvest_count": 1,
     "regrows": false,
-    "seasons": ["fall"]
+    "seasons": ["fall"],
+    "watering": "daily"
   }
 ]
