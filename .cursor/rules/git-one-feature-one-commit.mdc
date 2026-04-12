@@ -1,0 +1,13 @@
+---
+description: One Git commit per feature point; keep batches atomic
+alwaysApply: true
+---
+
+# Git：一功能点一提交
+
+在本仓库由 Agent 实现或修复工作时：
+
+- **每个独立功能点**（或一张 TODO 子项、计划里的一条可交付项）对应 **恰好一次 Git 提交**。
+- 同一提交里不要混无关改动；若一次对话完成多项，用 **多次 `git commit`**，必要时配合 `git add -p` 按逻辑拆暂存。
+- 提交信息用简短英文或中文均可，但需 **一眼能看出该功能点**（动词开头、`feat`/`fix`/`docs`/`chore` 等前缀皆可）。
+- 仅在用户明确要求「合成一次提交」或「squash」时，才合并多个功能点到单次提交。
