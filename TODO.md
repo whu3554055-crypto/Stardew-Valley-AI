@@ -66,9 +66,9 @@
   补齐或替换占位：**TileMap tileset、玩家/作物/工具相关美术**，让玩法反馈「看得见」（可与 A1/A2 并行，由人力安排）。  
   *进度：`GameTileMap` + `terrain_atlas_32.png`；玩家/NPC 精灵 **NEAREST**；作物 **NEAREST**；背包格 + **体力条填色**（填色随 **季节 accent**）；**对话/图鉴/配方/简报/商店** 面板与字阴影；**HUD 半透明底**、**AI Config** 按钮描边（边框随季节色）；**海洋区域**示意；**对话 Label 铺满**；**WorldEventFeed 标题** 阴影 + **标题字色**随季节；**WorldEventFeed** 面板边框随 **季节色**（与 HUDBackdrop / QuestLog / ActivityZone 一致）；**背包 / 图鉴 / 配方选择器 / 对话** 面板边框与 **季节色** 同步；**商店** 全屏 **SeasonBorder** 边框与季节色同步；**QuickTip** 条 **QuickTipBackdrop** 底板与边框随季节色（随提示显隐）；**任务列表**字色随季节；**商店** 商品行 / **关闭** 按钮边框随 **季节 accent**（`apply_seasonal_accent`）；NPC **头顶名字** 阴影；**配方选择器** 外框 + **制作/关闭** 按钮 + 列表 **选中/悬停** 字色随季节（`set_seasonal_accent`）；**图鉴 (J)** 外框 + 标题字色 + 四列表 **选中/悬停** 随季节；**背包** 格子 **非选中** 边框与季节 accent 混合（选中格仍金色描边）；**AI 配置界面** 输入框/按钮统一；**银矿/银锭** 32px 占位 PNG（`tools/gen_silver_placeholders.py`）+ `resolve_icon` 走资源路径；新增地图内 **Farm/House Upgrade Zone** 可视引导（U/H）；并统一世界区域提示（矿/林/河/海/升级区）文字阴影与视觉强度；新增 **QuestLog/ActivityZone** 独立底板增强可读性。存档仅 `game_save.bundle`。*
 
-- [ ] **A4 — 长线玩法 MVP（按需排期）**  
+- [x] **A4 — 长线玩法 MVP（按需排期）**  
   从下列中选做最小可用版本（不必一次全做）：**建筑升级** / **畜牧** / **洞穴与战斗**（若目标超出当前「矿区条带式」挖矿）。
-  *进度：建筑升级 MVP（房屋）已落地：`data/buildings/upgrades.json` 配置升级成本与收益；地图内房屋区域按 **H** 升级；`player_data.house_level` 持久化并驱动 `stamina_max` / `stamina_regen_mult`。新增 **Lv3 Family House**（上限与恢复倍率进一步提升）。**畜牧 MVP**：`data/farm/livestock.json` + `LivestockManager`；畜栏区（与 `immersion_config.json` `zones.barn` 对齐）**V** 收取产物；栏内无动物时 **V** 按顺序购买鸡/牛（扣金、`player_data.livestock_animals` 持久化）；产物 **鸡蛋/牛奶** 入包，鸡蛋可厨房做 **煎蛋**。*
+  *进度：建筑升级 MVP（房屋）已落地：`data/buildings/upgrades.json` 配置升级成本与收益；地图内房屋区域按 **H** 升级；`player_data.house_level` 持久化并驱动 `stamina_max` / `stamina_regen_mult`。新增 **Lv3 Family House**（上限与恢复倍率进一步提升）。**畜牧 MVP**：`data/farm/livestock.json` + `LivestockManager`；畜栏区（与 `immersion_config.json` `zones.barn` 对齐）**V** 收取产物；栏内无动物时 **V** 按顺序购买鸡/牛（扣金、`player_data.livestock_animals` 持久化）；产物 **鸡蛋/牛奶** 入包，鸡蛋可厨房做 **煎蛋**。**洞穴与战斗**：`world_cave.tscn` 独立场景；森林 **↑**、矿口 **↓** 互通；`MineCombatController` 支持 `fixed_combat_depth` / `spawn_interval_scale` / 区域简报文案；洞内固定 **深带** 敌表与更高刷怪压力，仍可镐采；`MiningSystem` 在 `world_mine` / `world_cave` 间切换时保留覆盖矩形逻辑。*
 
 ### 阶段 B — AI（玩法阶段目标达成后再做）
 

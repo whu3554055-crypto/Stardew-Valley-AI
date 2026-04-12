@@ -21,8 +21,10 @@ func _hook_world_router() -> void:
 
 
 func _on_world_changed_clear_mine(scene_path: String) -> void:
-	if not String(scene_path).ends_with("world_mine.tscn"):
-		clear_mine_bounds_override()
+	var p: String = String(scene_path)
+	if p.ends_with("world_mine.tscn") or p.ends_with("world_cave.tscn"):
+		return
+	clear_mine_bounds_override()
 
 
 func set_mine_bounds_override(r: Rect2) -> void:

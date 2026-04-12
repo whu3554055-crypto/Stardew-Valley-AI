@@ -1,6 +1,7 @@
 extends Node2D
 
 ## B6 + G2: mine shell — shared `MineCombatController` combat + pickaxe / fish / axe gather.
+## Same script drives `world_cave.tscn` via exports (`use_deep_cave_tiles`, combat tuning).
 
 const MineCombatControllerT := preload("res://scripts/combat/mine_combat_controller.gd")
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
@@ -11,6 +12,13 @@ const WORLD_EVENT_FEED_MAX := 6
 @export var banner_title: String = "矿口"
 @export var mine_bounds_rect: Rect2 = Rect2(140, 80, 744, 560)
 @export var defeat_respawn: Vector2 = Vector2(512, 360)
+@export var use_deep_cave_tiles: bool = false
+@export var combat_fixed_depth: int = -1
+@export var combat_spawn_interval_scale: float = 1.0
+@export var combat_journal_zone: String = "Mine"
+@export var combat_elite_journal_line: String = "An elite foe appears in the mine!"
+@export var defeat_message_charged: String = "You blacked out and woke at the mine mouth. Lost 60g."
+@export var defeat_message_insured: String = "You blacked out at the mine. Daily rescue covered the gold loss."
 
 @onready var _player: CharacterBody2D = $Player as CharacterBody2D
 @onready var _hud_msg: Label = get_node_or_null("RegionHud/RegionMessage") as Label
@@ -33,7 +41,10 @@ func _ready() -> void:
 
 	var tile_ground: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
 	if tile_ground:
-		WorldTileBackdrop.paint_mine_cavern(tile_ground, 0)
+		if use_deep_cave_tiles:
+			WorldTileBackdrop.paint_deep_cave(tile_ground, 0)
+		else:
+			WorldTileBackdrop.paint_mine_cavern(tile_ground, 0)
 		WorldTileBackdrop.hide_polygon_ground(self)
 
 	if not banner_title.is_empty():
@@ -44,8 +55,12 @@ func _ready() -> void:
 	_mine_combat = MineCombatControllerT.new()
 	_mine_combat.name = "MineCombatController"
 	_mine_combat.defeat_respawn = defeat_respawn
-	_mine_combat.defeat_message_charged = "You blacked out and woke at the mine mouth. Lost 60g."
-	_mine_combat.defeat_message_insured = "You blacked out at the mine. Daily rescue covered the gold loss."
+	_mine_combat.defeat_message_charged = defeat_message_charged
+	_mine_combat.defeat_message_insured = defeat_message_insured
+	_mine_combat.fixed_combat_depth = combat_fixed_depth
+	_mine_combat.spawn_interval_scale = combat_spawn_interval_scale
+	_mine_combat.journal_zone_name = combat_journal_zone
+	_mine_combat.elite_spawn_journal_line = combat_elite_journal_line
 	add_child(_mine_combat)
 	_mine_combat.feedback_tip.connect(_show_message)
 	_mine_combat.feedback_dialog.connect(_on_defeat_dialog)

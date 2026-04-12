@@ -20,6 +20,7 @@ if (Test-Path -LiteralPath $strip) {
 $scenes = @(
 	"res://scenes/world/world_town.tscn",
 	"res://scenes/world/world_mine.tscn",
+	"res://scenes/world/world_cave.tscn",
 	"res://scenes/world/world_beach.tscn",
 	"res://scenes/world/world_forest.tscn",
 	"res://scenes/world/world_farm.tscn"

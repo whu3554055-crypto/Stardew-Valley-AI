@@ -46,13 +46,18 @@ position = Vector2(900, 360)
 script = ExtResource("4_spawn")
 spawn_id = "from_world_beach"
 
+[node name="Spawn_from_world_cave" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(512, 600)
+script = ExtResource("4_spawn")
+spawn_id = "from_world_cave"
+
 [node name="Hint" type="Label" parent="."]
 offset_left = 16.0
 offset_top = 12.0
 offset_right = 760.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Forest — axe in green band · ← Town · → Beach · Esc: save"
+text = "Forest — axe in green band · ↑ Cave · ← Town · → Beach · Esc: save"
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 360)
@@ -99,6 +104,27 @@ offset_right = 90.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
 text = "→ Town"
+horizontal_alignment = 1
+
+[node name="PortalToCave" type="Area2D" parent="."]
+position = Vector2(512, 72)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+script = ExtResource("2_portal")
+target_scene = "res://scenes/world/world_cave.tscn"
+target_spawn_id = "from_world_forest"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToCave"]
+shape = SubResource("RectangleShape2D_portal")
+
+[node name="PortalLabel" type="Label" parent="PortalToCave"]
+offset_left = -100.0
+offset_top = 48.0
+offset_right = 100.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 11
+text = "↑ Cave"
 horizontal_alignment = 1
 
 [node name="PortalToBeach" type="Area2D" parent="."]

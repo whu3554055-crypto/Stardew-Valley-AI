@@ -52,3 +52,13 @@ static func paint_mine_cavern(layer: TileMapLayer, source_id: int = 0) -> void:
 	var wood := Vector2i(5, 0)
 	for x in range(7, 25):
 		layer.set_cell(Vector2i(x, GRID_H - 1), source_id, wood)
+
+
+static func paint_deep_cave(layer: TileMapLayer, source_id: int = 0) -> void:
+	fill_uniform(layer, Vector2i(3, 0), source_id)
+	var rubble := Vector2i(1, 0)
+	for i in range(10):
+		layer.set_cell(Vector2i(4 + (i * 3) % 24, 6 + (i % 5)), source_id, rubble)
+	var wood := Vector2i(5, 0)
+	for x in range(5, 27):
+		layer.set_cell(Vector2i(x, GRID_H - 1), source_id, wood)

@@ -1,7 +1,7 @@
 extends Node
 class_name MineCombatController
 
-## Shared hub (`main`) + `world_mine` mine combat. Uses `MiningSystem.can_mine_here` / `depth_from_global_y` / `get_effective_mine_rect()`.
+## Shared hub (`main`) + `world_mine` / `world_cave` combat. Uses `MiningSystem.can_mine_here` / `get_effective_mine_rect()`; depth from Y unless `fixed_combat_depth` is set.
 
 const EnemyMelee := preload("res://scripts/enemies/enemy_melee.gd")
 
@@ -19,6 +19,12 @@ signal feedback_ui_refresh()
 @export var defeat_respawn: Vector2 = Vector2(640, 360)
 @export var defeat_message_charged: String = "You collapsed and woke up at the farmhouse. Lost 60g."
 @export var defeat_message_insured: String = "You collapsed and woke up at the farmhouse. Daily rescue covered the loss."
+## If 0–2, spawns and rewards use this depth instead of Y-based bands (`world_cave` uses 2).
+@export var fixed_combat_depth: int = -1
+## Multiplier on spawn delay after a successful spawn (lower = more pressure).
+@export var spawn_interval_scale: float = 1.0
+@export var journal_zone_name: String = "Mine"
+@export var elite_spawn_journal_line: String = "An elite foe appears in the mine!"
 
 var _player: Node2D = null
 var _enemy_layer: Node2D = null
@@ -148,6 +154,22 @@ func _ui_refresh() -> void:
 	feedback_ui_refresh.emit()
 
 
+func _effective_spawn_depth() -> int:
+	if fixed_combat_depth >= 0:
+		return clampi(fixed_combat_depth, 0, 2)
+	if MiningSystem and _player:
+		return MiningSystem.depth_from_global_y(_player.global_position.y)
+	return 0
+
+
+func _kill_reward_depth(_enemy: Node2D) -> int:
+	if fixed_combat_depth >= 0:
+		return clampi(fixed_combat_depth, 0, 2)
+	if MiningSystem:
+		return MiningSystem.depth_from_global_y(_enemy.global_position.y)
+	return 0
+
+
 func _maintain_combat_spawns() -> void:
 	if _enemy_layer == null or _player == null or MiningSystem == null:
 		return
@@ -155,7 +177,7 @@ func _maintain_combat_spawns() -> void:
 	if _was_in_mine_last_frame and not in_mine_now and (_run_kills > 0 or _run_bonus_gold > 0):
 		var run_stars: int = _run_star_rating(_run_kills, _run_elites, _run_bonus_gold, _perfect_guard_chain_best)
 		var mvp: String = _run_mvp_tag()
-		_journal("Mine run recap: %d★, kills %d, elites %d, bonus +%dg, MVP %s." % [run_stars, _run_kills, _run_elites, _run_bonus_gold, mvp])
+		_journal("%s run recap: %d★, kills %d, elites %d, bonus +%dg, MVP %s." % [journal_zone_name, run_stars, _run_kills, _run_elites, _run_bonus_gold, mvp])
 		_tip("Run recap %d★ · MVP %s" % [run_stars, mvp], 1.2)
 		_run_kills = 0
 		_run_elites = 0
@@ -178,7 +200,7 @@ func _maintain_combat_spawns() -> void:
 	for c in _enemy_layer.get_children():
 		if c is EnemyMelee:
 			alive += 1
-	var depth: int = MiningSystem.depth_from_global_y(_player.global_position.y)
+	var depth: int = _effective_spawn_depth()
 	var depth_cap: int = mini(MAX_MINE_ENEMIES + 2, MAX_MINE_ENEMIES + maxi(0, depth))
 	var hp_ratio: float = 1.0
 	if GameManager:
@@ -191,6 +213,7 @@ func _maintain_combat_spawns() -> void:
 		return
 	if _spawn_mine_enemy():
 		var interval: float = lerpf(MINE_SPAWN_MAX_INTERVAL_SEC, MINE_SPAWN_MIN_INTERVAL_SEC, clampf(float(depth) / 3.0, 0.0, 1.0))
+		interval *= clampf(spawn_interval_scale, 0.3, 4.0)
 		if hp_ratio <= 0.35:
 			interval += 0.9
 		_next_mine_spawn_at = now + interval
@@ -202,7 +225,7 @@ func _spawn_mine_enemy() -> bool:
 	if _enemy_layer == null or _player == null or MiningSystem == null:
 		return false
 	var mine: Rect2 = MiningSystem.get_effective_mine_rect()
-	var depth: int = MiningSystem.depth_from_global_y(_player.global_position.y)
+	var depth: int = _effective_spawn_depth()
 	var e := EnemyMelee.new()
 	var profile: Dictionary = _pick_enemy_profile_for_depth(depth)
 	e.profile_id = str(profile.get("id", ""))
@@ -228,7 +251,7 @@ func _spawn_mine_enemy() -> bool:
 		e.drop_count_max += extra_drop
 		e.enemy_id = "%s_elite" % e.enemy_id
 		e.set_body_color(Color(0.78, 0.45, 0.86, 0.96))
-		_journal("An elite foe appears in the mine!")
+		_journal(elite_spawn_journal_line)
 		_tip("Elite incoming!", 0.95)
 		feedback_shake.emit(4.2)
 		if GatheringSfx:
@@ -449,7 +472,7 @@ func _handle_player_defeat() -> void:
 
 
 func _on_enemy_killed(enemy: EnemyMelee) -> void:
-	var depth_now: int = MiningSystem.depth_from_global_y(enemy.global_position.y) if MiningSystem else 0
+	var depth_now: int = _kill_reward_depth(enemy)
 	var is_elite: bool = str(enemy.enemy_id).find("_elite") >= 0
 	var now_sec: float = Time.get_ticks_msec() / 1000.0
 	if _last_stand_redeem_until > 0.0 and now_sec <= _last_stand_redeem_until and GameManager:
@@ -594,7 +617,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 				_journal("Combat milestone %d kills reached (+%dg)." % [target, milestone_gold])
 				_tip("Milestone reached: %d kills!" % target, 1.3)
 	if _kill_streak > 0 and _kill_streak % KILL_STREAK_STEP == 0 and GameManager:
-		var depth_bonus: int = maxi(0, MiningSystem.depth_from_global_y(enemy.global_position.y) if MiningSystem else 0)
+		var depth_bonus: int = maxi(0, _kill_reward_depth(enemy))
 		var bonus_gold: int = 14 + depth_bonus * 4
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bonus_gold
 		_attack_speed_buff_until = now_sec + STREAK_HASTE_SEC

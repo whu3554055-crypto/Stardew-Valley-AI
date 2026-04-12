@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://worldminereal01"]
+[gd_scene load_steps=9 format=3 uid="uid://worldcavereal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_mine_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
@@ -11,15 +11,24 @@
 size = Vector2(32, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_portal"]
-size = Vector2(72, 96)
+size = Vector2(88, 96)
 
-[node name="WorldMine" type="Node2D"]
+[node name="WorldCave" type="Node2D"]
 script = ExtResource("1_root")
-banner_title = "矿口"
+banner_title = "深层洞穴"
+mine_bounds_rect = Rect2(120, 70, 784, 580)
+defeat_respawn = Vector2(512, 380)
+use_deep_cave_tiles = true
+combat_fixed_depth = 2
+combat_spawn_interval_scale = 0.72
+combat_journal_zone = "Cave"
+combat_elite_journal_line = "A heavy silhouette blocks the tunnel!"
+defeat_message_charged = "You blacked out in the deep cave. Lost 60g."
+defeat_message_insured = "You blacked out in the cave. Daily rescue covered the gold loss."
 
 [node name="Ground" type="Polygon2D" parent="."]
 z_index = -3
-color = Color(0.22, 0.2, 0.24, 1)
+color = Color(0.1, 0.09, 0.14, 1)
 polygon = PackedVector2Array(0, 0, 1024, 0, 1024, 720, 0, 720)
 
 [node name="TileLayers" type="Node2D" parent="."]
@@ -35,28 +44,23 @@ position = Vector2(512, 360)
 script = ExtResource("4_spawn")
 spawn_id = "default"
 
-[node name="Spawn_from_world_beach" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(120, 360)
+[node name="Spawn_from_world_forest" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(512, 160)
 script = ExtResource("4_spawn")
-spawn_id = "from_world_beach"
+spawn_id = "from_world_forest"
 
-[node name="Spawn_from_main" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(900, 360)
+[node name="Spawn_from_world_mine" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(820, 360)
 script = ExtResource("4_spawn")
-spawn_id = "from_main"
-
-[node name="Spawn_from_world_cave" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(512, 560)
-script = ExtResource("4_spawn")
-spawn_id = "from_world_cave"
+spawn_id = "from_world_mine"
 
 [node name="Hint" type="Label" parent="."]
 offset_left = 16.0
 offset_top = 12.0
-offset_right = 760.0
+offset_right = 860.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Mine — sword vs mobs; pickaxe · ← Beach · → Main · ↓ Cave · Esc: save"
+text = "Deep cave — harder mobs (deep-tier); sword + pickaxe · ↑ Forest · → Mine · Esc: save"
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 360)
@@ -84,67 +88,46 @@ shape = SubResource("RectangleShape2D_player")
 position_smoothing_enabled = true
 position_smoothing_speed = 10.0
 
-[node name="PortalToBeach" type="Area2D" parent="."]
-position = Vector2(56, 360)
+[node name="PortalToForest" type="Area2D" parent="."]
+position = Vector2(512, 72)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("2_portal")
-target_scene = "res://scenes/world/world_beach.tscn"
-target_spawn_id = "from_world_mine"
+target_scene = "res://scenes/world/world_forest.tscn"
+target_spawn_id = "from_world_cave"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToBeach"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToForest"]
 shape = SubResource("RectangleShape2D_portal")
 
-[node name="PortalLabel" type="Label" parent="PortalToBeach"]
-offset_left = -100.0
-offset_top = -64.0
-offset_right = 100.0
-offset_bottom = -36.0
+[node name="PortalLabel" type="Label" parent="PortalToForest"]
+offset_left = -110.0
+offset_top = 48.0
+offset_right = 110.0
+offset_bottom = 76.0
 theme_override_font_sizes/font_size = 11
-text = "→ Beach"
+text = "↑ Forest"
 horizontal_alignment = 1
 
-[node name="PortalToMain" type="Area2D" parent="."]
+[node name="PortalToMine" type="Area2D" parent="."]
 position = Vector2(968, 360)
 collision_layer = 0
 collision_mask = 1
 monitoring = true
 script = ExtResource("2_portal")
-target_scene = "res://scenes/main.tscn"
-target_spawn_id = "from_world_mine"
+target_scene = "res://scenes/world/world_mine.tscn"
+target_spawn_id = "from_world_cave"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMain"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMine"]
 shape = SubResource("RectangleShape2D_portal")
 
-[node name="PortalLabel" type="Label" parent="PortalToMain"]
+[node name="PortalLabel" type="Label" parent="PortalToMine"]
 offset_left = -90.0
 offset_top = -64.0
 offset_right = 90.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "→ Main"
-horizontal_alignment = 1
-
-[node name="PortalToCave" type="Area2D" parent="."]
-position = Vector2(512, 648)
-collision_layer = 0
-collision_mask = 1
-monitoring = true
-script = ExtResource("2_portal")
-target_scene = "res://scenes/world/world_cave.tscn"
-target_spawn_id = "from_world_mine"
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToCave"]
-shape = SubResource("RectangleShape2D_portal")
-
-[node name="PortalLabel" type="Label" parent="PortalToCave"]
-offset_left = -90.0
-offset_top = -80.0
-offset_right = 90.0
-offset_bottom = -52.0
-theme_override_font_sizes/font_size = 11
-text = "↓ Cave"
+text = "→ Mine"
 horizontal_alignment = 1
 
 [node name="RegionHud" type="CanvasLayer" parent="."]
