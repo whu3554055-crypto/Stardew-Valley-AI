@@ -35,6 +35,21 @@ tile_set = ExtResource("6_tileset")
 z_index = 1
 tile_set = ExtResource("6_tileset")
 
+[node name="MineVisualProps" type="Node2D" parent="."]
+z_index = -1
+
+[node name="CrateA" type="Polygon2D" parent="MineVisualProps"]
+color = Color(0.36, 0.25, 0.16, 0.9)
+polygon = PackedVector2Array(300, 470, 352, 470, 352, 522, 300, 522)
+
+[node name="CrateB" type="Polygon2D" parent="MineVisualProps"]
+color = Color(0.33, 0.23, 0.14, 0.88)
+polygon = PackedVector2Array(360, 486, 404, 486, 404, 530, 360, 530)
+
+[node name="LanternGlow" type="Polygon2D" parent="MineVisualProps"]
+color = Color(0.95, 0.68, 0.22, 0.2)
+polygon = PackedVector2Array(680, 220, 760, 220, 760, 300, 680, 300)
+
 [node name="SpawnPoints" type="Node2D" parent="."]
 
 [node name="Spawn_default" type="Marker2D" parent="SpawnPoints"]
