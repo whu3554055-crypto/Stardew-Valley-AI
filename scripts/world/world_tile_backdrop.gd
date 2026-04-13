@@ -47,6 +47,19 @@ static func paint_town(layer: TileMapLayer, source_id: int = 0) -> void:
 			layer.set_cell(Vector2i(x, y), source_id, cob)
 
 
+static func paint_town_deco(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var flower := Vector2i(2, 0)
+	var stone := Vector2i(6, 0)
+	for x in range(3, GRID_W - 2, 5):
+		layer.set_cell(Vector2i(x, 5), source_id, flower)
+		layer.set_cell(Vector2i(x + 1, 17), source_id, flower)
+	for y in range(4, GRID_H - 2, 6):
+		layer.set_cell(Vector2i(4, y), source_id, stone)
+		layer.set_cell(Vector2i(27, y), source_id, stone)
+
+
 static func paint_mine_cavern(layer: TileMapLayer, source_id: int = 0) -> void:
 	fill_uniform(layer, Vector2i(4, 0), source_id)
 	var wood := Vector2i(5, 0)

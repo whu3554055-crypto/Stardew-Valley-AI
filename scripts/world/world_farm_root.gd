@@ -6,6 +6,7 @@ const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
 
 @onready var _player: CharacterBody2D = $Player as CharacterBody2D
 @onready var _tilemap: TileMap = $TileMap as TileMap
+@onready var _tilemap_deco: TileMap = get_node_or_null("TileMapDeco") as TileMap
 @onready var _farm_manager: FarmManager = $FarmManager as FarmManager
 @onready var _farm_message: Label = get_node_or_null("FarmHud/FarmMessage") as Label
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 			_farm_manager.crop_harvested.connect(_on_crop_harvested)
 	if _player:
 		_player.interacted.connect(_on_player_interact)
+	_paint_farm_deco_tiles()
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "农场"
 	add_child(banner)
@@ -65,6 +67,20 @@ func _farm_show_message(text: String, seconds: float = 3.0) -> void:
 func _on_farm_message_timeout() -> void:
 	if _farm_message:
 		_farm_message.visible = false
+
+
+func _paint_farm_deco_tiles() -> void:
+	if _tilemap == null or _tilemap_deco == null:
+		return
+	_tilemap_deco.tile_set = _tilemap.tile_set
+	if _tilemap_deco.tile_set == null:
+		return
+	# Simple layered props on top of base farm map.
+	for x in range(14, 26):
+		_tilemap_deco.set_cell(0, Vector2i(x, 9), 0, Vector2i(10, 0))
+	for x in [8, 11, 28, 31]:
+		_tilemap_deco.set_cell(0, Vector2i(x, 11), 0, Vector2i(9, 0))
+		_tilemap_deco.set_cell(0, Vector2i(x, 12), 0, Vector2i(9, 0))
 
 
 func _try_harvest(tile_coords: Vector2i) -> bool:

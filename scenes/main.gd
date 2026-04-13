@@ -36,6 +36,7 @@ const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
 const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
 const PLAYER_CREATION_SCENE := preload("res://scenes/player_creation_panel.tscn")
 const PLAYER_JOURNAL_SCENE := preload("res://scenes/player_journal_panel.tscn")
+const ALIGNMENT_PROFILE_PATH := "res://data/presentation/stardew_alignment_profile.json"
 var audio_mix_panel: CanvasLayer = null
 var player_creation_panel: CanvasLayer = null
 var player_journal_panel: CanvasLayer = null
@@ -51,6 +52,7 @@ var _visible_feed_last: Dictionary = {}
 var _dialogue_hide_timer: Timer
 var _journal_modal_dim: ColorRect = null
 var _journal_popup_open: bool = false
+var _alignment_profile: Dictionary = {}
 
 func _ready():
 	# Connect signals
@@ -140,7 +142,9 @@ func _ready():
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
 
+	_load_alignment_profile()
 	_apply_a3_ui_polish()
+	_apply_alignment_profile()
 	_connect_mine_bands_toggle()
 	_set_journal_popup_visible(false)
 
@@ -259,6 +263,59 @@ func _on_locale_changed(_code: String) -> void:
 func _process(_delta: float) -> void:
 	_update_activity_zone_label()
 	_check_stamina_low_feedback()
+
+
+func _load_alignment_profile() -> void:
+	_alignment_profile = {}
+	var f: FileAccess = FileAccess.open(ALIGNMENT_PROFILE_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var raw: String = f.get_as_text()
+	f.close()
+	var parsed: Variant = JSON.parse_string(raw)
+	if parsed is Dictionary:
+		_alignment_profile = (parsed as Dictionary).duplicate(true)
+
+
+func _apply_alignment_profile() -> void:
+	var visual: Dictionary = _alignment_profile.get("visual", {})
+	var ui_cfg: Dictionary = _alignment_profile.get("ui", {})
+	if bool(visual.get("hide_placeholder_zone_overlays", true)):
+		for p: String in [
+			"SmelterArea/Slab",
+			"KitchenArea/Counter",
+			"WorkbenchArea/BenchTop",
+			"ForestArea/ForestFloor",
+			"MineArea/MineLayerSurface",
+			"MineArea/MineLayerIron",
+			"MineArea/MineLayerDeep",
+			"RiverZone/RiverWater",
+			"OceanZone/OceanWater",
+			"FarmUpgradeArea/Overlay",
+			"HouseUpgradeArea/Overlay",
+		]:
+			var n: CanvasItem = get_node_or_null(p) as CanvasItem
+			if n:
+				n.visible = false
+	if bool(visual.get("hide_zone_hint_labels", true)):
+		for p: String in [
+			"SmelterArea/SmelterHint",
+			"KitchenArea/KitchenHint",
+			"WorkbenchArea/WorkbenchHint",
+			"ForestArea/ForestHint",
+			"MineArea/MineHint",
+			"RiverZone/RiverHint",
+			"OceanZone/OceanHint",
+			"FarmUpgradeArea/FarmUpgradeHint",
+			"HouseUpgradeArea/HouseUpgradeHint",
+		]:
+			var n: CanvasItem = get_node_or_null(p) as CanvasItem
+			if n:
+				n.visible = false
+	if ui_cfg.get("hide_ai_config_button", true) and ai_config_button:
+		ai_config_button.visible = false
+	if ui_cfg.get("hide_activity_zone_label", true) and activity_zone_label:
+		activity_zone_label.visible = false
 
 func _apply_a3_ui_polish() -> void:
 	## Readability + panel chrome (A3 presentation pass).

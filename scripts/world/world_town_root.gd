@@ -24,9 +24,12 @@ func _ready() -> void:
 		WorldRouter.apply_pending_spawn_and_clear()
 
 	var tile_ground: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
+	var tile_deco: TileMapLayer = get_node_or_null("TileLayers/LayerDeco") as TileMapLayer
 	if tile_ground:
 		WorldTileBackdrop.paint_town(tile_ground, 0)
 		WorldTileBackdrop.hide_polygon_ground(self)
+	if tile_deco:
+		WorldTileBackdrop.paint_town_deco(tile_deco, 0)
 
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "鹈鹕镇"

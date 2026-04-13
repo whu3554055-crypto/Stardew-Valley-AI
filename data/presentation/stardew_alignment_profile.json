@@ -1,0 +1,13 @@
+{
+  "target_route": "B",
+  "profile_name": "structured_rebuild_baseline",
+  "visual": {
+    "hide_placeholder_zone_overlays": true,
+    "hide_zone_hint_labels": true
+  },
+  "ui": {
+    "hide_ai_config_button": true,
+    "hide_activity_zone_label": true,
+    "journal_popup_default_closed": true
+  }
+}

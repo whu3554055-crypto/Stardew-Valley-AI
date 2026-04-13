@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://worldtownreal01"]
+[gd_scene load_steps=13 format=3 uid="uid://worldtownreal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_town_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
@@ -15,6 +15,9 @@ size = Vector2(32, 32)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_portal"]
 size = Vector2(72, 96)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_town_block"]
+size = Vector2(140, 94)
+
 [node name="WorldTown" type="Node2D"]
 script = ExtResource("1_root")
 
@@ -28,6 +31,38 @@ z_index = -2
 
 [node name="LayerGround" type="TileMapLayer" parent="TileLayers"]
 tile_set = ExtResource("8_tileset")
+
+[node name="LayerDeco" type="TileMapLayer" parent="TileLayers"]
+tile_set = ExtResource("8_tileset")
+
+[node name="TownCollisionSemantics" type="Node2D" parent="."]
+
+[node name="GeneralStoreVisual" type="Polygon2D" parent="TownCollisionSemantics"]
+z_index = 1
+color = Color(0.55, 0.39, 0.26, 0.95)
+polygon = PackedVector2Array(438, 286, 592, 286, 592, 408, 438, 408)
+
+[node name="GeneralStoreRoof" type="Polygon2D" parent="TownCollisionSemantics"]
+z_index = 2
+color = Color(0.62, 0.25, 0.2, 0.94)
+polygon = PackedVector2Array(420, 286, 610, 286, 514, 236)
+
+[node name="GeneralStoreSolid" type="StaticBody2D" parent="TownCollisionSemantics"]
+position = Vector2(514, 350)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TownCollisionSemantics/GeneralStoreSolid"]
+shape = SubResource("RectangleShape2D_town_block")
+
+[node name="TownWellVisual" type="Polygon2D" parent="TownCollisionSemantics"]
+z_index = 1
+color = Color(0.38, 0.42, 0.48, 0.96)
+polygon = PackedVector2Array(300, 335, 360, 335, 360, 395, 300, 395)
+
+[node name="TownWellSolid" type="StaticBody2D" parent="TownCollisionSemantics"]
+position = Vector2(330, 365)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TownCollisionSemantics/TownWellSolid"]
+shape = SubResource("RectangleShape2D_player")
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
@@ -86,7 +121,7 @@ position_smoothing_enabled = true
 position_smoothing_speed = 10.0
 
 [node name="Pierre" parent="." instance=ExtResource("6_pierre")]
-position = Vector2(520, 380)
+position = Vector2(520, 436)
 use_ai_dialogue = false
 
 [node name="PortalToMain" type="Area2D" parent="."]
