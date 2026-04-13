@@ -33,6 +33,7 @@ script = ExtResource("1_root")
 [node name="TileMap" type="TileMap" parent="."]
 z_index = -3
 script = ExtResource("6_gtmap")
+auto_generate_map = false
 
 [node name="TileMapDeco" type="TileMap" parent="."]
 z_index = -2
@@ -58,9 +59,33 @@ polygon = PackedVector2Array(444, 160, 676, 160, 560, 98)
 color = Color(0.24, 0.16, 0.11, 0.95)
 polygon = PackedVector2Array(542, 286, 578, 286, 578, 236, 542, 236)
 
+[node name="FarmhouseWindowL" type="Polygon2D" parent="FarmBackdrop"]
+color = Color(0.74, 0.83, 0.89, 0.95)
+polygon = PackedVector2Array(494, 210, 522, 210, 522, 236, 494, 236)
+
+[node name="FarmhouseWindowR" type="Polygon2D" parent="FarmBackdrop"]
+color = Color(0.74, 0.83, 0.89, 0.95)
+polygon = PackedVector2Array(598, 210, 626, 210, 626, 236, 598, 236)
+
+[node name="FarmhouseRoofTrim" type="Polygon2D" parent="FarmBackdrop"]
+color = Color(0.42, 0.17, 0.12, 0.94)
+polygon = PackedVector2Array(458, 164, 662, 164, 650, 178, 470, 178)
+
+[node name="FarmhouseChimney" type="Polygon2D" parent="FarmBackdrop"]
+color = Color(0.32, 0.22, 0.2, 0.95)
+polygon = PackedVector2Array(612, 118, 638, 118, 638, 82, 612, 82)
+
+[node name="FarmhouseShadow" type="Polygon2D" parent="FarmBackdrop"]
+color = Color(0.1, 0.09, 0.09, 0.28)
+polygon = PackedVector2Array(482, 286, 664, 286, 650, 304, 470, 304)
+
 [node name="FenceVisual" type="Polygon2D" parent="FarmBackdrop"]
 color = Color(0.64, 0.52, 0.34, 0.9)
 polygon = PackedVector2Array(220, 418, 500, 418, 500, 438, 220, 438)
+
+[node name="FencePosts" type="Polygon2D" parent="FarmBackdrop"]
+color = Color(0.54, 0.43, 0.28, 0.94)
+polygon = PackedVector2Array(228, 404, 236, 404, 236, 438, 228, 438, 272, 404, 280, 404, 280, 438, 272, 438, 316, 404, 324, 404, 324, 438, 316, 438, 360, 404, 368, 404, 368, 438, 360, 438, 404, 404, 412, 404, 412, 438, 404, 438, 448, 404, 456, 404, 456, 438, 448, 438, 488, 404, 496, 404, 496, 438, 488, 438)
 
 [node name="FarmCollisionSemantics" type="Node2D" parent="."]
 

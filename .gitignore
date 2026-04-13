@@ -105,3 +105,6 @@ data/quests/backups/
 
 # Generated configs
 config_override.cfg
+scenes/world/world_farm.tscn
+scripts/game_tilemap.gd
+scripts/world/world_farm_root.gd

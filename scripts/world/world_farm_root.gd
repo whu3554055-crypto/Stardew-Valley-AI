@@ -76,6 +76,7 @@ func _on_farm_message_timeout() -> void:
 func _paint_farm_deco_tiles() -> void:
 	if _tilemap == null or _tilemap_deco == null:
 		return
+	_paint_farm_base_tiles()
 	_tilemap_deco.tile_set = _tilemap.tile_set
 	if _tilemap_occlusion:
 		_tilemap_occlusion.tile_set = _tilemap.tile_set
@@ -93,6 +94,38 @@ func _paint_farm_deco_tiles() -> void:
 			_tilemap_occlusion.set_cell(0, Vector2i(x, 8), 0, Vector2i(10, 0))
 		for x in [8, 11, 28, 31]:
 			_tilemap_occlusion.set_cell(0, Vector2i(x, 10), 0, Vector2i(9, 0))
+
+
+func _paint_farm_base_tiles() -> void:
+	if _tilemap == null:
+		return
+	var grass := Vector2i(0, 0)
+	var dirt := Vector2i(1, 0)
+	var tilled := Vector2i(2, 0)
+	var flower := Vector2i(8, 0)
+	for x in range(32):
+		for y in range(23):
+			var atlas: Vector2i = grass
+			if x >= 21 and y >= 17:
+				atlas = Vector2i(4, 0)
+			elif (x + y) % 11 == 0 and y > 5:
+				atlas = flower
+			_tilemap.set_cell(0, Vector2i(x, y), 0, atlas)
+	for x in range(14, 20):
+		for y in range(9, 18):
+			_tilemap.set_cell(0, Vector2i(x, y), 0, dirt)
+	for x in range(3, 17):
+		for y in range(11, 13):
+			_tilemap.set_cell(0, Vector2i(x, y), 0, dirt)
+	for x in range(20, 30):
+		for y in range(11, 13):
+			_tilemap.set_cell(0, Vector2i(x, y), 0, dirt)
+	for x in range(6, 13):
+		for y in range(16, 21):
+			_tilemap.set_cell(0, Vector2i(x, y), 0, tilled)
+	for x in range(20, 27):
+		for y in range(16, 21):
+			_tilemap.set_cell(0, Vector2i(x, y), 0, tilled)
 
 
 func _try_harvest(tile_coords: Vector2i) -> bool:

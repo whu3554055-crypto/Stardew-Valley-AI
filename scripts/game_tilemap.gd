@@ -22,6 +22,8 @@ enum TileType {
 	FENCE = 10
 }
 
+@export var auto_generate_map: bool = true
+
 # Zone definitions for NPC navigation and scheduling
 var town_zones = {
 	# RESIDENTIAL ZONES
@@ -100,8 +102,9 @@ var zone_paths = [
 func _ready():
 	if tile_set == null:
 		tile_set = _create_main_tileset()
-	generate_enhanced_map()
-	initialize_zone_data()
+	if auto_generate_map:
+		generate_enhanced_map()
+		initialize_zone_data()
 
 
 func _cell_randf(cx: int, cy: int, salt: int = 0) -> float:
