@@ -103,6 +103,11 @@ func _ready():
 		NPCEmotionSystem.emotion_changed.connect(_on_visible_emotion_changed)
 	if AIEconomySystem and AIEconomySystem.has_signal("player_visible_market_note"):
 		AIEconomySystem.player_visible_market_note.connect(_on_player_visible_market_note)
+	if AIEventSystem:
+		if AIEventSystem.has_signal("event_started"):
+			AIEventSystem.event_started.connect(_on_ai_world_event_started)
+		if AIEventSystem.has_signal("world_state_changed"):
+			AIEventSystem.world_state_changed.connect(_on_ai_world_state_changed)
 	if NPCTraitSystem and NPCTraitSystem.has_signal("relationship_evolved"):
 		NPCTraitSystem.relationship_evolved.connect(_on_relationship_evolved)
 	if NPCMemorySystem and NPCMemorySystem.has_signal("preference_learned"):
@@ -1845,6 +1850,34 @@ func _on_player_visible_market_note(line: String) -> void:
 	_visible_feed_last["market"] = now
 	record_world_event(line)
 	show_quick_tip(line, 2.0)
+	if AIQuestSystem:
+		AIQuestSystem.track_event("market_note", {"line": line})
+
+
+func _on_ai_world_event_started(event_id: String, event_info: Dictionary) -> void:
+	var title: String = str(event_info.get("name", event_id)).strip_edges()
+	var cat: String = str(event_info.get("category", "world")).strip_edges()
+	if title.is_empty():
+		title = event_id
+	var line: String = "World event · %s [%s]" % [title, cat]
+	record_world_event(line)
+	show_quick_tip(line, 1.7)
+	if AIQuestSystem:
+		AIQuestSystem.track_event("world_event_started", {
+			"event_id": event_id,
+			"category": cat,
+			"name": title
+		})
+
+
+func _on_ai_world_state_changed(change_type: String, change_data: Dictionary) -> void:
+	var line: String = "World state shift · %s." % str(change_type)
+	record_world_event(line)
+	if AIQuestSystem:
+		AIQuestSystem.track_event("world_state_changed", {
+			"type": change_type,
+			"data": change_data.duplicate(true)
+		})
 
 func _on_visible_memory_added(npc_id: String, memory: Variant) -> void:
 	if memory == null:
