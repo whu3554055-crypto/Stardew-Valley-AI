@@ -57,14 +57,24 @@ func _apply_region_override() -> void:
 ## F1 试点：`world_beach` 铺沙、`world_forest` 铺草（与 playground 同源 TileSet），隐藏纯色 Ground。
 func _paint_world_tile_pilot() -> void:
 	var layer: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
+	var layer_deco: TileMapLayer = get_node_or_null("TileLayers/LayerDeco") as TileMapLayer
+	var layer_occ: TileMapLayer = get_node_or_null("TileLayers/LayerOcclusion") as TileMapLayer
 	if layer == null or layer.tile_set == null:
 		return
 	match region_kind:
 		Kind.BEACH:
 			WorldTileBackdrop.paint_beach(layer, 0)
+			if layer_deco:
+				WorldTileBackdrop.paint_beach_deco(layer_deco, 0)
+			if layer_occ:
+				WorldTileBackdrop.paint_beach_occlusion(layer_occ, 0)
 			WorldTileBackdrop.hide_polygon_ground(self)
 		Kind.FOREST:
 			WorldTileBackdrop.paint_forest(layer, 0)
+			if layer_deco:
+				WorldTileBackdrop.paint_forest_deco(layer_deco, 0)
+			if layer_occ:
+				WorldTileBackdrop.paint_forest_occlusion(layer_occ, 0)
 			WorldTileBackdrop.hide_polygon_ground(self)
 		_:
 			pass

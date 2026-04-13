@@ -31,12 +31,51 @@ static func paint_beach(layer: TileMapLayer, source_id: int = 0) -> void:
 			layer.set_cell(Vector2i(x, y), source_id, wet if y >= 12 else dry)
 
 
+static func paint_beach_deco(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var shell := Vector2i(2, 0)
+	var stone := Vector2i(6, 0)
+	for x in range(4, GRID_W - 2, 6):
+		layer.set_cell(Vector2i(x, 9), source_id, shell)
+		layer.set_cell(Vector2i(x + 1, 16), source_id, shell)
+	for x in [3, 28]:
+		layer.set_cell(Vector2i(x, 11), source_id, stone)
+		layer.set_cell(Vector2i(x, 18), source_id, stone)
+
+
+static func paint_beach_occlusion(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var palm := Vector2i(9, 0)
+	layer.set_cell(Vector2i(6, 8), source_id, palm)
+	layer.set_cell(Vector2i(25, 7), source_id, palm)
+
+
 static func paint_forest(layer: TileMapLayer, source_id: int = 0) -> void:
 	fill_uniform(layer, Vector2i(0, 0), source_id)
 	var deco := Vector2i(2, 0)
 	layer.set_cell(Vector2i(10, 8), source_id, deco)
 	layer.set_cell(Vector2i(22, 14), source_id, deco)
 	layer.set_cell(Vector2i(18, 19), source_id, deco)
+
+
+static func paint_forest_deco(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var tree := Vector2i(9, 0)
+	var flower := Vector2i(2, 0)
+	for x in [6, 11, 18, 25]:
+		layer.set_cell(Vector2i(x, 7), source_id, tree)
+		layer.set_cell(Vector2i(x + 1, 15), source_id, flower)
+
+
+static func paint_forest_occlusion(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var canopy := Vector2i(10, 0)
+	for x in [6, 11, 18, 25]:
+		layer.set_cell(Vector2i(x, 6), source_id, canopy)
 
 
 static func paint_town(layer: TileMapLayer, source_id: int = 0) -> void:
@@ -76,6 +115,23 @@ static func paint_mine_cavern(layer: TileMapLayer, source_id: int = 0) -> void:
 	var wood := Vector2i(5, 0)
 	for x in range(7, 25):
 		layer.set_cell(Vector2i(x, GRID_H - 1), source_id, wood)
+
+
+static func paint_mine_deco(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var rubble := Vector2i(6, 0)
+	for x in range(5, GRID_W - 5, 5):
+		layer.set_cell(Vector2i(x, 8), source_id, rubble)
+		layer.set_cell(Vector2i(x + 1, 14), source_id, rubble)
+
+
+static func paint_mine_occlusion(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var beam := Vector2i(5, 0)
+	for x in range(8, GRID_W - 8, 6):
+		layer.set_cell(Vector2i(x, 5), source_id, beam)
 
 
 static func paint_deep_cave(layer: TileMapLayer, source_id: int = 0) -> void:

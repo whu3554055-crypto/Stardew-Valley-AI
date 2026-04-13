@@ -40,12 +40,18 @@ func _ready() -> void:
 		MiningSystem.set_mine_bounds_override(mine_bounds_rect)
 
 	var tile_ground: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
+	var tile_deco: TileMapLayer = get_node_or_null("TileLayers/LayerDeco") as TileMapLayer
+	var tile_occ: TileMapLayer = get_node_or_null("TileLayers/LayerOcclusion") as TileMapLayer
 	if tile_ground:
 		if use_deep_cave_tiles:
 			WorldTileBackdrop.paint_deep_cave(tile_ground, 0)
 		else:
 			WorldTileBackdrop.paint_mine_cavern(tile_ground, 0)
 		WorldTileBackdrop.hide_polygon_ground(self)
+	if tile_deco:
+		WorldTileBackdrop.paint_mine_deco(tile_deco, 0)
+	if tile_occ:
+		WorldTileBackdrop.paint_mine_occlusion(tile_occ, 0)
 
 	if not banner_title.is_empty():
 		var b: CanvasLayer = WorldRegionBanner.new()

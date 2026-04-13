@@ -28,6 +28,13 @@ z_index = -2
 [node name="LayerGround" type="TileMapLayer" parent="TileLayers"]
 tile_set = ExtResource("6_tileset")
 
+[node name="LayerDeco" type="TileMapLayer" parent="TileLayers"]
+tile_set = ExtResource("6_tileset")
+
+[node name="LayerOcclusion" type="TileMapLayer" parent="TileLayers"]
+z_index = 1
+tile_set = ExtResource("6_tileset")
+
 [node name="SpawnPoints" type="Node2D" parent="."]
 
 [node name="Spawn_default" type="Marker2D" parent="SpawnPoints"]
