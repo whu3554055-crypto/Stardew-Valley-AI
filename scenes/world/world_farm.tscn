@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://worldfarmreal01"]
+[gd_scene load_steps=14 format=3 uid="uid://worldfarmreal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_farm_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://scripts/farm_manager.gd" id="5_farm"]
 [ext_resource type="Script" path="res://scripts/game_tilemap.gd" id="6_gtmap"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="7_tex"]
+[ext_resource type="Script" path="res://scripts/world/foreground_occlusion_area.gd" id="8_occ"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -22,6 +23,9 @@ size = Vector2(280, 20)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_world_wall"]
 size = Vector2(28, 736)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_occ_house"]
+size = Vector2(170, 76)
 
 [node name="WorldFarm" type="Node2D"]
 script = ExtResource("1_root")
@@ -83,6 +87,15 @@ position = Vector2(1010, 360)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/WorldWallRight"]
 shape = SubResource("RectangleShape2D_world_wall")
+
+[node name="HouseFrontOcclusion" type="Area2D" parent="FarmCollisionSemantics"]
+position = Vector2(560, 210)
+monitoring = true
+monitorable = true
+script = ExtResource("8_occ")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/HouseFrontOcclusion"]
+shape = SubResource("RectangleShape2D_occ_house")
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(640, 360)

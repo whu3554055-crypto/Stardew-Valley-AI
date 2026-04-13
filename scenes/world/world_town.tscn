@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://worldtownreal01"]
+[gd_scene load_steps=16 format=3 uid="uid://worldtownreal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_town_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/npc_pierre.tscn" id="6_pierre"]
 [ext_resource type="PackedScene" path="res://scenes/shop_ui.tscn" id="7_shop"]
 [ext_resource type="TileSet" path="res://assets/tiles/playground_tileset.tres" id="8_tileset"]
+[ext_resource type="Script" path="res://scripts/world/foreground_occlusion_area.gd" id="9_occ"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -17,6 +18,9 @@ size = Vector2(72, 96)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_town_block"]
 size = Vector2(140, 94)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_occ_store_front"]
+size = Vector2(140, 58)
 
 [node name="WorldTown" type="Node2D"]
 script = ExtResource("1_root")
@@ -67,6 +71,15 @@ position = Vector2(330, 365)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TownCollisionSemantics/TownWellSolid"]
 shape = SubResource("RectangleShape2D_player")
+
+[node name="StoreFrontOcclusion" type="Area2D" parent="TownCollisionSemantics"]
+position = Vector2(514, 322)
+monitoring = true
+monitorable = true
+script = ExtResource("9_occ")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TownCollisionSemantics/StoreFrontOcclusion"]
+shape = SubResource("RectangleShape2D_occ_store_front")
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
