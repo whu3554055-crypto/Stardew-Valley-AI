@@ -1397,6 +1397,7 @@ func _on_time_changed(new_time):
 func _on_day_changed(new_day):
 	_reset_daily_event_budget()
 	_writeback_player_behavior_digest(new_day)
+	_apply_next_day_style_feedback(new_day)
 	_apply_rc_beginner_guidance()
 	if GameManager:
 		var defeats_today: int = int(GameManager.player_data.get("daily_defeats", 0))
@@ -1534,6 +1535,36 @@ func _writeback_player_behavior_digest(new_day: int) -> void:
 	GameManager.player_data["harvest_count_today"] = 0
 	GameManager.player_data["talk_count_today"] = 0
 	GameManager.player_data["fish_count_today"] = 0
+
+
+func _apply_next_day_style_feedback(new_day: int) -> void:
+	if not GameManager:
+		return
+	var style: String = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+	var key: String = "style_feedback_day_%d" % int(new_day)
+	if bool(GameManager.player_data.get(key, false)):
+		return
+	GameManager.player_data[key] = true
+	var line: String = ""
+	match style:
+		"combat_focused":
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + 20
+			line = "Town reward: +20g for keeping mines safer yesterday."
+		"farming_focused":
+			var seeds: int = int(GameManager.player_data.get("parsnip_seed", 0))
+			GameManager.player_data["parsnip_seed"] = seeds + 2
+			line = "Farm support: +2 Parsnip Seeds for strong harvest work."
+		"social_focused":
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + 12
+			line = "Village thanks: +12g after helping everyone yesterday."
+		"fishing_focused":
+			GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + 15
+			line = "Dock bonus: +15g from fish market demand."
+		_:
+			line = "Balanced day bonus: townsfolk share useful rumors."
+	if not line.is_empty():
+		record_world_event(line)
+		show_quick_tip(line, 1.9)
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
 	_refresh_quest_log()
