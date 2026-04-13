@@ -40,6 +40,7 @@ var narrative_threads = []
 var daily_narrative_cache = {}
 var _verify_tick_accum: float = 0.0
 var _recent_events: Array = []
+const AI_QUEST_MIN_ACCEPT_SCORE := 0.58
 
 func _ready():
 	initialize_quest_system()
@@ -620,6 +621,15 @@ Output ONLY in JSON format:
 		ai_quest_request_completed.emit(npc_id, fallback_quest3)
 		assign_quest_to_player(fallback_quest3)
 		return
+	var quality: float = _score_ai_quest_payload(ai_data)
+	if quality < AI_QUEST_MIN_ACCEPT_SCORE:
+		ai_quest_request_failed.emit(npc_id, "low_quality_ai_payload:%.2f" % quality)
+		var fallback_quest4: Dictionary = generate_procedural_quest(opportunity)
+		if fallback_quest4.is_empty():
+			return
+		ai_quest_request_completed.emit(npc_id, fallback_quest4)
+		assign_quest_to_player(fallback_quest4)
+		return
 
 	_on_ai_quest_response_received(npc_id, opportunity, ai_data)
 
@@ -645,6 +655,27 @@ func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_
 	
 	ai_quest_request_completed.emit(npc_id, quest)
 	assign_quest_to_player(quest)
+
+
+func _score_ai_quest_payload(ai_data: Dictionary) -> float:
+	var score: float = 0.0
+	var title: String = str(ai_data.get("title", "")).strip_edges()
+	var desc: String = str(ai_data.get("description", "")).strip_edges()
+	var objective: String = str(ai_data.get("objective", "")).strip_edges()
+	var motivation: String = str(ai_data.get("motivation", "")).strip_edges()
+	if title.length() >= 6:
+		score += 0.2
+	if desc.length() >= 24:
+		score += 0.3
+	if objective.length() >= 10:
+		score += 0.3
+	if motivation.length() >= 12:
+		score += 0.2
+	if objective.find("???") >= 0 or objective.find("unknown") >= 0:
+		score -= 0.25
+	if title.to_lower().find("quest") >= 0 and title.length() < 10:
+		score -= 0.1
+	return clampf(score, 0.0, 1.0)
 
 func _clip_text(v: String, max_len: int) -> String:
 	var t: String = v.strip_edges()
