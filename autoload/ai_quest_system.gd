@@ -316,6 +316,7 @@ func apply_daily_narrative_context():
 func analyze_quest_opportunities() -> Array:
 	"""Analyze game state for quest opportunities"""
 	var opportunities = []
+	var bias: Dictionary = _derive_world_state_bias()
 	
 	# 1. Check NPC needs and goals
 	opportunities.append_array(analyze_npc_needs())
@@ -333,9 +334,50 @@ func analyze_quest_opportunities() -> Array:
 	opportunities.append_array(analyze_narrative_threads())
 	
 	# Sort by priority
+	for i in range(opportunities.size()):
+		var op: Dictionary = opportunities[i]
+		var tpl: String = str(op.get("quest_template", "fetch_item"))
+		op.priority = float(op.get("priority", 0.0)) + float(bias.get(tpl, 0.0))
+		opportunities[i] = op
 	opportunities.sort_custom(func(a, b): return a.priority > b.priority)
 	
 	return opportunities
+
+
+func _derive_world_state_bias() -> Dictionary:
+	var bias: Dictionary = {
+		"fetch_item": 0.0,
+		"delivery": 0.0,
+		"problem_solve": 0.0,
+		"relationship_build": 0.0,
+		"skill_challenge": 0.0,
+		"emergency": 0.0
+	}
+	for ev in _recent_events:
+		var et: String = str(ev.get("type", ""))
+		match et:
+			"enemy_kill":
+				bias["skill_challenge"] += 0.45
+			"harvest", "mine_ore":
+				bias["delivery"] += 0.35
+				bias["fetch_item"] += 0.2
+			"talk":
+				bias["relationship_build"] += 0.5
+			"quest_completed":
+				bias["problem_solve"] += 0.25
+	if AIEconomySystem and AIEconomySystem.has_method("get_top_demanded_items"):
+		var demands: Array = AIEconomySystem.get_top_demanded_items(2)
+		if not demands.is_empty():
+			bias["delivery"] += 0.6
+	if AIEventSystem and AIEventSystem.has_method("get_active_events"):
+		var events: Array = AIEventSystem.get_active_events()
+		for event in events:
+			var cat: String = str((event as Dictionary).get("category", ""))
+			if cat == "emergency":
+				bias["emergency"] += 1.2
+			elif cat == "social":
+				bias["relationship_build"] += 0.45
+	return bias
 
 func analyze_npc_needs() -> Array:
 	"""Analyze NPC needs that could become quests"""
@@ -1046,11 +1088,27 @@ func update_narrative_from_quest(quest: Dictionary, success: bool):
 		if thread.active_quests.has(quest.id):
 			if success:
 				thread.progress += 1
+				thread.completed_quests.append(quest.id)
+				thread.next_quest_type = _next_template_from_quest_type(str(quest.get("template", "fetch_item")))
 				if thread.progress >= thread.total_steps:
 					thread.status = "completed"
 					quest_chain_completed.emit(thread.id, thread.completed_quests)
 			else:
 				thread.status = "blocked"
+
+
+func _next_template_from_quest_type(current_template: String) -> String:
+	match current_template:
+		"fetch_item":
+			return "delivery"
+		"delivery":
+			return "relationship_build"
+		"relationship_build":
+			return "problem_solve"
+		"problem_solve":
+			return "skill_challenge"
+		_:
+			return "fetch_item"
 
 # ============================================
 # NARRATIVE THREAD MANAGEMENT
