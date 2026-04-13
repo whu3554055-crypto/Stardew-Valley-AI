@@ -1432,6 +1432,15 @@ func _on_day_changed(new_day):
 	# Auto-water crops if raining
 	if WeatherSystem.is_raining():
 		auto_water_crops()
+	var weather_now: String = WeatherSystem.get_weather_name() if WeatherSystem else "Unknown"
+	var weather_line: String = "Weather pulse: %s." % weather_now
+	record_world_event(weather_line)
+	show_quick_tip(weather_line, 1.3)
+	if AIQuestSystem:
+		AIQuestSystem.track_event("weather_pulse", {
+			"day": int(new_day),
+			"weather": weather_now
+		})
 	if AIEconomySystem:
 		var market_line: String = AIEconomySystem.get_daily_shop_brief()
 		if not market_line.is_empty():
@@ -1911,6 +1920,12 @@ func _on_relationship_evolved(npc_id: String, other_id: String, new_level: int) 
 	var line: String = "Bond · %s → tier %d." % [who, clampi(int(new_level), 0, 10)]
 	record_world_event(line)
 	show_quick_tip(line, 1.8)
+	if AIQuestSystem:
+		AIQuestSystem.track_event("relationship_shift", {
+			"npc_id": npc_id,
+			"other_id": other_id,
+			"new_level": int(new_level)
+		})
 
 func _on_preference_learned_memory(npc_id: String, preference_key: String) -> void:
 	var now: float = float(Time.get_unix_time_from_system())
