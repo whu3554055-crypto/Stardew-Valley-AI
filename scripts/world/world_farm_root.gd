@@ -7,6 +7,7 @@ const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
 @onready var _player: CharacterBody2D = $Player as CharacterBody2D
 @onready var _tilemap: TileMap = $TileMap as TileMap
 @onready var _tilemap_deco: TileMap = get_node_or_null("TileMapDeco") as TileMap
+@onready var _tilemap_occlusion: TileMap = get_node_or_null("TileMapOcclusion") as TileMap
 @onready var _farm_manager: FarmManager = $FarmManager as FarmManager
 @onready var _farm_message: Label = get_node_or_null("FarmHud/FarmMessage") as Label
 
@@ -73,6 +74,8 @@ func _paint_farm_deco_tiles() -> void:
 	if _tilemap == null or _tilemap_deco == null:
 		return
 	_tilemap_deco.tile_set = _tilemap.tile_set
+	if _tilemap_occlusion:
+		_tilemap_occlusion.tile_set = _tilemap.tile_set
 	if _tilemap_deco.tile_set == null:
 		return
 	# Simple layered props on top of base farm map.
@@ -81,6 +84,12 @@ func _paint_farm_deco_tiles() -> void:
 	for x in [8, 11, 28, 31]:
 		_tilemap_deco.set_cell(0, Vector2i(x, 11), 0, Vector2i(9, 0))
 		_tilemap_deco.set_cell(0, Vector2i(x, 12), 0, Vector2i(9, 0))
+	if _tilemap_occlusion:
+		# Occlusion row in front of farmhouse roof/trees.
+		for x in range(14, 26):
+			_tilemap_occlusion.set_cell(0, Vector2i(x, 8), 0, Vector2i(10, 0))
+		for x in [8, 11, 28, 31]:
+			_tilemap_occlusion.set_cell(0, Vector2i(x, 10), 0, Vector2i(9, 0))
 
 
 func _try_harvest(tile_coords: Vector2i) -> bool:
