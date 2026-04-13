@@ -378,18 +378,11 @@ func _apply_a3_ui_polish() -> void:
 	]
 	for n in hud_labels:
 		if n is Label:
-			var lb: Label = n as Label
-			lb.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.62))
-			lb.add_theme_constant_override("shadow_offset_x", 1)
-			lb.add_theme_constant_override("shadow_offset_y", 1)
+			_apply_ui_label_style(n as Label, 15, Color(0, 0, 0, 0.62))
 	if quick_tip_label:
-		quick_tip_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.65))
-		quick_tip_label.add_theme_constant_override("shadow_offset_x", 1)
-		quick_tip_label.add_theme_constant_override("shadow_offset_y", 1)
+		_apply_ui_label_style(quick_tip_label, 14, Color(0, 0, 0, 0.65))
 	if activity_zone_label:
-		activity_zone_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
-		activity_zone_label.add_theme_constant_override("shadow_offset_x", 1)
-		activity_zone_label.add_theme_constant_override("shadow_offset_y", 1)
+		_apply_ui_label_style(activity_zone_label, 13, Color(0, 0, 0, 0.5))
 	var wsb := StyleBoxFlat.new()
 	wsb.bg_color = Color(0.05, 0.06, 0.08, 0.88)
 	wsb.set_border_width_all(1)
@@ -403,9 +396,7 @@ func _apply_a3_ui_polish() -> void:
 		if tp:
 			tp.add_theme_stylebox_override("panel", wsb.duplicate() as StyleBoxFlat)
 	if world_event_feed_label:
-		world_event_feed_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
-		world_event_feed_label.add_theme_constant_override("shadow_offset_x", 1)
-		world_event_feed_label.add_theme_constant_override("shadow_offset_y", 1)
+		_apply_ui_label_style(world_event_feed_label, 13, Color(0, 0, 0, 0.45))
 	if ai_config_button:
 		ai_config_button.tooltip_text = "L: events / quests log"
 		var bsb := StyleBoxFlat.new()
@@ -417,9 +408,7 @@ func _apply_a3_ui_polish() -> void:
 		ai_config_button.add_theme_stylebox_override("pressed", bsb)
 		ai_config_button.flat = true
 	if quest_log_label:
-		quest_log_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
-		quest_log_label.add_theme_constant_override("shadow_offset_x", 1)
-		quest_log_label.add_theme_constant_override("shadow_offset_y", 1)
+		_apply_ui_label_style(quest_log_label, 13, Color(0, 0, 0, 0.45))
 	if ui_layer and ui_layer.get_node_or_null("HUDBackdrop") == null:
 		var hud_bg := Panel.new()
 		hud_bg.name = "HUDBackdrop"
@@ -436,6 +425,15 @@ func _apply_a3_ui_polish() -> void:
 		hud_bg.add_theme_stylebox_override("panel", hsb)
 		ui_layer.add_child(hud_bg)
 		ui_layer.move_child(hud_bg, 0)
+
+
+func _apply_ui_label_style(lb: Label, font_size: int, shadow: Color) -> void:
+	if lb == null:
+		return
+	lb.add_theme_font_size_override("font_size", font_size)
+	lb.add_theme_color_override("font_shadow_color", shadow)
+	lb.add_theme_constant_override("shadow_offset_x", 1)
+	lb.add_theme_constant_override("shadow_offset_y", 1)
 	if ui_layer and ui_layer.get_node_or_null("QuestLogBackdrop") == null:
 		var q_bg := Panel.new()
 		q_bg.name = "QuestLogBackdrop"
