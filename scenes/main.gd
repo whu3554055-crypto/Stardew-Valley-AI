@@ -1443,6 +1443,19 @@ func _on_day_changed(new_day):
 		if not is_inside_tree():
 			return
 		record_world_event("New day, new story seed is ready.")
+		if AIQuestSystem and AIQuestSystem.has_method("create_narrative_thread"):
+			var last_style: String = ""
+			if GameManager:
+				last_style = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+			var thread_id: String = AIQuestSystem.create_narrative_thread({
+				"title": "Daily thread D%s" % str(new_day),
+				"description": "State-driven thread seeded from %s playstyle." % last_style,
+				"steps": 3 if last_style != "balanced" else 2,
+				"importance": 0.65 if last_style != "balanced" else 0.5,
+				"next_quest_type": "social_help" if last_style == "social_focused" else "resource_gather"
+			})
+			if not thread_id.is_empty():
+				record_world_event("Narrative thread started: %s" % thread_id)
 		_apply_narrative_daily_quest(narrative)
 		if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative") and _consume_daily_budget("chain_activation"):
 			QuestSystem.activate_chain_for_narrative(narrative)
