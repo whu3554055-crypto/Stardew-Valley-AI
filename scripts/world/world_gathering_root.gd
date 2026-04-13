@@ -32,6 +32,7 @@ func _ready() -> void:
 
 	_apply_region_override()
 	_paint_world_tile_pilot()
+	_apply_region_palette_profile()
 
 	if not banner_title.is_empty():
 		var b: CanvasLayer = WorldRegionBanner.new()
@@ -107,6 +108,26 @@ func _show_message(text: String, seconds: float = 3.2) -> void:
 func _on_msg_timeout() -> void:
 	if _hud_msg:
 		_hud_msg.visible = false
+
+
+func _apply_region_palette_profile() -> void:
+	var tint: Color = Color(1, 1, 1, 1)
+	var hint_color: Color = Color(0.9, 0.92, 0.94, 0.92)
+	match region_kind:
+		Kind.FOREST:
+			tint = Color(0.96, 1.0, 0.95, 1.0)
+			hint_color = Color(0.83, 0.93, 0.83, 0.94)
+		Kind.BEACH:
+			tint = Color(1.0, 0.98, 0.92, 1.0)
+			hint_color = Color(0.92, 0.9, 0.78, 0.94)
+		_:
+			tint = Color(1, 1, 1, 1)
+	if has_node("TileLayers"):
+		(get_node("TileLayers") as CanvasItem).modulate = tint
+	var hint: Label = get_node_or_null("Hint") as Label
+	if hint:
+		hint.add_theme_color_override("font_color", hint_color)
+		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 
 
 func _on_player_interacted(_tile_position: Vector2) -> void:

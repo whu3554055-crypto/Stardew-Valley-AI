@@ -53,6 +53,7 @@ func _ready() -> void:
 		WorldTileBackdrop.paint_mine_deco(tile_deco, 0)
 	if tile_occ:
 		WorldTileBackdrop.paint_mine_occlusion(tile_occ, 0)
+	_apply_mine_palette_profile()
 
 	if not banner_title.is_empty():
 		var b: CanvasLayer = WorldRegionBanner.new()
@@ -119,6 +120,16 @@ func _show_message(text: String, seconds: float = 3.2) -> void:
 func _on_msg_timeout() -> void:
 	if _hud_msg:
 		_hud_msg.visible = false
+
+
+func _apply_mine_palette_profile() -> void:
+	var tile_layers: CanvasItem = get_node_or_null("TileLayers") as CanvasItem
+	if tile_layers:
+		tile_layers.modulate = Color(0.92, 0.9, 1.0, 1.0) if use_deep_cave_tiles else Color(0.94, 0.94, 0.98, 1.0)
+	var hint: Label = get_node_or_null("Hint") as Label
+	if hint:
+		hint.add_theme_color_override("font_color", Color(0.86, 0.87, 0.96, 0.96))
+		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
 
 
 func _mine_journal_event(event_text: String) -> void:
