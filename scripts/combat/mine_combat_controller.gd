@@ -602,9 +602,9 @@ func _adaptive_combat_profile() -> Dictionary:
 		style = str(GameManager.player_data.get("player_style_last_day", "balanced"))
 	match style:
 		"combat_focused":
-			return {"spawn_pressure": 0.9, "elite_delta": 0.03, "bounty_scale": 0.9}
+			return {"spawn_pressure": 0.92, "elite_delta": 0.025, "bounty_scale": 0.95}
 		"farming_focused", "social_focused", "fishing_focused":
-			return {"spawn_pressure": 1.12, "elite_delta": -0.02, "bounty_scale": 1.2}
+			return {"spawn_pressure": 1.1, "elite_delta": -0.018, "bounty_scale": 1.15}
 		_:
 			return {"spawn_pressure": 1.0, "elite_delta": 0.0, "bounty_scale": 1.0}
 	var splash_hits: int = 0

@@ -34,3 +34,13 @@ func test_world_state_bias_prefers_relationship_after_talk_events() -> void:
 	]
 	var bias: Dictionary = _aiq._derive_world_state_bias()
 	assert_gt(float(bias.get("relationship_build", 0.0)), float(bias.get("fetch_item", 0.0)))
+
+
+func test_effective_quality_threshold_tracks_player_style() -> void:
+	var old_style: String = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+	GameManager.player_data["player_style_last_day"] = "social_focused"
+	var social_thr: float = _aiq._effective_ai_quality_threshold()
+	GameManager.player_data["player_style_last_day"] = "combat_focused"
+	var combat_thr: float = _aiq._effective_ai_quality_threshold()
+	GameManager.player_data["player_style_last_day"] = old_style
+	assert_gt(social_thr, combat_thr, "social route should enforce a stricter AI quality threshold")
