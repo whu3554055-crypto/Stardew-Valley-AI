@@ -4,6 +4,7 @@ extends Node2D
 
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
 const WorldTileBackdrop := preload("res://scripts/world/world_tile_backdrop.gd")
+const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
 
 const SHOP_PROXIMITY: float = 112.0
 
@@ -37,6 +38,8 @@ func _ready() -> void:
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "鹈鹕镇"
 	add_child(banner)
+	if OS.is_debug_build():
+		add_child(PerfOverlay.new())
 
 	if _shop_ui:
 		if not _shop_ui.purchase_confirmed.is_connected(_on_shop_purchase):

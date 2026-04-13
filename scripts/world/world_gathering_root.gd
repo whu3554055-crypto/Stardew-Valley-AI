@@ -4,6 +4,7 @@ extends Node2D
 
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
 const WorldTileBackdrop := preload("res://scripts/world/world_tile_backdrop.gd")
+const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
 
 enum Kind { FOREST, BEACH, MINE }
 
@@ -36,6 +37,8 @@ func _ready() -> void:
 		var b: CanvasLayer = WorldRegionBanner.new()
 		b.title_text = banner_title
 		add_child(b)
+	if OS.is_debug_build():
+		add_child(PerfOverlay.new())
 
 	if _player and _player.has_signal("interacted"):
 		_player.interacted.connect(_on_player_interacted)

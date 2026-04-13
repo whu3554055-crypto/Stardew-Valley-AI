@@ -6,6 +6,7 @@ extends Node2D
 const MineCombatControllerT := preload("res://scripts/combat/mine_combat_controller.gd")
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
 const WorldTileBackdrop := preload("res://scripts/world/world_tile_backdrop.gd")
+const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
 
 const WORLD_EVENT_FEED_MAX := 6
 
@@ -57,6 +58,8 @@ func _ready() -> void:
 		var b: CanvasLayer = WorldRegionBanner.new()
 		b.title_text = banner_title
 		add_child(b)
+	if OS.is_debug_build():
+		add_child(PerfOverlay.new())
 
 	if GameManager and GameManager.has_signal("day_changed") and not GameManager.day_changed.is_connected(_on_game_day_changed_mine):
 		GameManager.day_changed.connect(_on_game_day_changed_mine)

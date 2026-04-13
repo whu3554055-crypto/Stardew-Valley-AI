@@ -3,6 +3,7 @@ extends Node2D
 ## B2: farm field scene root — TileMap + FarmManager + player; hub is `main.tscn`.
 
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
+const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
 
 @onready var _player: CharacterBody2D = $Player as CharacterBody2D
 @onready var _tilemap: TileMap = $TileMap as TileMap
@@ -35,6 +36,8 @@ func _ready() -> void:
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "农场"
 	add_child(banner)
+	if OS.is_debug_build():
+		add_child(PerfOverlay.new())
 
 
 func _exit_tree() -> void:

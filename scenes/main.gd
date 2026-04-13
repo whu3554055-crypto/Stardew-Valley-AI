@@ -36,6 +36,7 @@ const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
 const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
 const PLAYER_CREATION_SCENE := preload("res://scenes/player_creation_panel.tscn")
 const PLAYER_JOURNAL_SCENE := preload("res://scenes/player_journal_panel.tscn")
+const PERF_OVERLAY_SCENE := preload("res://scripts/world/perf_overlay.gd")
 const ALIGNMENT_PROFILE_PATH := "res://data/presentation/stardew_alignment_profile.json"
 var audio_mix_panel: CanvasLayer = null
 var player_creation_panel: CanvasLayer = null
@@ -146,6 +147,8 @@ func _ready():
 		ai_config_button.pressed.connect(_on_ai_config_pressed)
 	if quick_tip_timer:
 		quick_tip_timer.timeout.connect(_on_quick_tip_timeout)
+	if OS.is_debug_build():
+		add_child(PERF_OVERLAY_SCENE.new())
 
 	_load_alignment_profile()
 	_apply_a3_ui_polish()
