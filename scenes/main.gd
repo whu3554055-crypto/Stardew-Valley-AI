@@ -54,6 +54,9 @@ var _dialogue_hide_timer: Timer
 var _journal_modal_dim: ColorRect = null
 var _journal_popup_open: bool = false
 var _alignment_profile: Dictionary = {}
+var _last_world_event_text: String = ""
+var _last_world_event_ts: float = 0.0
+const WORLD_EVENT_DUP_SUPPRESS_SEC := 0.75
 
 func _ready():
 	# Connect signals
@@ -2249,10 +2252,18 @@ func _apply_story_completion_feedback(quest_data: Dictionary) -> void:
 	show_dialogue(feedback_line)
 
 func record_world_event(event_text: String) -> void:
+	var trimmed: String = event_text.strip_edges()
+	if trimmed.is_empty():
+		return
+	var now_ts: float = float(Time.get_unix_time_from_system())
+	if trimmed == _last_world_event_text and (now_ts - _last_world_event_ts) < WORLD_EVENT_DUP_SUPPRESS_SEC:
+		return
+	_last_world_event_text = trimmed
+	_last_world_event_ts = now_ts
 	var timestamp := ""
 	if GameManager:
 		timestamp = str(GameManager.get_time_string())
-	var line := "[%s] %s" % [timestamp if not timestamp.is_empty() else "--:--", event_text]
+	var line := "[%s] %s" % [timestamp if not timestamp.is_empty() else "--:--", trimmed]
 	world_event_feed.push_front(line)
 	if world_event_feed.size() > WORLD_EVENT_FEED_MAX:
 		world_event_feed.resize(WORLD_EVENT_FEED_MAX)
