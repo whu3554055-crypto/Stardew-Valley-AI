@@ -41,6 +41,13 @@ var daily_narrative_cache = {}
 var _verify_tick_accum: float = 0.0
 var _recent_events: Array = []
 const AI_QUEST_MIN_ACCEPT_SCORE := 0.58
+const AI_QUEST_BREAKER_FAILS := 3
+const AI_QUEST_BREAKER_COOLDOWN_SEC := 480
+var _ai_guardrail_state: Dictionary = {
+	"consecutive_failures": 0,
+	"breaker_until": 0.0,
+	"last_quality": 1.0
+}
 
 func _ready():
 	initialize_quest_system()
@@ -557,6 +564,9 @@ func generate_ai_enhanced_quest(opportunity: Dictionary):
 	"""Request LLM to generate creative quest details"""
 	var npc_id = opportunity.get("npc", "unknown")
 	ai_quest_request_started.emit(npc_id)
+	if float(Time.get_unix_time_from_system()) < float(_ai_guardrail_state.get("breaker_until", 0.0)):
+		_degrade_to_procedural(npc_id, opportunity, "quality_breaker_open", "procedural_breaker")
+		return
 	
 	var npc_profile = {}
 	if EnhancedPersonalitySystem:
@@ -589,12 +599,7 @@ Output ONLY in JSON format:
 	
 	# Use AIAgentManager to make the request
 	if not AIAgentManager or not AIAgentManager.has_method("request_text_generation"):
-		ai_quest_request_failed.emit(npc_id, "AIAgentManager unavailable")
-		var fallback_quest: Dictionary = generate_procedural_quest(opportunity)
-		if fallback_quest.is_empty():
-			return
-		ai_quest_request_completed.emit(npc_id, fallback_quest)
-		assign_quest_to_player(fallback_quest)
+		_degrade_to_procedural(npc_id, opportunity, "AIAgentManager unavailable", "procedural_unavailable")
 		return
 
 	var gen: Dictionary = await AIAgentManager.request_text_generation({
@@ -604,34 +609,48 @@ Output ONLY in JSON format:
 		"source": "ai_quest:%s" % npc_id
 	})
 	if not bool(gen.get("ok", false)):
-		ai_quest_request_failed.emit(npc_id, str(gen.get("error", "quest generation failed")))
-		var fallback_quest2: Dictionary = generate_procedural_quest(opportunity)
-		if fallback_quest2.is_empty():
-			return
-		ai_quest_request_completed.emit(npc_id, fallback_quest2)
-		assign_quest_to_player(fallback_quest2)
+		_degrade_to_procedural(npc_id, opportunity, str(gen.get("error", "quest generation failed")), "procedural_request_error")
 		return
 
 	var ai_data: Dictionary = _parse_ai_quest_json(str(gen.get("text", "")))
 	if ai_data.is_empty():
-		ai_quest_request_failed.emit(npc_id, "invalid ai quest json")
-		var fallback_quest3: Dictionary = generate_procedural_quest(opportunity)
-		if fallback_quest3.is_empty():
-			return
-		ai_quest_request_completed.emit(npc_id, fallback_quest3)
-		assign_quest_to_player(fallback_quest3)
+		_degrade_to_procedural(npc_id, opportunity, "invalid ai quest json", "procedural_invalid_json")
 		return
 	var quality: float = _score_ai_quest_payload(ai_data)
-	if quality < AI_QUEST_MIN_ACCEPT_SCORE:
-		ai_quest_request_failed.emit(npc_id, "low_quality_ai_payload:%.2f" % quality)
-		var fallback_quest4: Dictionary = generate_procedural_quest(opportunity)
-		if fallback_quest4.is_empty():
-			return
-		ai_quest_request_completed.emit(npc_id, fallback_quest4)
-		assign_quest_to_player(fallback_quest4)
+	_ai_guardrail_state["last_quality"] = quality
+	var threshold: float = _effective_ai_quality_threshold()
+	if quality < threshold:
+		_degrade_to_procedural(npc_id, opportunity, "low_quality_ai_payload:%.2f<thr:%.2f" % [quality, threshold], "procedural_low_quality")
 		return
 
+	_ai_guardrail_state["consecutive_failures"] = 0
 	_on_ai_quest_response_received(npc_id, opportunity, ai_data)
+
+
+func _effective_ai_quality_threshold() -> float:
+	var threshold: float = AI_QUEST_MIN_ACCEPT_SCORE
+	if GameManager:
+		var style: String = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+		if style == "social_focused":
+			threshold += 0.06
+		elif style == "combat_focused":
+			threshold -= 0.04
+	return clampf(threshold, 0.45, 0.82)
+
+
+func _degrade_to_procedural(npc_id: String, opportunity: Dictionary, reason: String, degraded_to: String) -> void:
+	ai_quest_request_failed.emit(npc_id, reason)
+	var fails: int = int(_ai_guardrail_state.get("consecutive_failures", 0)) + 1
+	_ai_guardrail_state["consecutive_failures"] = fails
+	if fails >= AI_QUEST_BREAKER_FAILS:
+		_ai_guardrail_state["breaker_until"] = float(Time.get_unix_time_from_system()) + float(AI_QUEST_BREAKER_COOLDOWN_SEC)
+	var fallback_quest: Dictionary = generate_procedural_quest(opportunity)
+	if fallback_quest.is_empty():
+		return
+	fallback_quest["ai_degraded_to"] = degraded_to
+	fallback_quest["ai_fallback_reason"] = reason
+	ai_quest_request_completed.emit(npc_id, fallback_quest)
+	assign_quest_to_player(fallback_quest)
 
 func _on_ai_quest_response_received(npc_id: String, opportunity: Dictionary, ai_data: Dictionary):
 	"""Process LLM response and create the quest"""
