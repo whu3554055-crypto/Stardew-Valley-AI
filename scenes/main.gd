@@ -194,7 +194,11 @@ func _finish_boot_after_profile() -> void:
 	_apply_rc_beginner_guidance()
 	_print_boot_banner()
 	if WorldRouter:
-		WorldRouter.call_deferred("consume_saved_world_after_boot")
+		if _had_savegame:
+			WorldRouter.call_deferred("consume_saved_world_after_boot")
+		else:
+			# New game should enter the playable farm scene instead of lingering in the hub stub.
+			WorldRouter.call_deferred("change_world", WorldRouter.WORLD_FARM_SCENE, "from_main")
 
 
 func _print_boot_banner() -> void:
@@ -2703,6 +2707,8 @@ func _on_dialogue_hide_timeout() -> void:
 
 func show_quick_tip(text: String, duration: float = 1.35) -> void:
 	if not quick_tip_label or not quick_tip_timer:
+		return
+	if not is_inside_tree() or not quick_tip_timer.is_inside_tree():
 		return
 	quick_tip_label.text = text
 	quick_tip_label.visible = true

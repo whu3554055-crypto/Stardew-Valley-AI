@@ -60,6 +60,11 @@ func consume_saved_world_after_boot() -> void:
 		spawn = "default"
 	if target.is_empty():
 		target = MAIN_SCENE
+	if target == MAIN_SCENE:
+		# Legacy saves may point to hub/main; route to the playable farm world.
+		target = WORLD_FARM_SCENE
+		if spawn == "default":
+			spawn = "from_main"
 	pending_spawn_id = spawn
 	var current: String = ""
 	if get_tree() and get_tree().current_scene:
@@ -79,15 +84,22 @@ func consume_saved_world_after_boot() -> void:
 
 func change_world(scene_path: String, spawn_id: String = "default") -> void:
 	_autosave_before_leave_if_needed()
+	var resolved_scene: String = scene_path
+	var resolved_spawn: String = spawn_id
+	if resolved_scene == MAIN_SCENE:
+		# Keep main as a technical hub, but route gameplay transitions to farm.
+		resolved_scene = WORLD_FARM_SCENE
+		if resolved_spawn == "default":
+			resolved_spawn = "from_main"
 	if GameManager and GameManager.player_data:
-		GameManager.player_data["last_spawn_id"] = spawn_id
-	pending_spawn_id = spawn_id
-	var err: Error = get_tree().change_scene_to_file(scene_path)
+		GameManager.player_data["last_spawn_id"] = resolved_spawn
+	pending_spawn_id = resolved_spawn
+	var err: Error = get_tree().change_scene_to_file(resolved_scene)
 	if err != OK:
-		push_error("WorldRouter: change_world failed: %s" % scene_path)
+		push_error("WorldRouter: change_world failed: %s" % resolved_scene)
 		pending_spawn_id = ""
 		return
-	world_changed.emit(scene_path)
+	world_changed.emit(resolved_scene)
 
 
 func apply_pending_spawn_to_player() -> void:
