@@ -134,6 +134,7 @@ func generate_ai_response(player_message: String) -> String:
 	var context = build_context()
 	var relationship = NPCMemorySystem.get_relationship(npc_id) if NPCMemorySystem else 5
 	context["relationship"] = relationship
+	context["relationship_band"] = _relationship_band_label(relationship)
 	
 	# Recent interactions: gossip/events first, then conversation history (newest-first lists)
 	var recent_interactions: Array = []
@@ -150,6 +151,9 @@ func generate_ai_response(player_message: String) -> String:
 		for m in scored:
 			snippets.append(m.content)
 		context["memory_snippets"] = snippets
+		var pref_raw: Dictionary = NPCMemorySystem.get_preferences(npc_id)
+		context["known_preferences"] = _compress_preferences_for_prompt(pref_raw)
+		context["recent_memory_digest"] = _build_recent_memory_digest(events, conv)
 	
 	context["recent_interactions"] = recent_interactions
 	
@@ -168,6 +172,42 @@ func generate_ai_response(player_message: String) -> String:
 	
 	# Return placeholder while waiting
 	return "..."
+
+
+func _relationship_band_label(points: int) -> String:
+	if points >= 8:
+		return "trusted"
+	if points >= 5:
+		return "friendly"
+	if points >= 2:
+		return "warm"
+	return "distant"
+
+
+func _compress_preferences_for_prompt(raw: Dictionary) -> Array[String]:
+	var lines: Array[String] = []
+	for k in raw.keys():
+		var item: Dictionary = raw.get(k, {})
+		var confidence: float = float(item.get("confidence", 0.0))
+		if confidence < 0.35:
+			continue
+		lines.append("%s=%s (%.2f)" % [str(k), str(item.get("value", "")), confidence])
+		if lines.size() >= 4:
+			break
+	return lines
+
+
+func _build_recent_memory_digest(events: Array, conv: Array) -> Array[String]:
+	var out: Array[String] = []
+	for e in events:
+		out.append("Event d%s: %s" % [str(e.get("day", "?")), str(e.get("summary", ""))])
+		if out.size() >= 2:
+			break
+	for c in conv:
+		out.append("Talk d%s: %s" % [str(c.get("day", "?")), str(c.get("summary", ""))])
+		if out.size() >= 4:
+			break
+	return out
 
 func _on_ai_dialogue_generated(response_npc_id: String, dialogue: String):
 	if response_npc_id != npc_id:
