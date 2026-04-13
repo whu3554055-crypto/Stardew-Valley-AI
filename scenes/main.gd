@@ -1748,6 +1748,14 @@ func _on_shop_purchase(item_id: String, quantity: int) -> void:
 			var market_note: String = AIEconomySystem.get_market_brief(item_id)
 			if not market_note.is_empty():
 				record_world_event("Market shift after buying %s: %s" % [nm, market_note])
+		if NPCMemorySystem:
+			NPCMemorySystem.record_event(
+				"pierre",
+				"Player bought %s x%d from the shop." % [nm, quantity],
+				0.62,
+				"pleased",
+				[item_id, "trade"]
+			)
 		update_ui()
 		if shop_ui:
 			shop_ui.populate_shop_items()
@@ -1779,6 +1787,17 @@ func _on_quest_completed(quest_id: String):
 				show_quick_tip("Combat chain x%d +%dg" % [_combat_quest_chain, chain_bonus], 1.0)
 				record_world_event("Combat quest chain reward: +%dg." % chain_bonus)
 		_apply_story_completion_feedback(quest_data)
+		if NPCMemorySystem:
+			var giver: String = str(quest_data.get("giver", quest_data.get("npc", "pierre"))).strip_edges()
+			if giver.is_empty():
+				giver = "pierre"
+			NPCMemorySystem.record_event(
+				giver,
+				"Player completed quest %s." % str(title),
+				0.78,
+				"grateful",
+				[quest_id, "help"]
+			)
 		if quest_id == "intro_combat":
 			QuestSystem.start_quest("deep_mine_hunt")
 			record_world_event("New combat contract unlocked: Deep Mine Hunt.")
