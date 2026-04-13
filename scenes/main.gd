@@ -188,6 +188,7 @@ func _finish_boot_after_profile() -> void:
 		give_starter_items()
 	update_ui()
 	initialize_playable_first_loop()
+	_apply_rc_beginner_guidance()
 	_print_boot_banner()
 	if WorldRouter:
 		WorldRouter.call_deferred("consume_saved_world_after_boot")
@@ -1396,6 +1397,7 @@ func _on_time_changed(new_time):
 func _on_day_changed(new_day):
 	_reset_daily_event_budget()
 	_writeback_player_behavior_digest(new_day)
+	_apply_rc_beginner_guidance()
 	if GameManager:
 		var defeats_today: int = int(GameManager.player_data.get("daily_defeats", 0))
 		var daily_kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
@@ -1448,6 +1450,32 @@ func _on_day_changed(new_day):
 			await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
 			if is_inside_tree() and AgenticContentOrchestrator.has_method("get_runtime_status_line"):
 				record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
+
+
+func _apply_rc_beginner_guidance() -> void:
+	if not GameManager:
+		return
+	var day: int = int(GameManager.player_data.get("day", 1))
+	if day > 3:
+		return
+	var shown_key: String = "rc_guidance_day_%d" % day
+	if bool(GameManager.player_data.get(shown_key, false)):
+		return
+	GameManager.player_data[shown_key] = true
+	var line: String = ""
+	match day:
+		1:
+			line = "Day 1 goal: talk to 2 villagers, plant seeds, sleep before midnight."
+		2:
+			line = "Day 2 goal: earn 200g and visit one extra region portal."
+		3:
+			line = "Day 3 goal: finish one quest and trigger one world event."
+		_:
+			line = ""
+	if line.is_empty():
+		return
+	record_world_event(line)
+	show_quick_tip(line, 2.2)
 
 
 func _writeback_player_behavior_digest(new_day: int) -> void:
