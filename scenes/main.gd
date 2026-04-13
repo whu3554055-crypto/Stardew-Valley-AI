@@ -1398,6 +1398,7 @@ func _on_day_changed(new_day):
 	_reset_daily_event_budget()
 	_writeback_player_behavior_digest(new_day)
 	_apply_next_day_style_feedback(new_day)
+	_run_daily_npc_collaboration(new_day)
 	_apply_rc_beginner_guidance()
 	if GameManager:
 		var defeats_today: int = int(GameManager.player_data.get("daily_defeats", 0))
@@ -1565,6 +1566,34 @@ func _apply_next_day_style_feedback(new_day: int) -> void:
 	if not line.is_empty():
 		record_world_event(line)
 		show_quick_tip(line, 1.9)
+
+
+func _run_daily_npc_collaboration(new_day: int) -> void:
+	if not GameManager:
+		return
+	var pairs: Array = [
+		["pierre", "abigail", "supply swap"],
+		["lewis", "pierre", "town request support"],
+		["abigail", "lewis", "festival prep alliance"]
+	]
+	var idx: int = posmod(int(new_day), pairs.size())
+	var entry: Array = pairs[idx]
+	var npc_a: String = str(entry[0])
+	var npc_b: String = str(entry[1])
+	var pact: String = str(entry[2])
+	var line: String = "NPC collaboration: %s + %s (%s)." % [_resolve_npc_display_name(npc_a), _resolve_npc_display_name(npc_b), pact]
+	record_world_event(line)
+	show_quick_tip(line, 1.8)
+	if NPCMemorySystem:
+		NPCMemorySystem.record_event(npc_a, line, 0.66, "cooperative", [npc_b, pact])
+		NPCMemorySystem.record_event(npc_b, line, 0.66, "cooperative", [npc_a, pact])
+	if AIQuestSystem:
+		AIQuestSystem.track_event("npc_collaboration", {
+			"day": int(new_day),
+			"npc_a": npc_a,
+			"npc_b": npc_b,
+			"kind": pact
+		})
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
 	_refresh_quest_log()
