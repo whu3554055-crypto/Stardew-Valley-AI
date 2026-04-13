@@ -1890,6 +1890,7 @@ func _on_quest_completed(quest_id: String):
 				show_quick_tip("Combat chain x%d +%dg" % [_combat_quest_chain, chain_bonus], 1.0)
 				record_world_event("Combat quest chain reward: +%dg." % chain_bonus)
 		_apply_story_completion_feedback(quest_data)
+		_update_beginner_loop_progress("quest")
 		if NPCMemorySystem:
 			var giver: String = str(quest_data.get("giver", quest_data.get("npc", "pierre"))).strip_edges()
 			if giver.is_empty():
@@ -2614,9 +2615,30 @@ func auto_water_crops():
 
 func _on_crop_planted(position, crop_id):
 	QuestSystem.track_event("plant", {"crop_id": crop_id, "count": 1})
+	_update_beginner_loop_progress("plant")
 
 func _on_crop_harvested(position, crop_id, quantity):
 	QuestSystem.track_event("harvest", {"crop_id": crop_id, "count": quantity})
+	_update_beginner_loop_progress("harvest")
+
+
+func _update_beginner_loop_progress(action: String) -> void:
+	if not GameManager:
+		return
+	var day_now: int = int(GameManager.player_data.get("day", 1))
+	if day_now > 2:
+		return
+	var key: String = "beginner_loop_%s_count" % action
+	GameManager.player_data[key] = int(GameManager.player_data.get(key, 0)) + 1
+	if bool(GameManager.player_data.get("beginner_loop_validated", false)):
+		return
+	var planted: int = int(GameManager.player_data.get("beginner_loop_plant_count", 0))
+	var harvested: int = int(GameManager.player_data.get("beginner_loop_harvest_count", 0))
+	var quests: int = int(GameManager.player_data.get("beginner_loop_quest_count", 0))
+	if planted >= 1 and (harvested >= 1 or quests >= 1):
+		GameManager.player_data["beginner_loop_validated"] = true
+		record_world_event("Beginner loop validated: planting, progress, and quest feedback are reachable on day 1-2.")
+		show_quick_tip("30-min loop validated", 2.2)
 
 func update_ui():
 	var loc: String = LocaleSettings.get_locale() if LocaleSettings else "zh_CN"
