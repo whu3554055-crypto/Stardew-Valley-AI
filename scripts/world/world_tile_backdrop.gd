@@ -60,6 +60,17 @@ static func paint_town_deco(layer: TileMapLayer, source_id: int = 0) -> void:
 		layer.set_cell(Vector2i(27, y), source_id, stone)
 
 
+static func paint_town_occlusion(layer: TileMapLayer, source_id: int = 0) -> void:
+	if layer == null or layer.tile_set == null:
+		return
+	var tree := Vector2i(9, 0)
+	var roof := Vector2i(10, 0)
+	for x in range(13, 19):
+		layer.set_cell(Vector2i(x, 8), source_id, roof)
+	layer.set_cell(Vector2i(7, 7), source_id, tree)
+	layer.set_cell(Vector2i(24, 8), source_id, tree)
+
+
 static func paint_mine_cavern(layer: TileMapLayer, source_id: int = 0) -> void:
 	fill_uniform(layer, Vector2i(4, 0), source_id)
 	var wood := Vector2i(5, 0)

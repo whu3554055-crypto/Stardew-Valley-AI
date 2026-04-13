@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://worldtownreal01"]
+[gd_scene load_steps=14 format=3 uid="uid://worldtownreal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_town_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
@@ -33,6 +33,10 @@ z_index = -2
 tile_set = ExtResource("8_tileset")
 
 [node name="LayerDeco" type="TileMapLayer" parent="TileLayers"]
+tile_set = ExtResource("8_tileset")
+
+[node name="LayerOcclusion" type="TileMapLayer" parent="TileLayers"]
+z_index = 1
 tile_set = ExtResource("8_tileset")
 
 [node name="TownCollisionSemantics" type="Node2D" parent="."]

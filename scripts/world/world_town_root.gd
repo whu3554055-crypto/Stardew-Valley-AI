@@ -25,11 +25,14 @@ func _ready() -> void:
 
 	var tile_ground: TileMapLayer = get_node_or_null("TileLayers/LayerGround") as TileMapLayer
 	var tile_deco: TileMapLayer = get_node_or_null("TileLayers/LayerDeco") as TileMapLayer
+	var tile_occ: TileMapLayer = get_node_or_null("TileLayers/LayerOcclusion") as TileMapLayer
 	if tile_ground:
 		WorldTileBackdrop.paint_town(tile_ground, 0)
 		WorldTileBackdrop.hide_polygon_ground(self)
 	if tile_deco:
 		WorldTileBackdrop.paint_town_deco(tile_deco, 0)
+	if tile_occ:
+		WorldTileBackdrop.paint_town_occlusion(tile_occ, 0)
 
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "鹈鹕镇"
