@@ -8,6 +8,7 @@
   "ui": {
     "hide_ai_config_button": true,
     "hide_activity_zone_label": true,
-    "journal_popup_default_closed": true
+    "journal_popup_default_closed": true,
+    "minimal_hud_default": true
   }
 }

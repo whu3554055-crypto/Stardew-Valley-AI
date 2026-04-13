@@ -312,10 +312,36 @@ func _apply_alignment_profile() -> void:
 			var n: CanvasItem = get_node_or_null(p) as CanvasItem
 			if n:
 				n.visible = false
+	var mine_toggle: CanvasItem = get_node_or_null("MineArea/MineBandsToggle") as CanvasItem
+	if mine_toggle:
+		mine_toggle.visible = false
 	if ui_cfg.get("hide_ai_config_button", true) and ai_config_button:
 		ai_config_button.visible = false
 	if ui_cfg.get("hide_activity_zone_label", true) and activity_zone_label:
 		activity_zone_label.visible = false
+	_apply_minimal_hud_mode(ui_cfg)
+
+
+func _apply_minimal_hud_mode(ui_cfg: Dictionary) -> void:
+	if not bool(ui_cfg.get("minimal_hud_default", true)):
+		return
+	if season_label:
+		season_label.visible = false
+	if weather_label:
+		weather_label.visible = false
+	if dialogue_box:
+		dialogue_box.visible = false
+	# Keep essentials only: time / gold / stamina / day.
+	var minimizable_paths: Array[String] = [
+		"UILayer/AlmanacPanel",
+		"UILayer/InventoryUI",
+		"UILayer/RecipePicker",
+		"UILayer/ShopUI",
+	]
+	for p: String in minimizable_paths:
+		var n: CanvasItem = get_node_or_null(p) as CanvasItem
+		if n:
+			n.visible = false
 
 func _apply_a3_ui_polish() -> void:
 	## Readability + panel chrome (A3 presentation pass).
