@@ -6,6 +6,7 @@ const SPEED = 100.0
 @export_range(0, 8) var walk_direction_columns: int = 0
 ## 运行时 `Image.load_from_file`，**不依赖** `.import`；可用 `tools/_make_player_walk_strip.ps1` 生成。
 @export var walk_strip_res_path: String = "res://assets/sprites/characters/player_walk_3.png"
+@export var player_sprite_scale: Vector2 = Vector2(0.62, 0.62)
 
 @onready var sprite = $Sprite2D
 @onready var interaction_area = $InteractionArea
@@ -17,6 +18,11 @@ var _footstep_cooldown: float = 0.0
 var _knockback_vel: Vector2 = Vector2.ZERO
 var _knockback_decay: float = 850.0
 const FOOTSTEP_INTERVAL := 0.38
+const WALK_CYCLE_FPS := 8.0
+const WALK_BOB_AMPLITUDE := 1.5
+const WALK_SWAY_X := 0.7
+var _walk_anim_clock: float = 0.0
+var _use_direction_rows_strip: bool = false
 
 signal interacted(tile_position)
 signal attack_requested(origin: Vector2, facing: Vector2)
@@ -27,6 +33,7 @@ func _ready():
 	if sprite:
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		sprite.z_index = 4
+		sprite.scale = player_sprite_scale
 	if walk_direction_columns >= 3:
 		_try_load_walk_strip_texture()
 		_apply_directional_sprite_strip()
@@ -54,6 +61,7 @@ func _physics_process(delta):
 	is_moving = velocity_input.length() > 0
 
 	if is_moving:
+		_walk_anim_clock += delta
 		_footstep_cooldown -= delta
 		if _footstep_cooldown <= 0.0:
 			_footstep_cooldown = FOOTSTEP_INTERVAL
@@ -61,6 +69,7 @@ func _physics_process(delta):
 				var surf: String = _footstep_surface_kind()
 				GatheringSfx.play_footstep_surface(surf, _footstep_pitch_for_surface(surf))
 	else:
+		_walk_anim_clock = 0.0
 		_footstep_cooldown = 0.0
 
 	# Flip / 朝向条带；可选 AnimationPlayer
@@ -79,6 +88,7 @@ func _physics_process(delta):
 				_animation_player.play("idle")
 
 	move_and_slide()
+	_apply_walk_pose()
 
 
 func _try_load_walk_strip_texture() -> void:
@@ -105,6 +115,11 @@ func _try_load_walk_strip_texture() -> void:
 		walk_direction_columns = 0
 		return
 	sprite.texture = ImageTexture.create_from_image(img)
+	_use_direction_rows_strip = false
+	if walk_direction_columns >= 2:
+		var cell_w: int = int(round(float(img.get_width()) / float(walk_direction_columns)))
+		if cell_w > 0 and img.get_height() >= cell_w * 4:
+			_use_direction_rows_strip = true
 
 
 func _apply_directional_sprite_strip() -> void:
@@ -113,8 +128,25 @@ func _apply_directional_sprite_strip() -> void:
 	var tex: Texture2D = sprite.texture
 	var tw: int = tex.get_width()
 	var th: int = tex.get_height()
-	var col_w: int = int(round(float(tw) / float(walk_direction_columns)))
-	col_w = maxi(1, col_w)
+	var col_w: int = maxi(1, int(round(float(tw) / float(walk_direction_columns))))
+	var frame_idx: int = 0
+	if is_moving:
+		frame_idx = int(floor(_walk_anim_clock * WALK_CYCLE_FPS)) % maxi(1, walk_direction_columns)
+	if _use_direction_rows_strip:
+		var cell_h: int = col_w
+		var row_idx: int = 0
+		if facing_direction == Vector2.UP:
+			row_idx = 1
+		elif facing_direction == Vector2.RIGHT:
+			row_idx = 2
+		elif facing_direction == Vector2.LEFT:
+			row_idx = 3
+		else:
+			row_idx = 0
+		sprite.region_enabled = true
+		sprite.region_rect = Rect2(frame_idx * col_w, row_idx * cell_h, col_w, cell_h)
+		sprite.flip_h = false
+		return
 	var idx: int = 0
 	if facing_direction == Vector2.UP:
 		idx = 1
@@ -132,6 +164,18 @@ func _apply_directional_sprite_strip() -> void:
 	else:
 		if _animation_player and _animation_player.has_animation("idle"):
 			_animation_player.play("idle")
+
+
+func _apply_walk_pose() -> void:
+	if sprite == null:
+		return
+	if not is_moving:
+		sprite.position = Vector2(0, -2)
+		return
+	var t: float = _walk_anim_clock * WALK_CYCLE_FPS
+	var bob_y: float = sin(t * PI) * WALK_BOB_AMPLITUDE
+	var sway_x: float = sin(t * PI * 0.5) * WALK_SWAY_X
+	sprite.position = Vector2(sway_x, -2.0 - bob_y)
 
 func _footstep_surface_kind() -> String:
 	if MiningSystem and MiningSystem.can_mine_here(global_position):
