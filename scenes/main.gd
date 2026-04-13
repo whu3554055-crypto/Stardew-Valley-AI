@@ -1398,6 +1398,7 @@ func _on_day_changed(new_day):
 	_reset_daily_event_budget()
 	_writeback_player_behavior_digest(new_day)
 	_apply_next_day_style_feedback(new_day)
+	_emit_daily_path_focus()
 	_run_daily_npc_collaboration(new_day)
 	_apply_rc_beginner_guidance()
 	if GameManager:
@@ -1594,6 +1595,25 @@ func _run_daily_npc_collaboration(new_day: int) -> void:
 			"npc_b": npc_b,
 			"kind": pact
 		})
+
+
+func _emit_daily_path_focus() -> void:
+	if not GameManager:
+		return
+	var style: String = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+	var path_line: String = ""
+	match style:
+		"farming_focused":
+			path_line = "Path focus: Farming route active (plant/harvest bonuses and seed support)."
+		"social_focused":
+			path_line = "Path focus: Social route active (bond events and collaboration opportunities)."
+		"combat_focused":
+			path_line = "Path focus: Combat route active (mine pressure up, bounty tuned)."
+		_:
+			path_line = "Path focus: Balanced route active (mixed opportunities across farm/social/combat)."
+	record_world_event(path_line)
+	show_quick_tip(path_line, 2.0)
+	managed_chain_status_banner = "[Path: %s]" % style.replace("_focused", "").capitalize()
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
 	_refresh_quest_log()
