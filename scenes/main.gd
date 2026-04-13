@@ -1162,6 +1162,8 @@ func _try_harvest_facing_tile(tile_coords: Vector2i) -> bool:
 			"yield": int(h.get("tier_bonus", 0))
 		}))
 	record_world_event("Harvested %s ×%d" % [product_id, count])
+	if GameManager:
+		GameManager.player_data["harvest_count_today"] = int(GameManager.player_data.get("harvest_count_today", 0)) + count
 	update_ui()
 	return true
 
@@ -1192,6 +1194,8 @@ func _on_player_interact(tile_position: Vector2):
 	if current_npc:
 		var dialogue = current_npc.interact()
 		show_dialogue(dialogue)
+		if GameManager:
+			GameManager.player_data["talk_count_today"] = int(GameManager.player_data.get("talk_count_today", 0)) + 1
 		if QuestSystem:
 			QuestSystem.track_event("talk", {"npc_id": current_npc.npc_id, "count": 1})
 		if AIQuestSystem:
@@ -1237,6 +1241,8 @@ func _on_player_interact(tile_position: Vector2):
 			if catch_result.get("ok", false):
 				show_dialogue(fish_msg)
 				record_world_event(fish_msg)
+				if GameManager:
+					GameManager.player_data["fish_count_today"] = int(GameManager.player_data.get("fish_count_today", 0)) + 1
 				if WorldAmbientController:
 					WorldAmbientController.request_activity_duck(1.15)
 				_play_fx_fish()
@@ -1386,6 +1392,7 @@ func _on_time_changed(new_time):
 
 func _on_day_changed(new_day):
 	_reset_daily_event_budget()
+	_writeback_player_behavior_digest(new_day)
 	if GameManager:
 		var defeats_today: int = int(GameManager.player_data.get("daily_defeats", 0))
 		var daily_kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
@@ -1438,6 +1445,42 @@ func _on_day_changed(new_day):
 			await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
 			if is_inside_tree() and AgenticContentOrchestrator.has_method("get_runtime_status_line"):
 				record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
+
+
+func _writeback_player_behavior_digest(new_day: int) -> void:
+	if not GameManager:
+		return
+	var kills: int = int(GameManager.player_data.get("combat_kills_today", 0))
+	var harvests: int = int(GameManager.player_data.get("harvest_count_today", 0))
+	var talks: int = int(GameManager.player_data.get("talk_count_today", 0))
+	var fish: int = int(GameManager.player_data.get("fish_count_today", 0))
+	var style: String = "balanced"
+	if kills >= 8 and kills >= harvests:
+		style = "combat_focused"
+	elif harvests >= 6 and harvests >= kills:
+		style = "farming_focused"
+	elif talks >= 6:
+		style = "social_focused"
+	elif fish >= 4:
+		style = "fishing_focused"
+	GameManager.player_data["player_style_last_day"] = style
+	var line: String = "Yesterday style: %s (kills %d / harvest %d / talk %d / fish %d)." % [style, kills, harvests, talks, fish]
+	record_world_event(line)
+	if AIQuestSystem:
+		AIQuestSystem.track_event("player_style_digest", {
+			"day": int(new_day) - 1,
+			"style": style,
+			"kills": kills,
+			"harvests": harvests,
+			"talks": talks,
+			"fish": fish
+		})
+	if NPCMemorySystem:
+		for npc_id in ["pierre", "abigail", "lewis"]:
+			NPCMemorySystem.record_event(npc_id, line, 0.72, "curious", [style])
+	GameManager.player_data["harvest_count_today"] = 0
+	GameManager.player_data["talk_count_today"] = 0
+	GameManager.player_data["fish_count_today"] = 0
 
 func _on_quest_log_changed(_a = null, _b = null) -> void:
 	_refresh_quest_log()
