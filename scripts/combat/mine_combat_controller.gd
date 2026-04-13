@@ -214,6 +214,7 @@ func _maintain_combat_spawns() -> void:
 	if _spawn_mine_enemy():
 		var interval: float = lerpf(MINE_SPAWN_MAX_INTERVAL_SEC, MINE_SPAWN_MIN_INTERVAL_SEC, clampf(float(depth) / 3.0, 0.0, 1.0))
 		interval *= clampf(spawn_interval_scale, 0.3, 4.0)
+		interval *= _adaptive_combat_profile().get("spawn_pressure", 1.0)
 		if hp_ratio <= 0.35:
 			interval += 0.9
 		_next_mine_spawn_at = now + interval
@@ -241,6 +242,7 @@ func _spawn_mine_enemy() -> bool:
 	e.drop_count_max = maxi(e.drop_count_min, int(profile.get("drop_count_max", 2)))
 	e.drop_item_id = _pick_weighted_drop_item(profile.get("drop_pool", []), "stone_chunk")
 	var elite_chance: float = clampf(float(profile.get("elite_chance", ELITE_BASE_CHANCE + float(depth) * 0.02)), 0.0, 0.45)
+	elite_chance = clampf(elite_chance + float(_adaptive_combat_profile().get("elite_delta", 0.0)), 0.0, 0.5)
 	if randf() < elite_chance or _no_elite_kill_streak >= ELITE_PITY_KILLS:
 		var hp_mult: float = maxf(1.1, float(profile.get("elite_hp_mult", 1.55)))
 		var dmg_mult: float = maxf(1.1, float(profile.get("elite_damage_mult", 1.3)))
@@ -578,6 +580,7 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 		_no_elite_kill_streak = 0
 		_run_elites += 1
 		var bounty_gold: int = ELITE_BOUNTY_GOLD_BASE + depth_now * 10
+		bounty_gold = int(round(float(bounty_gold) * float(_adaptive_combat_profile().get("bounty_scale", 1.0))))
 		GameManager.player_data["gold"] = int(GameManager.player_data.get("gold", 0)) + bounty_gold
 		_run_bonus_gold += bounty_gold
 		_journal("Elite bounty claimed (+%dg)." % bounty_gold)
@@ -591,6 +594,19 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 				_tip("Elite bonus drop: %s" % bonus_item_id, 0.8)
 	else:
 		_no_elite_kill_streak += 1
+
+
+func _adaptive_combat_profile() -> Dictionary:
+	var style: String = ""
+	if GameManager:
+		style = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+	match style:
+		"combat_focused":
+			return {"spawn_pressure": 0.9, "elite_delta": 0.03, "bounty_scale": 0.9}
+		"farming_focused", "social_focused", "fishing_focused":
+			return {"spawn_pressure": 1.12, "elite_delta": -0.02, "bounty_scale": 1.2}
+		_:
+			return {"spawn_pressure": 1.0, "elite_delta": 0.0, "bounty_scale": 1.0}
 	var splash_hits: int = 0
 	if _enemy_layer:
 		for c in _enemy_layer.get_children():
