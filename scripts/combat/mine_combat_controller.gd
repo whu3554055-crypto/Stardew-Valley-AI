@@ -594,19 +594,6 @@ func _on_enemy_killed(enemy: EnemyMelee) -> void:
 				_tip("Elite bonus drop: %s" % bonus_item_id, 0.8)
 	else:
 		_no_elite_kill_streak += 1
-
-
-func _adaptive_combat_profile() -> Dictionary:
-	var style: String = ""
-	if GameManager:
-		style = str(GameManager.player_data.get("player_style_last_day", "balanced"))
-	match style:
-		"combat_focused":
-			return {"spawn_pressure": 0.92, "elite_delta": 0.025, "bounty_scale": 0.95}
-		"farming_focused", "social_focused", "fishing_focused":
-			return {"spawn_pressure": 1.1, "elite_delta": -0.018, "bounty_scale": 1.15}
-		_:
-			return {"spawn_pressure": 1.0, "elite_delta": 0.0, "bounty_scale": 1.0}
 	var splash_hits: int = 0
 	if _enemy_layer:
 		for c in _enemy_layer.get_children():
@@ -651,6 +638,19 @@ func _adaptive_combat_profile() -> Dictionary:
 	feedback_shake.emit(3.2)
 	_journal("Defeated %s." % enemy.enemy_id)
 	_ui_refresh()
+
+
+func _adaptive_combat_profile() -> Dictionary:
+	var style: String = ""
+	if GameManager:
+		style = str(GameManager.player_data.get("player_style_last_day", "balanced"))
+	match style:
+		"combat_focused":
+			return {"spawn_pressure": 0.92, "elite_delta": 0.025, "bounty_scale": 0.95}
+		"farming_focused", "social_focused", "fishing_focused":
+			return {"spawn_pressure": 1.1, "elite_delta": -0.018, "bounty_scale": 1.15}
+		_:
+			return {"spawn_pressure": 1.0, "elite_delta": 0.0, "bounty_scale": 1.0}
 
 
 func _load_combat_weapons_config() -> void:
