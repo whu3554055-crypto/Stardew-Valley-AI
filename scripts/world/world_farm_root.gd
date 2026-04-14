@@ -33,6 +33,7 @@ func _ready() -> void:
 	if _player:
 		_player.interacted.connect(_on_player_interact)
 	_paint_farm_deco_tiles()
+	_apply_farm_palette_profile()
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "农场"
 	add_child(banner)
@@ -126,6 +127,13 @@ func _paint_farm_base_tiles() -> void:
 	for x in range(20, 27):
 		for y in range(16, 21):
 			_tilemap.set_cell(0, Vector2i(x, y), 0, tilled)
+
+
+func _apply_farm_palette_profile() -> void:
+	var hint: Label = get_node_or_null("Hint") as Label
+	if hint:
+		hint.add_theme_color_override("font_color", Color(0.84, 0.93, 0.82, 0.95))
+		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 
 
 func _try_harvest(tile_coords: Vector2i) -> bool:
