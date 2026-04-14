@@ -88,30 +88,64 @@ test -d "hello_agent_backend" && echo "✓ Python 后端存在"
 
 ### 🎯 快速开始（新玩家必读）
 - **[执行摘要](docs/00-执行摘要.md)** ⭐ - 项目概览、技术方案、商业计划一页纸总结
-- **[TODO 路线图](TODO.md)** 🚀 - **当前任务进度与开发计划 (推荐阅读)**（含 **「分阶段迭代顺序」**：先玩法 A1→A4，后 AI B1→B4）
+- **[TODO 路线图](docs/01-项目概览/TODO.md)** 🚀 - **当前任务进度与开发计划 (推荐阅读)**（含 **「分阶段迭代顺序」**：先玩法 A1→A4，后 AI B1→B4）
 - **[文档索引](docs/README.md)** - 完整文档体系导航
-- **[快速参考卡片](docs/CHEATSHEET.md)** - 日常开发速查表
+- **[快速参考卡片](docs/08-开发工具/CHEATSHEET.md)** - 日常开发速查表
 
-### 🏗️ 核心技术文档
-- **[技术架构升级方案](docs/01-技术架构与优化/01-技术架构升级方案.md)** 🔥 - SQLite、向量搜索、云AI、多语言完整方案
-- **[性能优化指南](OPTIMIZATION_GUIDE.md)** - 9项详细优化方案和代码示例
-- **[实施检查清单](IMPLEMENTATION_CHECKLIST.md)** - 逐步操作指南，9-13天完成优化
+### 📖 结构化文档（按主题分类）
+
+#### 🌟 项目概览
+- [游戏设计文档](docs/01-项目概览/GAME_DESIGN.md) - 游戏的整体设计理念
+- [贡献指南](docs/01-项目概览/CONTRIBUTING.md) - 如何参与项目开发
+
+#### 🚀 快速开始指南
+- [中文快速开始](docs/02-快速开始/快速开始.md) - 新手入门指南
+- [通用快速开始](docs/02-快速开始/QUICK_START.md) - Quick Start Guide
+- [NPC 音频系统](docs/02-快速开始/QUICK_START_NPC_AUDIO.md) - NPC Audio Quick Start
+- [优化系统](docs/02-快速开始/QUICK_START_OPTIMIZATION.md) - Optimization Quick Start
+- [快速参考卡](docs/02-快速开始/快速参考.txt) - 日常开发速查
+
+#### 🏗️ 技术架构
+- [后端设置](docs/03-技术架构/BACKEND_SETUP.md) - Backend Setup Guide
+- [Godot 集成](docs/03-技术架构/GODOT_INTEGRATION_GUIDE.md) - Godot Integration Guide
+- [优化架构](docs/03-技术架构/OPTIMIZATION_ARCHITECTURE.md) - Optimization Architecture
+- [性能优化](docs/03-技术架构/OPTIMIZATION_GUIDE.md) - Performance Optimization Guide
+
+#### 🤖 AI 与 NPC 系统
+- [高级 AI 系统](docs/04-AI与NPC系统/ADVANCED_AI_SYSTEM.md) - Advanced AI System
+- [AI NPC 指南](docs/04-AI与NPC系统/AI_NPC_GUIDE.md) - AI NPC Guide
+- [增强 NPC 系统](docs/04-AI与NPC系统/ENHANCED_NPC_SYSTEM.md) - Enhanced NPC System
+- [NPC 扩展指南](docs/04-AI与NPC系统/NPC_EXPANSION_GUIDE.md) - NPC Expansion Guide
+- [NPC 个性化](docs/04-AI与NPC系统/NPC_PERSONALITY_GUIDE.md) - NPC Personality Guide
+- [每日叙事系统](docs/04-AI与NPC系统/DAILY_NARRATIVE_SYSTEM.md) - Daily Narrative System
+- [增强叙事系统](docs/04-AI与NPC系统/NARRATIVE_SYSTEM_ENHANCED.md) - Enhanced Narrative System
+
+#### ✅ 实施与交付
+- [实施检查清单](docs/05-实施与交付/IMPLEMENTATION_CHECKLIST.md) - Implementation Checklist
+- [实施总结](docs/05-实施与交付/IMPLEMENTATION_SUMMARY.md) - Implementation Summary
+- [集成完成报告](docs/05-实施与交付/INTEGRATION_COMPLETE.md) - Integration Complete
+- [当前状态与计划](docs/05-实施与交付/CURRENT_STATUS_AND_NEXT_STEPS.md) - Current Status & Next Steps
+- [后续路线图](docs/05-实施与交付/NEXT_STEPS_ROADMAP.md) - Next Steps Roadmap
+- [项目交付总结](docs/05-实施与交付/项目交付总结.md) - Project Delivery Summary
+
+#### 🚀 部署与运维
+- [GitHub 推送准备](docs/06-部署与运维/GITHUB_PUSH_READY.md) - GitHub Push Ready
+- [GitHub 推送指南](docs/06-部署与运维/PUSH_TO_GITHUB.md) - Push to GitHub Guide
+- [自动推送脚本](docs/06-部署与运维/push_to_github.ps1) - PowerShell Auto-push Script
+
+#### 📊 优化与总结
+- [优化总结](docs/07-优化与总结/优化总结.md) - Optimization Summary
+- [个性化系统总结](docs/07-优化与总结/个性化系统总结.md) - Personalization Summary
+- [高级系统总结](docs/07-优化与总结/高级系统总结.md) - Advanced Systems Summary
+- [个性化速查卡](docs/07-优化与总结/个性化速查卡.txt) - Personalization Cheatsheet
+
+#### 🛠️ 开发工具
+- [AI Agents](docs/08-开发工具/AGENTS.md) - AI Agent Configuration
+- [开发者速查表](docs/08-开发工具/CHEATSHEET.md) - Developer Cheatsheet
 
 ### 💼 商业运营文档
 - **[商业运营方案](docs/02-商业运营/01-商业运营方案.md)** 💰 - 市场分析、定价策略、营销推广、收入预测
 - **[研发周期计划](docs/03-研发管理/01-研发周期与里程碑.md)** 📅 - 7个月详细研发时间表和里程碑
-
-### 🛠️ 原有技术文档
-- [OPTIMIZATION_ARCHITECTURE.md](OPTIMIZATION_ARCHITECTURE.md) - 架构图解和可视化
-- [QUICK_START_OPTIMIZATION.md](QUICK_START_OPTIMIZATION.md) - 15分钟快速优化指南
-- [NPC_EXPANSION_GUIDE.md](NPC_EXPANSION_GUIDE.md) - NPC扩展指南
-- [NARRATIVE_SYSTEM_ENHANCED.md](NARRATIVE_SYSTEM_ENHANCED.md) - 叙事系统增强说明
-
-### 📖 游戏设计文档
-- [AI_NPC_GUIDE.md](AI_NPC_GUIDE.md) - AI NPC设置指南
-- [GAME_DESIGN.md](GAME_DESIGN.md) - 游戏设计概述
-- [QUICKSTART.md](QUICKSTART.md) - 快速开始指南
-- [ADVANCED_AI_SYSTEMS_COMPLETE.md](ADVANCED_AI_SYSTEMS_COMPLETE.md) - 高级AI系统说明
 
 ---
 
@@ -197,9 +231,15 @@ stardew_valley/
 │   └── tilemaps/          # Tileset images
 ├── project.godot          # Godot project config
 ├── README.md              # This file
-├── AI_NPC_GUIDE.md        # AI NPC setup guide
-├── GAME_DESIGN.md         # Full design document
-└── QUICKSTART.md          # Quick start guide
+└── docs/                  # Documentation (organized by topic)
+    ├── 01-项目概览/       # Project overview & design
+    ├── 02-快速开始/       # Quick start guides
+    ├── 03-技术架构/       # Technical architecture
+    ├── 04-AI与NPC系统/   # AI & NPC systems
+    ├── 05-实施与交付/     # Implementation & delivery
+    ├── 06-部署与运维/     # Deployment & operations
+    ├── 07-优化与总结/     # Optimization & summaries
+    └── 08-开发工具/       # Development tools
 ```
 
 ## Controls
