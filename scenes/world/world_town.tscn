@@ -22,8 +22,14 @@ size = Vector2(140, 94)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_occ_store_front"]
 size = Vector2(140, 58)
 
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_store"]
+polygon = PackedVector2Array(-68, -44, 68, -44, 68, 16, -68, 16)
+
 [node name="WorldTown" type="Node2D"]
 script = ExtResource("1_root")
+
+[node name="Ambient" type="CanvasModulate" parent="."]
+color = Color(0.88, 0.89, 0.92, 1)
 
 [node name="Ground" type="Polygon2D" parent="."]
 z_index = -3
@@ -80,6 +86,18 @@ script = ExtResource("9_occ")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TownCollisionSemantics/StoreFrontOcclusion"]
 shape = SubResource("RectangleShape2D_occ_store_front")
+
+[node name="GeneralStoreLightOccluder" type="LightOccluder2D" parent="TownCollisionSemantics"]
+position = Vector2(514, 338)
+occluder = SubResource("OccluderPolygon2D_store")
+
+[node name="StoreSignLight" type="PointLight2D" parent="TownCollisionSemantics"]
+position = Vector2(514, 296)
+enabled = true
+texture_scale = 2.2
+color = Color(1, 0.84, 0.62, 1)
+energy = 0.6
+shadow_enabled = true
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 

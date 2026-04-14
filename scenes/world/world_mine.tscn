@@ -17,6 +17,9 @@ size = Vector2(72, 96)
 script = ExtResource("1_root")
 banner_title = "矿口"
 
+[node name="Ambient" type="CanvasModulate" parent="."]
+color = Color(0.74, 0.75, 0.84, 1)
+
 [node name="Ground" type="Polygon2D" parent="."]
 z_index = -3
 color = Color(0.22, 0.2, 0.24, 1)
@@ -49,6 +52,14 @@ polygon = PackedVector2Array(360, 486, 404, 486, 404, 530, 360, 530)
 [node name="LanternGlow" type="Polygon2D" parent="MineVisualProps"]
 color = Color(0.95, 0.68, 0.22, 0.2)
 polygon = PackedVector2Array(680, 220, 760, 220, 760, 300, 680, 300)
+
+[node name="LanternLight" type="PointLight2D" parent="MineVisualProps"]
+position = Vector2(720, 258)
+enabled = true
+texture_scale = 2.4
+color = Color(1, 0.78, 0.58, 1)
+energy = 0.68
+shadow_enabled = true
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 

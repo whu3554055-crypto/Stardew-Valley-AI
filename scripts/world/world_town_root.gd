@@ -34,6 +34,7 @@ func _ready() -> void:
 		WorldTileBackdrop.paint_town_deco(tile_deco, 0)
 	if tile_occ:
 		WorldTileBackdrop.paint_town_occlusion(tile_occ, 0)
+	_apply_town_palette_profile()
 
 	var banner: CanvasLayer = WorldRegionBanner.new()
 	banner.title_text = "鹈鹕镇"
@@ -148,3 +149,12 @@ func _on_player_interacted(_tile_position: Vector2) -> void:
 		QuestSystem.track_event("talk", {"npc_id": npc.npc_id, "count": 1})
 	if AIQuestSystem:
 		AIQuestSystem.track_event("talk", {"npc_id": npc.npc_id, "count": 1})
+
+
+func _apply_town_palette_profile() -> void:
+	if has_node("TileLayers"):
+		(get_node("TileLayers") as CanvasItem).modulate = Color(0.97, 0.95, 0.92, 1.0)
+	var hint: Label = get_node_or_null("Hint") as Label
+	if hint:
+		hint.add_theme_color_override("font_color", Color(0.91, 0.87, 0.78, 0.95))
+		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
