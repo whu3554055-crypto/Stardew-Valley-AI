@@ -11,6 +11,7 @@ const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
 @onready var _tilemap_occlusion: TileMap = get_node_or_null("TileMapOcclusion") as TileMap
 @onready var _farm_manager: FarmManager = $FarmManager as FarmManager
 @onready var _farm_message: Label = get_node_or_null("FarmHud/FarmMessage") as Label
+@onready var _farmhouse_sprite: Sprite2D = get_node_or_null("FarmBackdrop/FarmhouseSprite") as Sprite2D
 
 var _farm_msg_timer: Timer
 var _perf_overlay: CanvasLayer
@@ -42,6 +43,7 @@ func _ready() -> void:
 		_player.interacted.connect(_on_player_interact)
 	_paint_farm_deco_tiles()
 	_apply_farm_palette_profile()
+	_apply_farmhouse_texture()
 	_region_banner = WorldRegionBanner.new()
 	_region_banner.title_text = "农场"
 	add_child(_region_banner)
@@ -144,6 +146,36 @@ func _apply_farm_palette_profile() -> void:
 	if hint:
 		hint.add_theme_color_override("font_color", Color(0.84, 0.93, 0.82, 0.95))
 		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+
+
+func _set_farmhouse_fallback_visible(visible_value: bool) -> void:
+	for node_name in [
+		"FarmBackdrop/FarmhouseWalls",
+		"FarmBackdrop/FarmhouseRoof",
+		"FarmBackdrop/FarmhouseDoor",
+		"FarmBackdrop/FarmhouseWindowL",
+		"FarmBackdrop/FarmhouseWindowR",
+		"FarmBackdrop/FarmhouseRoofTrim",
+		"FarmBackdrop/FarmhouseChimney",
+		"FarmBackdrop/FarmhouseShadow"
+	]:
+		var ci: CanvasItem = get_node_or_null(node_name) as CanvasItem
+		if ci:
+			ci.visible = visible_value
+
+
+func _apply_farmhouse_texture() -> void:
+	if _farmhouse_sprite == null:
+		return
+	var image: Image = Image.load_from_file("res://assets/sprites/buildings/farmhouse_kenney_v01.png")
+	if image == null or image.is_empty():
+		_farmhouse_sprite.visible = false
+		_set_farmhouse_fallback_visible(true)
+		return
+	var tex: ImageTexture = ImageTexture.create_from_image(image)
+	_farmhouse_sprite.texture = tex
+	_farmhouse_sprite.visible = true
+	_set_farmhouse_fallback_visible(false)
 
 
 func _apply_screenshot_mode(enabled: bool) -> void:

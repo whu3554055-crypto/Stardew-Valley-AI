@@ -53,6 +53,10 @@ script = ExtResource("5_farm")
 [node name="FarmBackdrop" type="Node2D" parent="."]
 z_index = -2
 
+[node name="FarmhouseSprite" type="Sprite2D" parent="FarmBackdrop"]
+position = Vector2(560, 212)
+texture_filter = 1
+
 [node name="FarmhouseWalls" type="Polygon2D" parent="FarmBackdrop"]
 color = Color(0.55, 0.39, 0.27, 0.96)
 polygon = PackedVector2Array(470, 160, 650, 160, 650, 286, 470, 286)
