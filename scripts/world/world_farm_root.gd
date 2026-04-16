@@ -17,6 +17,11 @@ var _perf_overlay: CanvasLayer
 var _region_banner: CanvasLayer
 var _screenshot_mode_enabled: bool = false
 
+const _GRASS_ATLAS := Vector2i(0, 0)
+const _GRASS_ALT_ATLAS := Vector2i(4, 0)
+const _PATH_ATLAS_VARIANTS := [Vector2i(1, 0), Vector2i(5, 0), Vector2i(6, 0)]
+const _TILLED_ATLAS_VARIANTS := [Vector2i(2, 0), Vector2i(9, 0), Vector2i(10, 0)]
+
 
 func _ready() -> void:
 	_farm_msg_timer = Timer.new()
@@ -102,33 +107,36 @@ func _paint_farm_deco_tiles() -> void:
 func _paint_farm_base_tiles() -> void:
 	if _tilemap == null:
 		return
-	var grass := Vector2i(0, 0)
-	var dirt := Vector2i(1, 0)
-	var tilled := Vector2i(2, 0)
-	var grass_variation := Vector2i(4, 0)
 	for x in range(32):
 		for y in range(23):
-			var atlas: Vector2i = grass
+			var atlas: Vector2i = _GRASS_ATLAS
 			if x >= 21 and y >= 17:
-				atlas = grass_variation
+				atlas = _GRASS_ALT_ATLAS
 			elif (x + y) % 11 == 0 and y > 5:
-				atlas = grass_variation
+				atlas = _GRASS_ALT_ATLAS
 			_tilemap.set_cell(0, Vector2i(x, y), 0, atlas)
 	for x in range(14, 20):
 		for y in range(9, 18):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, dirt)
+			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
 	for x in range(3, 17):
 		for y in range(11, 13):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, dirt)
+			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
 	for x in range(20, 30):
 		for y in range(11, 13):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, dirt)
+			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
 	for x in range(6, 13):
 		for y in range(16, 21):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, tilled)
+			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_TILLED_ATLAS_VARIANTS, x, y))
 	for x in range(20, 27):
 		for y in range(16, 21):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, tilled)
+			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_TILLED_ATLAS_VARIANTS, x, y))
+
+
+func _pick_atlas_variant(variants: Array, x: int, y: int) -> Vector2i:
+	if variants.is_empty():
+		return Vector2i.ZERO
+	var idx: int = int(abs(hash(Vector3i(x, y, 97)))) % variants.size()
+	return variants[idx] as Vector2i
 
 
 func _apply_farm_palette_profile() -> void:
