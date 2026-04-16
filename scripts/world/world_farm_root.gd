@@ -13,6 +13,9 @@ const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
 @onready var _farm_message: Label = get_node_or_null("FarmHud/FarmMessage") as Label
 
 var _farm_msg_timer: Timer
+var _perf_overlay: CanvasLayer
+var _region_banner: CanvasLayer
+var _screenshot_mode_enabled: bool = false
 
 
 func _ready() -> void:
@@ -34,11 +37,15 @@ func _ready() -> void:
 		_player.interacted.connect(_on_player_interact)
 	_paint_farm_deco_tiles()
 	_apply_farm_palette_profile()
-	var banner: CanvasLayer = WorldRegionBanner.new()
-	banner.title_text = "农场"
-	add_child(banner)
+	_region_banner = WorldRegionBanner.new()
+	_region_banner.title_text = "农场"
+	add_child(_region_banner)
 	if OS.is_debug_build():
-		add_child(PerfOverlay.new())
+		_perf_overlay = PerfOverlay.new()
+		add_child(_perf_overlay)
+	# Startup value can be controlled by env var for capture automation.
+	if str(OS.get_environment("SV_CAPTURE_MODE")).to_lower() in ["1", "true", "yes", "on"]:
+		_apply_screenshot_mode(true)
 
 
 func _exit_tree() -> void:
@@ -47,6 +54,9 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F9:
+		_apply_screenshot_mode(not _screenshot_mode_enabled)
+		return
 	if not event.is_action_pressed("ui_cancel"):
 		return
 	if FarmStateCache and _farm_manager:
@@ -134,6 +144,25 @@ func _apply_farm_palette_profile() -> void:
 	if hint:
 		hint.add_theme_color_override("font_color", Color(0.84, 0.93, 0.82, 0.95))
 		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
+
+
+func _apply_screenshot_mode(enabled: bool) -> void:
+	_screenshot_mode_enabled = enabled
+	var hint: CanvasItem = get_node_or_null("Hint") as CanvasItem
+	if hint:
+		hint.visible = not enabled
+	var portal_main_label: CanvasItem = get_node_or_null("PortalToMain/PortalLabel") as CanvasItem
+	if portal_main_label:
+		portal_main_label.visible = not enabled
+	var portal_town_label: CanvasItem = get_node_or_null("PortalToTown/PortalLabel") as CanvasItem
+	if portal_town_label:
+		portal_town_label.visible = not enabled
+	if _farm_message:
+		_farm_message.visible = false if enabled else _farm_message.visible
+	if _perf_overlay:
+		_perf_overlay.visible = not enabled
+	if _region_banner:
+		_region_banner.visible = not enabled
 
 
 func _try_harvest(tile_coords: Vector2i) -> bool:
