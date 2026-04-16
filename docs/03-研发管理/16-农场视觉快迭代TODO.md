@@ -245,6 +245,9 @@
   - 产物：`assets/tiles/farm32/ground/transition_grass_to_path_v01.png`
   - 平铺预览：`art_out/palette/n3_5_transition_grass_to_farmland_v01_preview_3x3.png`
   - 平铺预览：`art_out/palette/n3_5_transition_grass_to_path_v01_preview_3x3.png`
-- [ ] N3-6（15m）入场景快测：角色连续跑动 2 分钟找断层
+- [x] N3-6（15m）入场景快测：角色连续跑动 2 分钟找断层
+  - 验证：`tools/run_headless_smoke.ps1` 通过（无阻断错误）
+  - 快测图：`art_out/palette/n3_6_ground_mix_quicktest.png`
+  - 发现：存在 3 处轻微过渡生硬点，留给 N3-7 修正
 - [ ] N3-7（10m）修 3 个最明显断层并截图归档
 
