@@ -19,9 +19,8 @@ var _region_banner: CanvasLayer
 var _screenshot_mode_enabled: bool = false
 
 const _GRASS_ATLAS := Vector2i(0, 0)
-const _GRASS_ALT_ATLAS := Vector2i(4, 0)
-const _PATH_ATLAS_VARIANTS := [Vector2i(1, 0), Vector2i(5, 0), Vector2i(6, 0)]
-const _TILLED_ATLAS_VARIANTS := [Vector2i(2, 0), Vector2i(9, 0), Vector2i(10, 0)]
+const _PATH_ATLAS_VARIANTS := [Vector2i(1, 0)]
+const _TILLED_ATLAS_VARIANTS := [Vector2i(2, 0)]
 
 
 func _ready() -> void:
@@ -111,12 +110,7 @@ func _paint_farm_base_tiles() -> void:
 		return
 	for x in range(32):
 		for y in range(23):
-			var atlas: Vector2i = _GRASS_ATLAS
-			if x >= 21 and y >= 17:
-				atlas = _GRASS_ALT_ATLAS
-			elif (x + y) % 11 == 0 and y > 5:
-				atlas = _GRASS_ALT_ATLAS
-			_tilemap.set_cell(0, Vector2i(x, y), 0, atlas)
+			_tilemap.set_cell(0, Vector2i(x, y), 0, _GRASS_ATLAS)
 	for x in range(14, 20):
 		for y in range(9, 18):
 			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
@@ -167,15 +161,10 @@ func _set_farmhouse_fallback_visible(visible_value: bool) -> void:
 func _apply_farmhouse_texture() -> void:
 	if _farmhouse_sprite == null:
 		return
-	var image: Image = Image.load_from_file("res://assets/sprites/buildings/farmhouse_kenney_v01.png")
-	if image == null or image.is_empty():
-		_farmhouse_sprite.visible = false
-		_set_farmhouse_fallback_visible(true)
-		return
-	var tex: ImageTexture = ImageTexture.create_from_image(image)
-	_farmhouse_sprite.texture = tex
-	_farmhouse_sprite.visible = true
-	_set_farmhouse_fallback_visible(false)
+	# Keep farmhouse in top-down fallback style to avoid projection mismatch
+	# with the current farm ground tiles.
+	_farmhouse_sprite.visible = false
+	_set_farmhouse_fallback_visible(true)
 
 
 func _apply_screenshot_mode(enabled: bool) -> void:
