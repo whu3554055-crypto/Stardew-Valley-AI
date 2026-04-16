@@ -10,6 +10,7 @@ var planted_crops = {}
 
 # Tilled soil positions
 var tilled_soil = {}
+var watered_soil: Dictionary = {}
 
 ## Placed basic sprinklers: tile under the sprinkler (must be tilled, no crop). Waters 4 ortho neighbors each morning.
 var sprinkler_tiles: Dictionary = {}
@@ -30,6 +31,8 @@ var _crop_layer: Node2D
 
 ## Matches `TileType.TILLED_SOIL` atlas column in `terrain_atlas_32.png` / GameTileMap.
 const _TILLED_ATLAS := Vector2i(2, 0)
+const _TILLED_ATLAS_VARIANTS := [Vector2i(2, 0), Vector2i(9, 0), Vector2i(10, 0)]
+const _WATERED_ATLAS := Vector2i(3, 0)
 
 func _ready():
 	_sprinkler_layer = Node2D.new()
@@ -95,8 +98,9 @@ func till_soil(position: Vector2i):
 		return false
 	if not tilled_soil.has(position):
 		tilled_soil[position] = true
+		watered_soil.erase(position)
 		soil_tilled.emit(position)
-		_paint_tilled_cell(position)
+		_paint_soil_cell(position)
 		return true
 	return false
 
@@ -177,9 +181,16 @@ func _apply_tier_harvest_bonus(harvest_data: Dictionary) -> void:
 	harvest_data["count"] = int(harvest_data.get("count", 1)) + bonus
 	harvest_data["tier_bonus"] = bonus
 
-func water_plant(position: Vector2i):
+func water_tile(position: Vector2i):
+	if tilled_soil.has(position):
+		watered_soil[position] = true
+		_paint_soil_cell(position)
 	if planted_crops.has(position):
 		planted_crops[position]["watered"] = true
+
+
+func water_plant(position: Vector2i):
+	water_tile(position)
 
 func _on_day_changed(new_day):
 	_sprinkler_water_neighbor_tiles()
@@ -193,6 +204,9 @@ func _on_day_changed(new_day):
 		if crop.watered:
 			crop.days_grown += 1
 			crop.watered = false
+	for pos in watered_soil.keys():
+		watered_soil.erase(pos)
+		_paint_soil_cell(pos)
 	_refresh_crop_visuals()
 
 func get_growth_stage(crop: Dictionary) -> int:
@@ -402,6 +416,7 @@ func _sprinkler_water_neighbor_tiles() -> void:
 func save_farm_data():
 	var save_data = {
 		"tilled_soil": tilled_soil,
+		"watered_soil": watered_soil,
 		"planted_crops": planted_crops,
 		"sprinkler_tiles": sprinkler_tiles,
 		"pending_fertilizer": pending_fertilizer,
@@ -411,6 +426,7 @@ func save_farm_data():
 
 func load_farm_data(data: Dictionary):
 	tilled_soil = _deserialize_vec2i_key_dict(data.get("tilled_soil", {}))
+	watered_soil = _deserialize_sprinklers(data.get("watered_soil", {}))
 	planted_crops = _deserialize_vec2i_key_dict(data.get("planted_crops", {}))
 	sprinkler_tiles = _deserialize_sprinklers(data.get("sprinkler_tiles", {}))
 	pending_fertilizer = _deserialize_sprinklers(data.get("pending_fertilizer", {}))
@@ -435,11 +451,19 @@ func _deserialize_vec2i_key_dict(raw: Variant) -> Dictionary:
 					out[Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))] = raw[k]
 	return out
 
-func _paint_tilled_cell(pos: Vector2i) -> void:
+func _pick_tilled_variant(pos: Vector2i) -> Vector2i:
+	var idx: int = int(abs(hash(Vector3i(pos.x, pos.y, 173)))) % _TILLED_ATLAS_VARIANTS.size()
+	return _TILLED_ATLAS_VARIANTS[idx]
+
+
+func _paint_soil_cell(pos: Vector2i) -> void:
 	var tm: TileMap = _tilemap()
 	if tm == null:
 		return
-	tm.set_cell(0, pos, 0, _TILLED_ATLAS)
+	if watered_soil.has(pos):
+		tm.set_cell(0, pos, 0, _WATERED_ATLAS)
+	else:
+		tm.set_cell(0, pos, 0, _pick_tilled_variant(pos))
 
 func _refresh_tilled_tilemap() -> void:
 	var tm: TileMap = _tilemap()
@@ -447,7 +471,7 @@ func _refresh_tilled_tilemap() -> void:
 		return
 	for k in tilled_soil.keys():
 		if k is Vector2i:
-			tm.set_cell(0, k, 0, _TILLED_ATLAS)
+			_paint_soil_cell(k)
 
 func _deserialize_sprinklers(raw: Variant) -> Dictionary:
 	var base: Dictionary = _deserialize_vec2i_key_dict(raw)
