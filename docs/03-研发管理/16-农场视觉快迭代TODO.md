@@ -237,7 +237,9 @@
 - [x] N3-3（15m）浇水耕地：复制耕地并做湿润高光/暗角
   - 产物：`assets/tiles/farm32/ground/farmland_watered_v01.png`
   - 平铺预览：`art_out/palette/n3_3_watered_tile_preview_3x3.png`
-- [ ] N3-4（15m）小路：从 `dirt_*.png` 组合直路/拐角/端点
+- [x] N3-4（15m）小路：从 `dirt_*.png` 组合直路/拐角/端点
+  - 产物：`assets/tiles/farm32/ground/path_dirt_base_v01.png`
+  - 平铺预览：`art_out/palette/n3_4_path_tile_preview_3x3.png`
 - [ ] N3-5（15m）过渡：补草地<->耕地、草地<->小路过渡块
 - [ ] N3-6（15m）入场景快测：角色连续跑动 2 分钟找断层
 - [ ] N3-7（10m）修 3 个最明显断层并截图归档
