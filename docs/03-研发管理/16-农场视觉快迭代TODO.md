@@ -249,5 +249,9 @@
   - 验证：`tools/run_headless_smoke.ps1` 通过（无阻断错误）
   - 快测图：`art_out/palette/n3_6_ground_mix_quicktest.png`
   - 发现：存在 3 处轻微过渡生硬点，留给 N3-7 修正
-- [ ] N3-7（10m）修 3 个最明显断层并截图归档
+- [x] N3-7（10m）修 3 个最明显断层并截图归档
+  - 修正 1：`assets/tiles/farm32/ground/path_dirt_base_v02.png`
+  - 修正 2：`assets/tiles/farm32/ground/transition_grass_to_farmland_v02.png`
+  - 修正 3：`assets/tiles/farm32/ground/transition_grass_to_path_v02.png`
+  - 归档图：`art_out/palette/n3_7_ground_mix_after_fix.png`
 
