@@ -228,7 +228,9 @@
 
 ### N3 地表四件套（目标 90-120 分钟）
 
-- [ ] N3-1（15m）草地：从 `ForgottenPlainsTiles` 裁出主 tile 并做无缝
+- [x] N3-1（15m）草地：从 `ForgottenPlainsTiles` 裁出主 tile 并做无缝
+  - 产物：`assets/tiles/farm32/ground/grass_base_v01.png`
+  - 平铺预览：`art_out/palette/n3_1_grass_tile_preview_3x3.png`
 - [ ] N3-2（15m）耕地：从 `dirtFarmland_*.png` 组出可平铺块
 - [ ] N3-3（15m）浇水耕地：复制耕地并做湿润高光/暗角
 - [ ] N3-4（15m）小路：从 `dirt_*.png` 组合直路/拐角/端点
