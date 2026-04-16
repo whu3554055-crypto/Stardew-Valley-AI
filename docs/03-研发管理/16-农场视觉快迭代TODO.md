@@ -240,7 +240,11 @@
 - [x] N3-4（15m）小路：从 `dirt_*.png` 组合直路/拐角/端点
   - 产物：`assets/tiles/farm32/ground/path_dirt_base_v01.png`
   - 平铺预览：`art_out/palette/n3_4_path_tile_preview_3x3.png`
-- [ ] N3-5（15m）过渡：补草地<->耕地、草地<->小路过渡块
+- [x] N3-5（15m）过渡：补草地<->耕地、草地<->小路过渡块
+  - 产物：`assets/tiles/farm32/ground/transition_grass_to_farmland_v01.png`
+  - 产物：`assets/tiles/farm32/ground/transition_grass_to_path_v01.png`
+  - 平铺预览：`art_out/palette/n3_5_transition_grass_to_farmland_v01_preview_3x3.png`
+  - 平铺预览：`art_out/palette/n3_5_transition_grass_to_path_v01_preview_3x3.png`
 - [ ] N3-6（15m）入场景快测：角色连续跑动 2 分钟找断层
 - [ ] N3-7（10m）修 3 个最明显断层并截图归档
 
