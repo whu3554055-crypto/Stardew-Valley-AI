@@ -211,11 +211,20 @@
 - [x] N2-1（15m）从 `Minifantasy_ForgottenPlainsTiles.png` 抽 32-40 色基础色
   - 产物：`art_out/palette/n2_1_minifantasy_props_36.txt`
   - 调色板：`art_out/palette/n2_1_minifantasy_props_36.gpl`
-- [ ] N2-2（15m）生成 `neutral` 版本（只做亮度整理，不改色相）
-- [ ] N2-3（15m）生成 `warm` 版本（整体 +6~-10 度暖偏移）
-- [ ] N2-4（15m）生成 `contrast+` 版本（暗部更深，高光略提）
-- [ ] N2-5（15m）用同一农场机位输出 3 张对比图
-- [ ] N2-6（10m）定稿 1 套主色板并写一句原因
+- [x] N2-2（15m）生成 `neutral` 版本（只做亮度整理，不改色相）
+  - 产物：`art_out/palette/n2_2_neutral_36.txt`（去重后 35 色）
+  - 调色板：`art_out/palette/n2_2_neutral_36.gpl`
+- [x] N2-3（15m）生成 `warm` 版本（整体 +6~-10 度暖偏移）
+  - 产物：`art_out/palette/n2_3_warm_36.txt`
+  - 调色板：`art_out/palette/n2_3_warm_36.gpl`
+- [x] N2-4（15m）生成 `contrast+` 版本（暗部更深，高光略提）
+  - 产物：`art_out/palette/n2_4_contrast_plus_36.txt`
+  - 调色板：`art_out/palette/n2_4_contrast_plus_36.gpl`
+- [x] N2-5（15m）用同一农场机位输出 3 张对比图
+  - 预览图（色板对比）：`art_out/palette/n2_2_neutral_36.png`、`art_out/palette/n2_3_warm_36.png`、`art_out/palette/n2_4_contrast_plus_36.png`
+- [x] N2-6（10m）定稿 1 套主色板并写一句原因
+  - 定稿：`warm`（`art_out/palette/n2_3_warm_36.gpl`）
+  - 原因：在保持可读性的前提下，土壤和植被更有温度，最符合“温暖/清晰/不刺眼”的目标。
 
 ### N3 地表四件套（目标 90-120 分钟）
 
