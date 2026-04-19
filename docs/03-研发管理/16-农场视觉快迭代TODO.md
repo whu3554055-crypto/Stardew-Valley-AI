@@ -61,20 +61,95 @@
 
 ## 4. Now（当前只保留 3-5 项）
 
-### Sprint 0：2-4 小时看到效果
+### Sprint 0.5：视觉集成（2-3 小时，必须先于 N5-N8）
 
-- [ ] N1 锁定视觉基线（网格/光源/关键词）
-  - 验收：确认 `16x16`、光源左上、关键词 `温暖/清晰/有层次/不刺眼`。
-- [ ] N2 建立三版主色板（neutral/warm/contrast+）
-  - 验收：三张同场景静态图对比，选定 1 套主色板。
-- [ ] N3 地表四件套落地（草/耕地/浇水耕地/小路）
-  - 验收：角色跑动时无明显地块断层或拼贴感。
-- [x] N4 产出第一张“可看截图”
-  - 白天图：`art_out/screenshots/n4_farm_showcase_day.png`
-  - 黄昏图：`art_out/screenshots/n4_farm_showcase_dusk.png`
-  - 验收：20x20 农场块，含房子+树+石头，输出白天与黄昏各 1 张。
+> **背景诊断（2026-04-19）：** 完成 N2/N3/N4 后发现视觉效果依然很差，经深度分析（读取 `world_farm.tscn`、`main.tscn`、`farm_manager.gd`、`game_tilemap.gd`、`n4_farm_showcase_day.png` 截图、Cursor 规则 `.cursor/rules/`）后确认以下 5 个致命问题。
+>
+> **核心教训：** 之前的迭代一直在"产出资产文件"（PNG、色板 TXT、GPL），但**从未将资产正确集成到 Godot 场景中**。接下来的每一步都必须以"在 Godot 编辑器中运行看到效果"为验收标准，而不是以"产出文件"为标准。
 
-### Sprint 1：1-2 天跑通最小可玩循环
+### 详细诊断报告（5 个致命问题）
+
+| 问题 | 证据 | 根因 | 修复 |
+|------|------|------|------|
+| 1. 白色空白 | `n4_farm_showcase_day.png` 农场中央大片白色菱形格子 | `world_farm.tscn` 中 TileMap 的 `auto_generate_map=false`，且无任何 Cell 数据；`game_tilemap.gd` 的 `generate_enhanced_map()` 从未被执行 | S0.5-1 |
+| 2. 房子像色块 | `world_farm.tscn` 第 56-91 行：7 个 `Polygon2D` 节点（Walls/Roof/Door/Windows/Chimney/Shadow）手动填充颜色 | 没有使用 Kenney/Minifantasy 的 Sprite 资产，而是用 `Polygon2D` 手绘几何色块 | S0.5-2 |
+| 3. 色调冷蓝出戏 | `world_farm.tscn` 第 37 行 `CanvasModulate` 颜色 `Color(0.86, 0.89, 0.94)` | 冷蓝色调与 N2 定稿的 `warm` 色板完全相反；色板文件 `n2_3_warm_36.gpl` 从未被加载或引用 | S0.5-3 |
+| 4. 没有深度遮挡 | `Player`、`Farmhouse`、`TileMap` 都在 `Node2D` 根下，未开启 `y_sort_enabled` | 所有物体在同一平面，玩家走到房子后面不会被遮挡 | S0.5-4 |
+| 5. UI 硬编码错位 | `main.tscn` 中所有 Label 用 `offset_left/top/right/bottom` 直接定位 | 没有 `MarginContainer` 安全边距、没有 Anchors Preset、没有 `Theme.tres` | S0.5-5/6 |
+
+### 核心教训（文件产出 ≠ 场景可见）
+
+之前的迭代一直在**"产出资产文件"**，但**从未将资产正确集成到 Godot 场景中**。具体表现：
+
+1. **N3 产出 7 个 Tile PNG，但 TileMap 是空的** — 文件存在 ≠ 场景可见
+2. **N2 产出 warm 色板，但 CanvasModulate 是冷蓝色** — 色板文件存在 ≠ 色调已应用
+3. **A5 资产映射表填完，但房子是 Polygon2D 色块** — 映射表存在 ≠ 资产已替换
+
+**铁律：每一步都必须以"在 Godot 编辑器中运行看到效果"为验收标准，而不是以"产出文件"为标准。**
+
+### AI 工作限制（不允许做的事）
+
+以下限制适用于所有后续 AI 生成的代码和场景修改：
+
+#### 不允许（禁止项）
+
+- **禁止** 只产出 PNG/TXT/GPL 文件而不将其集成到 Godot 场景中
+- **禁止** 使用 `Polygon2D` 手绘色块代替 Sprite 像素艺术资产
+- **禁止** 使用硬编码 `offset_left/top/right/bottom` 定位 UI 控件
+- **禁止** 在单个控件上设置 `custom_colors` 或 `theme_override_*`（必须走 Theme.tres）
+- **禁止** 使用 `Sprite2D` 平铺或 `Polygon2D` 手绘代替 `TileMap` 渲染地表
+- **禁止** 在不运行 Godot 编辑器验证的情况下宣称"完成"
+- **禁止** 忽略 N2 warm 色板而使用其他颜色方案（除非明确记录在 Pivot/Rejected）
+- **禁止** 不开启 Y-Sort 就放置地面物体
+- **禁止** 手动摆放超过 5 个相同物体而不做成预制体
+
+#### 必须做（正向指导）
+
+- **必须** 每次改动后在 Godot 编辑器中运行并截图对比
+- **必须** 使用 `MarginContainer` 作为 UI 根节点的第一层子节点
+- **必须** 使用 Anchors Preset 而非手动设置 position/offset
+- **必须** 使用 `CanvasModulate` 或 `ColorCorrection` 统一色调（基于 N2 warm 色板）
+- **必须** 开启 Y-Sort 并调整物体底部锚点对齐原点
+- **必须** 用 Sprite 纹理（PNG）替代所有 Polygon2D 手绘色块
+- **必须** 将重复视觉元素封装为 `.tscn` 预制体
+- **必须** 所有颜色、字体、边距在 `Theme.tres` 中统一定义
+
+### AI 工作原则（决策方向）
+
+| 原则 | 说明 | 例子 |
+|------|------|------|
+| 场景可见优先 | 文件产出 ≠ 完成，运行可见才算完成 | 产出 Tile PNG 后必须配置到 TileSet 并填充 Cell |
+| 标准优先于捷径 | 宁可多花 30 分钟按标准做，不用捷径快速出图 | 用容器+锚点重构 UI，而非调 offset 凑合 |
+| 统一优先于局部 | 全局统一比单个元素精美更重要 | 先修 CanvasModulate 色调，再调单个房子颜色 |
+| 资产优先于手绘 | 有资产就用资产，不用 Polygon2D 手绘 | 用 Kenney 房子 Sprite 替换 7 个 Polygon2D |
+| 数据驱动视觉 | 视觉变化由信号触发，不靠 _process 每帧刷新 | `money_changed.connect(update_gold_label)` |
+
+- [ ] S0.5-1 修复 TileMap 地表渲染（消除白色空白）
+  - 操作：将 `assets/tiles/farm32/ground/*.png` 配置到 TileSet 中，手动或用脚本填充 10x10 农场测试区
+  - 验收：运行 `world_farm.tscn`，草地和耕地清晰可见，无白色空白
+  - 截图：`art_out/screenshots/s05_1_tilemap_ground.png`
+- [ ] S0.5-2 用 Sprite 资产替换 Polygon2D 房子
+  - 操作：删除 `FarmhouseWalls/Roof/Door/Windows` 等 7 个 Polygon2D 节点，替换为 Kenney/Minifantasy 房子 Sprite
+  - 验收：房子看起来像像素艺术作品，不是几何色块
+  - 截图：`art_out/screenshots/s05_2_house_sprite.png`
+- [ ] S0.5-3 统一 CanvasModulate 为 warm 色板
+  - 操作：将 `Ambient` 节点 color 从 `Color(0.86, 0.89, 0.94)`（冷蓝）改为 `Color(1.0, 0.92, 0.82)`（暖黄）
+  - 验收：整个场景色调变暖，不再有冷蓝色出戏感
+  - 截图：`art_out/screenshots/s05_3_warm_lighting.png`
+- [ ] S0.5-4 全局开启 Y-Sort
+  - 操作：`WorldFarm` 根节点勾选 `Y Sort Enabled`；调整 Player/房子/作物的 `z_index` 和底部锚点对齐
+  - 验收：玩家走到房子/树后面时被遮挡，走到前面时遮挡它们
+  - 截图：`art_out/screenshots/s05_4_ysort_depth.png`
+- [ ] S0.5-5 UI 框架重构（MarginContainer + Anchors）
+  - 操作：重构 `main.tscn` 的 UILayer，用 `MarginContainer` 包裹所有 UI，使用 Anchors Preset 替代硬编码 offset
+  - 验收：改变窗口分辨率时，UI 元素自动适配，不再错位或溢出
+  - 截图：`art_out/screenshots/s05_5_ui_responsive.png`
+- [ ] S0.5-6 建立全局 Theme.tres
+  - 操作：创建 `resources/ui_theme.tres`，基于 N2 warm 色板定义颜色（字体色/面板背景/边框等），赋值给 UILayer
+  - 验收：修改 Theme 中一处颜色，所有 UI 同步变化
+  - 截图：`art_out/screenshots/s05_6_theme_unified.png`
+
+### Sprint 1：1-2 天跑通最小可玩循环（待 S0.5 完成后启动）
 
 - [ ] N5 单作物闭环（播种->成长->收获）
   - 验收：不看文字也能看懂成长阶段。
@@ -89,11 +164,11 @@
 
 ## 5. Done（完成即移动到此处）
 
-- [ ] （留空，完成后从 Now 移入并附 1 句结果）
-
-示例格式：
-
-- [x] N1 锁定视觉基线 - 已冻结 16x16 与左上光源，基线截图完成。
+- [x] N1 锁定视觉基线 — 已冻结 16x16 与左上光源，基线截图完成。
+- [x] N2 建立三版主色板 — 定稿 warm 色板（`n2_3_warm_36.gpl`），36 色，土壤植被有温度。
+- [x] N3 地表四件套落地 — 产出草地/耕地/浇水耕地/小路/过渡 7 个 Tile PNG，已修 3 处断层。
+- [x] N4 产出第一张“可看截图” — 白天图 `n4_farm_showcase_day.png` 完成，但发现大量白色空白（TileMap 未集成）。
+- [x] N4 问题诊断 — 2026-04-19 深度分析：5 个致命问题（TileMap 无数据、Polygon2D 房子、冷蓝色 CanvasModulate、无 Y-Sort、UI 硬编码）。
 
 ---
 
@@ -256,4 +331,49 @@
   - 修正 2：`assets/tiles/farm32/ground/transition_grass_to_farmland_v02.png`
   - 修正 3：`assets/tiles/farm32/ground/transition_grass_to_path_v02.png`
   - 归档图：`art_out/palette/n3_7_ground_mix_after_fix.png`
+
+---
+
+## 10. Godot 视觉开发核心标准（AI 开发约束指南）
+
+> **适用范围：** 本文档中的所有 Godot 视觉相关任务，以及后续 AI 生成的场景/脚本代码。
+>
+> **执行原则：** 以下标准是“最高指令”，任何偏离都必须记录在 `Pivot/Rejected` 区块并说明原因。
+
+### 10.1 布局与锚点约束（Layout & Anchors）
+
+- **[强制] UI 根节点：** 所有 UI 场景的根节点必须是 `Control`，其下第一层子节点必须是 `MarginContainer`（用于处理不同分辨率的安全边距）。
+- **[强制] 锚点逻辑：** 严禁手动设置 `position` 来定位静态 UI。必须使用 `Anchors Preset`（如 Full Rect、Center、Bottom Right）。
+- **[强制] 容器嵌套：** 列表类内容必须使用 `VBoxContainer` 或 `HBoxContainer`，并设置 `Theme Overrides > Constants > Separation` 统一间距。
+- **[强制] 禁止硬编码 offset：** 所有 UI 控件不得使用 `offset_left/top/right/bottom` 直接定位，必须通过容器和锚点自动布局。
+
+### 10.2 场景与对象约束（Scene & Objects）
+
+- **[强制] Y-Sort 基准：** 所有农场物体（树、人、建筑、作物）所在的 `Node2D` 父节点必须开启 `Y Sort Enabled`。
+- **[强制] 锚点归一化：** 所有地面物体的 `Sprite2D` 或 `AnimatedSprite2D` 的偏移必须调整为：**物体的底部中心点** 对应坐标原点 `(0,0)`。
+- **[强制] 预制体规范：** 任何重复出现的视觉元素（作物、栅栏、树、石头）必须封装为 `.tscn` 预制体，并通过代码实例化，禁止在地图编辑器中手动摆放超过 5 个相同物体。
+- **[强制] TileMap 优先：** 地表、耕地、小路等瓦片类资产必须通过 `TileMap` 渲染，禁止使用 `Sprite2D` 平铺或 `Polygon2D` 手绘。
+
+### 10.3 资源与渲染约束（Assets & Rendering）
+
+- **[强制] 纹理过滤：**
+  - 像素风资产：Import 设置中关闭 `Filter`，开启 `Pixel Snap`。
+  - 高清资产：开启 `Filter`，并使用 `NinePatchRect` 处理可拉伸背景。
+- **[强制] 主题统一（Theme）：** 严禁在单个控件上设置 `custom_colors` 或 `theme_override_*`。所有颜色、字体、边距必须在 `Theme.tres` 中定义，并赋值给根节点。
+- **[强制] 色调统一：** 必须使用 `CanvasModulate` 或 `ColorCorrection` 节点作为视觉最后的“滤镜”，确保所有资产符合 N2 定义的 `warm` 色板（`art_out/palette/n2_3_warm_36.gpl`）。
+- **[强制] Sprite 资产优先：** 建筑、道具、角色必须使用 Sprite 纹理（PNG），禁止使用 `Polygon2D` 手绘色块代替像素艺术。
+
+### 10.4 动画与反馈约束（Animation & Feedback）
+
+- **[强制] Tween 优先：** 所有 UI 的显示/隐藏、数值变化必须使用 `create_tween()`，缓动函数统一使用 `TRANS_QUAD` + `EASE_OUT`。
+- **[强制] 信号驱动：** 视觉更新必须绑定数据信号（如 `signal money_changed`），禁止在 `_process()` 中每帧刷新 UI。
+
+### 10.5 验收检查清单（每步完成后必做）
+
+- [ ] 在 Godot 编辑器中实际运行场景，而非只看文件产出
+- [ ] 截图对比（同机位、同缩放），记录在 `art_out/screenshots/`
+- [ ] 检查 TileMap 是否有白色空白（说明 Cell 数据未正确设置）
+- [ ] 检查 CanvasModulate 颜色是否符合 warm 色板
+- [ ] 检查 Y-Sort 是否生效（玩家能否被房子/树遮挡）
+- [ ] 检查 UI 是否在窗口缩放时正确适配
 
