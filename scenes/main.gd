@@ -4,27 +4,27 @@ extends Node2D
 @onready var tilemap: TileMap = get_node_or_null("TileMap") as TileMap
 @onready var farm_manager: FarmManager = get_node_or_null("FarmManager") as FarmManager
 @onready var ui_layer = $UILayer
-@onready var time_label = $UILayer/TimeLabel
-@onready var gold_label = $UILayer/GoldLabel
-@onready var dialogue_box = $UILayer/DialogueBox
-@onready var dialogue_label = $UILayer/DialogueBox/Label
-@onready var weather_label = $UILayer/WeatherLabel
-@onready var season_label = $UILayer/SeasonLabel
-@onready var day_label = $UILayer/DayLabel
-@onready var stamina_label = $UILayer/StaminaLabel
-@onready var ai_config_button = $UILayer/AIConfigButton
-@onready var world_event_feed_label = $UILayer/RightJournalTabs/Events/EventScroll/Content
-@onready var quick_tip_label = $UILayer/QuickTipLabel
-@onready var quick_tip_timer = $UILayer/QuickTipTimer
-@onready var activity_zone_label = $UILayer/ActivityZoneLabel
+@onready var time_label = $UILayer/UISafeArea/TopBar/TimeLabel
+@onready var gold_label = $UILayer/UISafeArea/TopBar/GoldLabel
+@onready var dialogue_box = $UILayer/UISafeArea/CenterArea/DialogueBox
+@onready var dialogue_label = $UILayer/UISafeArea/CenterArea/DialogueBox/Label
+@onready var weather_label = $UILayer/UISafeArea/WeatherLabel
+@onready var season_label = $UILayer/UISafeArea/SeasonLabel
+@onready var day_label = $UILayer/UISafeArea/DayLabel
+@onready var stamina_label = $UILayer/UISafeArea/TopBar/StaminaLabel
+@onready var ai_config_button = $UILayer/UISafeArea/AIConfigButton
+@onready var world_event_feed_label = $UILayer/UISafeArea/RightJournalTabs/Events/EventScroll/Content
+@onready var quick_tip_label = $UILayer/UISafeArea/BottomBar/QuickTipLabel
+@onready var quick_tip_timer = $UILayer/UISafeArea/QuickTipTimer
+@onready var activity_zone_label = $UILayer/UISafeArea/BottomBar/ActivityZoneLabel
 @onready var fx_fish = $FXLayer/FishSplash
 @onready var fx_mine = $FXLayer/MineSpark
 @onready var fx_chop = $FXLayer/ChopLeaves
-@onready var almanac_panel = $UILayer/AlmanacPanel
-@onready var recipe_picker = $UILayer/RecipePicker
-@onready var shop_ui = $UILayer/ShopUI
-@onready var quest_log_label = $UILayer/RightJournalTabs/Quests/QuestLogScroll/QuestLogLabel
-@onready var right_journal_tabs: TabContainer = $UILayer/RightJournalTabs
+@onready var almanac_panel = $UILayer/UISafeArea/CenterArea/AlmanacPanel
+@onready var recipe_picker = $UILayer/UISafeArea/RecipePicker
+@onready var shop_ui = $UILayer/UISafeArea/ShopUI
+@onready var quest_log_label = $UILayer/UISafeArea/RightJournalTabs/Quests/QuestLogScroll/QuestLogLabel
+@onready var right_journal_tabs: TabContainer = $UILayer/UISafeArea/RightJournalTabs
 
 var current_npc = null
 var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
@@ -349,10 +349,10 @@ func _apply_minimal_hud_mode(ui_cfg: Dictionary) -> void:
 		dialogue_box.visible = false
 	# Keep essentials only: time / gold / stamina / day.
 	var minimizable_paths: Array[String] = [
-		"UILayer/AlmanacPanel",
-		"UILayer/InventoryUI",
-		"UILayer/RecipePicker",
-		"UILayer/ShopUI",
+		"UILayer/UISafeArea/CenterArea/AlmanacPanel",
+		"UILayer/UISafeArea/CenterArea/InventoryUI",
+		"UILayer/UISafeArea/RecipePicker",
+		"UILayer/UISafeArea/ShopUI",
 	]
 	for p: String in minimizable_paths:
 		var n: CanvasItem = get_node_or_null(p) as CanvasItem
@@ -396,7 +396,7 @@ func _apply_a3_ui_polish() -> void:
 	wsb.content_margin_right = 6
 	wsb.content_margin_bottom = 6
 	for tab_panel_name: String in ["Events", "Quests"]:
-		var tp: Panel = ui_layer.get_node_or_null("RightJournalTabs/%s" % tab_panel_name) as Panel
+		var tp: Panel = ui_layer.get_node_or_null("UISafeArea/RightJournalTabs/%s" % tab_panel_name) as Panel
 		if tp:
 			tp.add_theme_stylebox_override("panel", wsb.duplicate() as StyleBoxFlat)
 	if world_event_feed_label:
@@ -662,11 +662,11 @@ func _apply_seasonal_hud_tint() -> void:
 			asb.border_color = accent
 			a_bg.add_theme_stylebox_override("panel", asb)
 	for tab_panel_name: String in ["Events", "Quests"]:
-		var tp: Panel = ui_layer.get_node_or_null("RightJournalTabs/%s" % tab_panel_name) as Panel
+		var tp: Panel = ui_layer.get_node_or_null("UISafeArea/RightJournalTabs/%s" % tab_panel_name) as Panel
 		if tp:
 			_panel_set_season_border(tp, accent)
 	_panel_set_season_border(dialogue_box, accent)
-	var inv_panel: Panel = ui_layer.get_node_or_null("InventoryUI") as Panel
+	var inv_panel: Panel = ui_layer.get_node_or_null("UISafeArea/CenterArea/InventoryUI") as Panel
 	_panel_set_season_border(inv_panel, accent)
 	if almanac_panel:
 		almanac_panel.set_seasonal_accent(accent, text_col)
@@ -689,7 +689,7 @@ func _apply_seasonal_hud_tint() -> void:
 		quest_log_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.92))
 	if day_label:
 		day_label.add_theme_color_override("font_color", Color(text_col.r, text_col.g, text_col.b, 0.95))
-	var inv_ui_accent = ui_layer.get_node_or_null("InventoryUI")
+	var inv_ui_accent = ui_layer.get_node_or_null("UISafeArea/CenterArea/InventoryUI")
 	if inv_ui_accent and inv_ui_accent.has_method("set_seasonal_accent"):
 		inv_ui_accent.set_seasonal_accent(accent)
 	if season_label:
@@ -2315,7 +2315,7 @@ func _on_journal_modal_dim_gui_input(event: InputEvent) -> void:
 func _apply_journal_tab_titles() -> void:
 	if not ui_layer:
 		return
-	var tabs: TabContainer = ui_layer.get_node_or_null("RightJournalTabs") as TabContainer
+	var tabs: TabContainer = ui_layer.get_node_or_null("UISafeArea/RightJournalTabs") as TabContainer
 	if tabs == null or tabs.get_tab_count() < 2:
 		return
 	if UITextCatalog:

@@ -293,7 +293,6 @@ gravity = Vector2(0, 120)
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 
-## S0.5-5: Root safe area container using MarginContainer + Full Rect anchors
 [node name="UISafeArea" type="MarginContainer" parent="UILayer"]
 layout_mode = 1
 anchors_preset = 15
@@ -308,7 +307,6 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-## TopBar: Horizontal container for Time, Gold, Stamina
 [node name="TopBar" type="HBoxContainer" parent="UILayer/UISafeArea"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -327,13 +325,11 @@ text = "Gold: 500"
 layout_mode = 2
 text = "Stamina: 100 / 100"
 
-## Day info below TopBar
 [node name="DayLabel" type="Label" parent="UILayer/UISafeArea"]
 layout_mode = 2
 text = "Day 1, Year 1"
 autowrap_mode = 2
 
-## Season and Weather labels
 [node name="SeasonLabel" type="Label" parent="UILayer/UISafeArea"]
 visible = false
 layout_mode = 2
@@ -344,7 +340,6 @@ visible = false
 layout_mode = 2
 text = "Weather: Sunny"
 
-## CenterArea: Control node for centered panels (Dialogue, Inventory, Almanac)
 [node name="CenterArea" type="Control" parent="UILayer/UISafeArea"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -443,6 +438,7 @@ layout_mode = 2
 
 [node name="Title" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 18
 text = "Gathering — Collection (J)"
 
 [node name="FishLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
@@ -481,7 +477,6 @@ layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 100)
 
-## AI Config Button (top-right corner)
 [node name="AIConfigButton" type="Button" parent="UILayer/UISafeArea"]
 layout_mode = 1
 anchors_preset = 1
@@ -493,7 +488,6 @@ offset_right = 0.0
 offset_bottom = 32.0
 text = "AI Config"
 
-## BottomBar: Horizontal container for ActivityZone and QuickTip
 [node name="BottomBar" type="HBoxContainer" parent="UILayer/UISafeArea"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -518,10 +512,8 @@ text = ""
 [node name="QuickTipTimer" type="Timer" parent="UILayer/UISafeArea"]
 one_shot = true
 
-## RecipePicker (centered instance)
 [node name="RecipePicker" parent="UILayer/UISafeArea" instance=ExtResource("11_rp")]
 
-## RightJournalTabs (right side panel)
 [node name="RightJournalTabs" type="TabContainer" parent="UILayer/UISafeArea"]
 visible = false
 z_index = 52
@@ -556,6 +548,7 @@ vertical_scroll_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(300, 200)
+theme_override_font_sizes/font_size = 11
 text = "No events yet."
 autowrap_mode = 2
 
@@ -580,10 +573,11 @@ vertical_scroll_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(308, 200)
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
 text = "Quests"
 autowrap_mode = 2
 
-## ShopUI (centered instance)
 [node name="ShopUI" parent="UILayer/UISafeArea" instance=ExtResource("14_shop")]
 visible = false
 
