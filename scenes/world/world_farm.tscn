@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="7_tex"]
 [ext_resource type="Script" path="res://scripts/world/foreground_occlusion_area.gd" id="8_occ"]
 [ext_resource type="Script" path="res://scripts/world/farm_tileset_builder.gd" id="9_tilesetbuilder"]
-[ext_resource type="Texture2D" path="res://assets/sprites/buildings/house_topdown_v01.png" id="10_house"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/sunnyside_buildings_full.png" id="10_house"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -62,6 +62,8 @@ z_index = -2
 position = Vector2(560, 212)
 texture_filter = 0
 texture = ExtResource("10_house")
+region_enabled = true
+region_rect = Rect2(16, 16, 96, 128)
 scale = Vector2(1.0, 1.0)
 
 
