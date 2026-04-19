@@ -106,8 +106,5 @@ data/quests/backups/
 # External reference materials (not part of project)
 outer_resource/
 
-# Generated configs
-config_override.cfg
-scenes/world/world_farm.tscn
-scripts/game_tilemap.gd
-scripts/world/world_farm_root.gd
+# Downloaded external assets (not part of project)
+art_out/new_downloaded/
