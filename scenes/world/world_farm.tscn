@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="7_tex"]
 [ext_resource type="Script" path="res://scripts/world/foreground_occlusion_area.gd" id="8_occ"]
 [ext_resource type="Script" path="res://scripts/world/farm_tileset_builder.gd" id="9_tilesetbuilder"]
-[ext_resource type="Texture2D" path="res://assets/sprites/buildings/farmhouse_kenney_v01.png" id="10_house"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/house_topdown_v01.png" id="10_house"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
