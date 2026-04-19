@@ -103,6 +103,9 @@ vector_store/
 .bak
 data/quests/backups/
 
+# External reference materials (not part of project)
+outer_resource/
+
 # Generated configs
 config_override.cfg
 scenes/world/world_farm.tscn
