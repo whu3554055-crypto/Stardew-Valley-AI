@@ -1,6 +1,7 @@
 extends Node2D
 
-## B2: farm field scene root — TileMap + FarmManager + player; hub is `main.tscn`.
+## B2/S0.5-1: farm field scene root — TileMap + FarmManager + player; hub is `main.tscn`.
+## S0.5-1: TileMap tile painting moved to FarmTileSetBuilder (child of TileMap).
 
 const WorldRegionBanner := preload("res://scripts/world/world_region_banner.gd")
 const PerfOverlay := preload("res://scripts/world/perf_overlay.gd")
@@ -22,6 +23,8 @@ const _GRASS_ATLAS := Vector2i(0, 0)
 const _PATH_ATLAS_VARIANTS := [Vector2i(1, 0)]
 const _TILLED_ATLAS_VARIANTS := [Vector2i(2, 0)]
 
+## S0.5-1: Old constants kept for reference; tile painting now handled by FarmTileSetBuilder.
+
 
 func _ready() -> void:
 	_farm_msg_timer = Timer.new()
@@ -40,7 +43,8 @@ func _ready() -> void:
 			_farm_manager.crop_harvested.connect(_on_crop_harvested)
 	if _player:
 		_player.interacted.connect(_on_player_interact)
-	_paint_farm_deco_tiles()
+	# S0.5-1: FarmTileSetBuilder (child of TileMap) handles tile painting now.
+	# _paint_farm_deco_tiles() removed; deco layer handled by builder too.
 	_apply_farm_palette_profile()
 	_apply_farmhouse_texture()
 	_region_banner = WorldRegionBanner.new()
@@ -90,49 +94,9 @@ func _on_farm_message_timeout() -> void:
 		_farm_message.visible = false
 
 
-func _paint_farm_deco_tiles() -> void:
-	if _tilemap == null or _tilemap_deco == null:
-		return
-	_paint_farm_base_tiles()
-	_tilemap_deco.tile_set = _tilemap.tile_set
-	if _tilemap_occlusion:
-		_tilemap_occlusion.tile_set = _tilemap.tile_set
-	if _tilemap_deco.tile_set == null:
-		return
-	# Keep deco layer neutral until dedicated farm props atlas is imported.
-	_tilemap_deco.clear()
-	if _tilemap_occlusion:
-		_tilemap_occlusion.clear()
-
-
-func _paint_farm_base_tiles() -> void:
-	if _tilemap == null:
-		return
-	for x in range(32):
-		for y in range(23):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, _GRASS_ATLAS)
-	for x in range(14, 20):
-		for y in range(9, 18):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
-	for x in range(3, 17):
-		for y in range(11, 13):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
-	for x in range(20, 30):
-		for y in range(11, 13):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_PATH_ATLAS_VARIANTS, x, y))
-	for x in range(6, 13):
-		for y in range(16, 21):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_TILLED_ATLAS_VARIANTS, x, y))
-	for x in range(20, 27):
-		for y in range(16, 21):
-			_tilemap.set_cell(0, Vector2i(x, y), 0, _pick_atlas_variant(_TILLED_ATLAS_VARIANTS, x, y))
-
-
-func _pick_atlas_variant(variants: Array, x: int, y: int) -> Vector2i:
-	if variants.is_empty():
-		return Vector2i.ZERO
-	var idx: int = int(abs(hash(Vector3i(x, y, 97)))) % variants.size()
-	return variants[idx] as Vector2i
+## S0.5-1: _paint_farm_deco_tiles and _paint_farm_base_tiles removed.
+## FarmTileSetBuilder now creates TileSet from farm32/ground assets and paints ground.
+## Deco tiles can be added to FarmTileSetBuilder later when props are ready.
 
 
 func _apply_farm_palette_profile() -> void:
@@ -142,29 +106,12 @@ func _apply_farm_palette_profile() -> void:
 		hint.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.55))
 
 
-func _set_farmhouse_fallback_visible(visible_value: bool) -> void:
-	for node_name in [
-		"FarmBackdrop/FarmhouseWalls",
-		"FarmBackdrop/FarmhouseRoof",
-		"FarmBackdrop/FarmhouseDoor",
-		"FarmBackdrop/FarmhouseWindowL",
-		"FarmBackdrop/FarmhouseWindowR",
-		"FarmBackdrop/FarmhouseRoofTrim",
-		"FarmBackdrop/FarmhouseChimney",
-		"FarmBackdrop/FarmhouseShadow"
-	]:
-		var ci: CanvasItem = get_node_or_null(node_name) as CanvasItem
-		if ci:
-			ci.visible = visible_value
-
-
 func _apply_farmhouse_texture() -> void:
 	if _farmhouse_sprite == null:
 		return
-	# Keep farmhouse in top-down fallback style to avoid projection mismatch
-	# with the current farm ground tiles.
-	_farmhouse_sprite.visible = false
-	_set_farmhouse_fallback_visible(true)
+	# S0.5-2: Use Kenney farmhouse sprite asset (PNG) instead of Polygon2D fallback.
+	# Polygon2D nodes (Walls/Roof/Door/Windows/etc.) have been removed from world_farm.tscn.
+	_farmhouse_sprite.visible = true
 
 
 func _apply_screenshot_mode(enabled: bool) -> void:

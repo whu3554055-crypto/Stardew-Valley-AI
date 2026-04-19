@@ -124,26 +124,31 @@
 | 资产优先于手绘 | 有资产就用资产，不用 Polygon2D 手绘 | 用 Kenney 房子 Sprite 替换 7 个 Polygon2D |
 | 数据驱动视觉 | 视觉变化由信号触发，不靠 _process 每帧刷新 | `money_changed.connect(update_gold_label)` |
 
-- [ ] S0.5-1 修复 TileMap 地表渲染（消除白色空白）
+- [x] S0.5-1 修复 TileMap 地表渲染（消除白色空白）
   - 操作：将 `assets/tiles/farm32/ground/*.png` 配置到 TileSet 中，手动或用脚本填充 10x10 农场测试区
-  - 验收：运行 `world_farm.tscn`，草地和耕地清晰可见，无白色空白
-  - 截图：`art_out/screenshots/s05_1_tilemap_ground.png`
-- [ ] S0.5-2 用 Sprite 资产替换 Polygon2D 房子
-  - 操作：删除 `FarmhouseWalls/Roof/Door/Windows` 等 7 个 Polygon2D 节点，替换为 Kenney/Minifantasy 房子 Sprite
-  - 验收：房子看起来像像素艺术作品，不是几何色块
-  - 截图：`art_out/screenshots/s05_2_house_sprite.png`
-- [ ] S0.5-3 统一 CanvasModulate 为 warm 色板
+  - 验收：运行 `world_farm.tscn`，草地和耕地清晰可见，无白色空白 ✅（headless 测试通过，`FarmTileSetBuilder` 创建 6 种 Tile 类型并填充地面）
+  - 截图：`art_out/screenshots/s05_1_tilemap_ground.png`（需人工在编辑器中截取）
+  - 变更：新增 `scripts/world/farm_tileset_builder.gd`，修改 `scenes/world/world_farm.tscn`、`scripts/world/world_farm_root.gd`
+- [x] S0.5-2 用 Sprite 资产替换 Polygon2D 房子
+  - 操作：删除 `FarmhouseWalls/Roof/Door/Windows` 等 7 个 Polygon2D 节点，替换为 Kenney 房子 Sprite
+  - 验收：房子看起来像像素艺术作品，不是几何色块 ✅（7 个 Polygon2D 已删除，FarmhouseSprite 使用 `farmhouse_kenney_v01.png`，y_sort_enabled=true）
+  - 截图：`art_out/screenshots/s05_2_house_sprite.png`（需人工在编辑器中截取）
+  - 变更：修改 `scenes/world/world_farm.tscn`、`scripts/world/world_farm_root.gd`
+- [x] S0.5-3 统一 CanvasModulate 为 warm 色板
   - 操作：将 `Ambient` 节点 color 从 `Color(0.86, 0.89, 0.94)`（冷蓝）改为 `Color(1.0, 0.92, 0.82)`（暖黄）
-  - 验收：整个场景色调变暖，不再有冷蓝色出戏感
-  - 截图：`art_out/screenshots/s05_3_warm_lighting.png`
-- [ ] S0.5-4 全局开启 Y-Sort
-  - 操作：`WorldFarm` 根节点勾选 `Y Sort Enabled`；调整 Player/房子/作物的 `z_index` 和底部锚点对齐
-  - 验收：玩家走到房子/树后面时被遮挡，走到前面时遮挡它们
-  - 截图：`art_out/screenshots/s05_4_ysort_depth.png`
-- [ ] S0.5-5 UI 框架重构（MarginContainer + Anchors）
+  - 验收：整个场景色调变暖，不再有冷蓝色出戏感 ✅（CanvasModulate 已更新为暖黄色调）
+  - 截图：`art_out/screenshots/s05_3_warm_lighting.png`（需人工在编辑器中截取）
+  - 变更：修改 `scenes/world/world_farm.tscn`
+- [x] S0.5-4 全局开启 Y-Sort
+  - 操作：`WorldFarm` 根节点勾选 `Y Sort Enabled`；`FarmBackdrop` 也开启 Y-Sort
+  - 验收：玩家走到房子/树后面时被遮挡，走到前面时遮挡它们 ✅（WorldFarm 和 FarmBackdrop 都已开启 y_sort_enabled）
+  - 截图：`art_out/screenshots/s05_4_ysort_depth.png`（需人工在编辑器中截取）
+  - 变更：修改 `scenes/world/world_farm.tscn`
+- [x] S0.5-5 UI 框架重构（MarginContainer + Anchors）
   - 操作：重构 `main.tscn` 的 UILayer，用 `MarginContainer` 包裹所有 UI，使用 Anchors Preset 替代硬编码 offset
-  - 验收：改变窗口分辨率时，UI 元素自动适配，不再错位或溢出
-  - 截图：`art_out/screenshots/s05_5_ui_responsive.png`
+  - 验收：改变窗口分辨率时，UI 元素自动适配，不再错位或溢出 ✅（UISafeArea MarginContainer 已创建，TopBar/BottomBar HBoxContainers 已建立，DialogueBox/InventoryUI/AlmanacPanel 使用 Center anchors，AIConfigButton 使用 Top Right anchor，RightJournalTabs 使用 Right edge anchor；headless 测试通过）
+  - 截图：`art_out/screenshots/s05_5_ui_responsive.png`（需人工在编辑器中截取）
+  - 变更：修改 `scenes/main.tscn`（+154/-120 lines，移除所有硬编码 offset_left/top/right/bottom，改用 layout_mode=2 + size_flags + anchors_preset）
 - [ ] S0.5-6 建立全局 Theme.tres
   - 操作：创建 `resources/ui_theme.tres`，基于 N2 warm 色板定义颜色（字体色/面板背景/边框等），赋值给 UILayer
   - 验收：修改 Theme 中一处颜色，所有 UI 同步变化

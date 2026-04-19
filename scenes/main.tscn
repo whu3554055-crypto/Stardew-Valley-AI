@@ -293,63 +293,77 @@ gravity = Vector2(0, 120)
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 
-[node name="TimeLabel" type="Label" parent="UILayer"]
-offset_left = 12.0
+## S0.5-5: Root safe area container using MarginContainer + Full Rect anchors
+[node name="UISafeArea" type="MarginContainer" parent="UILayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
 offset_top = 8.0
-offset_right = 130.0
-offset_bottom = 36.0
-theme_override_font_sizes/font_size = 17
+offset_right = -8.0
+offset_bottom = -8.0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+## TopBar: Horizontal container for Time, Gold, Stamina
+[node name="TopBar" type="HBoxContainer" parent="UILayer/UISafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 60)
+theme_override_constants/separation = 12
+
+[node name="TimeLabel" type="Label" parent="UILayer/UISafeArea/TopBar"]
+layout_mode = 2
 text = "06:00 AM"
 
-[node name="GoldLabel" type="Label" parent="UILayer"]
-offset_left = 132.0
-offset_top = 8.0
-offset_right = 420.0
-offset_bottom = 36.0
-theme_override_font_sizes/font_size = 14
+[node name="GoldLabel" type="Label" parent="UILayer/UISafeArea/TopBar"]
+layout_mode = 2
 text = "Gold: 500"
 
-[node name="StaminaLabel" type="Label" parent="UILayer"]
-offset_left = 12.0
-offset_top = 38.0
-offset_right = 420.0
-offset_bottom = 64.0
-theme_override_font_sizes/font_size = 12
+[node name="StaminaLabel" type="Label" parent="UILayer/UISafeArea/TopBar"]
+layout_mode = 2
 text = "Stamina: 100 / 100"
 
-[node name="DayLabel" type="Label" parent="UILayer"]
-offset_left = 12.0
-offset_top = 66.0
-offset_right = 420.0
-offset_bottom = 118.0
-theme_override_font_sizes/font_size = 12
+## Day info below TopBar
+[node name="DayLabel" type="Label" parent="UILayer/UISafeArea"]
+layout_mode = 2
 text = "Day 1, Year 1"
 autowrap_mode = 2
 
-[node name="SeasonLabel" type="Label" parent="UILayer"]
+## Season and Weather labels
+[node name="SeasonLabel" type="Label" parent="UILayer/UISafeArea"]
 visible = false
-offset_left = 10.0
-offset_top = 115.0
-offset_right = 200.0
-offset_bottom = 145.0
+layout_mode = 2
 text = "Season: Spring"
 
-[node name="WeatherLabel" type="Label" parent="UILayer"]
+[node name="WeatherLabel" type="Label" parent="UILayer/UISafeArea"]
 visible = false
-offset_left = 10.0
-offset_top = 150.0
-offset_right = 200.0
-offset_bottom = 180.0
+layout_mode = 2
 text = "Weather: Sunny"
 
-[node name="DialogueBox" type="Panel" parent="UILayer"]
-visible = false
-offset_left = 100.0
-offset_top = 500.0
-offset_right = 1180.0
-offset_bottom = 650.0
+## CenterArea: Control node for centered panels (Dialogue, Inventory, Almanac)
+[node name="CenterArea" type="Control" parent="UILayer/UISafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
-[node name="Label" type="Label" parent="UILayer/DialogueBox"]
+[node name="DialogueBox" type="Panel" parent="UILayer/UISafeArea/CenterArea"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 0.9
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -540.0
+offset_top = -150.0
+offset_right = 540.0
+offset_bottom = 0.0
+
+[node name="Label" type="Label" parent="UILayer/UISafeArea/CenterArea/DialogueBox"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -361,15 +375,21 @@ offset_bottom = -14.0
 text = "Dialogue text here..."
 autowrap_mode = 2
 
-[node name="InventoryUI" type="Panel" parent="UILayer"]
+[node name="InventoryUI" type="Panel" parent="UILayer/UISafeArea/CenterArea"]
 visible = false
-offset_left = 400.0
-offset_top = 200.0
-offset_right = 880.0
-offset_bottom = 520.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -160.0
+offset_right = 240.0
+offset_bottom = 160.0
 script = ExtResource("10_inv")
 
-[node name="MarginContainer" type="MarginContainer" parent="UILayer/InventoryUI"]
+[node name="MarginContainer" type="MarginContainer" parent="UILayer/UISafeArea/CenterArea/InventoryUI"]
 layout_mode = 0
 anchors_preset = 15
 anchor_right = 1.0
@@ -381,29 +401,35 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 8
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/InventoryUI/MarginContainer"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/UISafeArea/CenterArea/InventoryUI/MarginContainer"]
 layout_mode = 2
 
-[node name="StaminaBar" type="ProgressBar" parent="UILayer/InventoryUI/MarginContainer/VBox"]
+[node name="StaminaBar" type="ProgressBar" parent="UILayer/UISafeArea/CenterArea/InventoryUI/MarginContainer/VBox"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 22)
 max_value = 100.0
 value = 100.0
 show_percentage = true
 
-[node name="GridContainer" type="GridContainer" parent="UILayer/InventoryUI/MarginContainer/VBox"]
+[node name="GridContainer" type="GridContainer" parent="UILayer/UISafeArea/CenterArea/InventoryUI/MarginContainer/VBox"]
 layout_mode = 2
 columns = 9
 
-[node name="AlmanacPanel" type="Panel" parent="UILayer"]
+[node name="AlmanacPanel" type="Panel" parent="UILayer/UISafeArea/CenterArea"]
 visible = false
-offset_left = 320.0
-offset_top = 80.0
-offset_right = 960.0
-offset_bottom = 520.0
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -220.0
+offset_right = 320.0
+offset_bottom = 220.0
 script = ExtResource("9_almanac")
 
-[node name="Margin" type="MarginContainer" parent="UILayer/AlmanacPanel"]
+[node name="Margin" type="MarginContainer" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel"]
 layout_mode = 0
 offset_right = 640.0
 offset_bottom = 440.0
@@ -412,97 +438,107 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/AlmanacPanel/Margin"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="Title" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "Gathering — Collection (J)"
 
-[node name="FishLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="FishLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 text = "Fish"
 
-[node name="FishItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="FishItemList" type="ItemList" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 120)
 
-[node name="MineralLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="MineralLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 text = "Minerals"
 
-[node name="MineralItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="MineralItemList" type="ItemList" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 120)
 
-[node name="SmeltLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="SmeltLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 text = "Smelted bars"
 
-[node name="SmeltItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="SmeltItemList" type="ItemList" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 100)
 
-[node name="MealLabel" type="Label" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="MealLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 text = "Cooked meals"
 
-[node name="MealItemList" type="ItemList" parent="UILayer/AlmanacPanel/Margin/VBox"]
+[node name="MealItemList" type="ItemList" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 100)
 
-[node name="AIConfigButton" type="Button" parent="UILayer"]
-offset_left = 1100.0
-offset_top = 10.0
-offset_right = 1270.0
-offset_bottom = 40.0
+## AI Config Button (top-right corner)
+[node name="AIConfigButton" type="Button" parent="UILayer/UISafeArea"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -170.0
+offset_top = 2.0
+offset_right = 0.0
+offset_bottom = 32.0
 text = "AI Config"
 
-[node name="ActivityZoneLabel" type="Label" parent="UILayer"]
-offset_left = 280.0
-offset_top = 548.0
-offset_right = 920.0
-offset_bottom = 578.0
-theme_override_colors/font_color = Color(0.82, 0.86, 0.9, 0.78)
-theme_override_font_sizes/font_size = 14
+## BottomBar: Horizontal container for ActivityZone and QuickTip
+[node name="BottomBar" type="HBoxContainer" parent="UILayer/UISafeArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="ActivityZoneLabel" type="Label" parent="UILayer/UISafeArea/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
 horizontal_alignment = 1
 vertical_alignment = 1
 text = ""
 
-[node name="QuickTipLabel" type="Label" parent="UILayer"]
+[node name="QuickTipLabel" type="Label" parent="UILayer/UISafeArea/BottomBar"]
 visible = false
-offset_left = 360.0
-offset_top = 620.0
-offset_right = 920.0
-offset_bottom = 660.0
-theme_override_font_sizes/font_size = 16
+layout_mode = 2
+size_flags_horizontal = 3
 horizontal_alignment = 1
 text = ""
 
-[node name="QuickTipTimer" type="Timer" parent="UILayer"]
+[node name="QuickTipTimer" type="Timer" parent="UILayer/UISafeArea"]
 one_shot = true
 
-[node name="RecipePicker" parent="UILayer" instance=ExtResource("11_rp")]
+## RecipePicker (centered instance)
+[node name="RecipePicker" parent="UILayer/UISafeArea" instance=ExtResource("11_rp")]
 
-[node name="RightJournalTabs" type="TabContainer" parent="UILayer"]
+## RightJournalTabs (right side panel)
+[node name="RightJournalTabs" type="TabContainer" parent="UILayer/UISafeArea"]
 visible = false
 z_index = 52
-offset_left = 928.0
-offset_top = 48.0
-offset_right = 1272.0
-offset_bottom = 628.0
-theme_override_font_sizes/font_size = 13
-current_tab = 0
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_bottom = 1.0
+offset_left = -344.0
+offset_top = 40.0
+offset_right = 0.0
+offset_bottom = -40.0
 
-[node name="Events" type="Panel" parent="UILayer/RightJournalTabs"]
+[node name="Events" type="Panel" parent="UILayer/UISafeArea/RightJournalTabs"]
 layout_mode = 2
 
-[node name="EventScroll" type="ScrollContainer" parent="UILayer/RightJournalTabs/Events"]
+[node name="EventScroll" type="ScrollContainer" parent="UILayer/UISafeArea/RightJournalTabs/Events"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -516,18 +552,17 @@ grow_vertical = 2
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
-[node name="Content" type="Label" parent="UILayer/RightJournalTabs/Events/EventScroll"]
+[node name="Content" type="Label" parent="UILayer/UISafeArea/RightJournalTabs/Events/EventScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(300, 200)
-theme_override_font_sizes/font_size = 11
 text = "No events yet."
 autowrap_mode = 2
 
-[node name="Quests" type="Panel" parent="UILayer/RightJournalTabs"]
+[node name="Quests" type="Panel" parent="UILayer/UISafeArea/RightJournalTabs"]
 layout_mode = 2
 
-[node name="QuestLogScroll" type="ScrollContainer" parent="UILayer/RightJournalTabs/Quests"]
+[node name="QuestLogScroll" type="ScrollContainer" parent="UILayer/UISafeArea/RightJournalTabs/Quests"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -541,16 +576,15 @@ grow_vertical = 2
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
-[node name="QuestLogLabel" type="Label" parent="UILayer/RightJournalTabs/Quests/QuestLogScroll"]
+[node name="QuestLogLabel" type="Label" parent="UILayer/UISafeArea/RightJournalTabs/Quests/QuestLogScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(308, 200)
-theme_override_font_sizes/font_size = 11
-theme_override_colors/font_color = Color(0.85, 0.88, 0.92, 0.9)
 text = "Quests"
 autowrap_mode = 2
 
-[node name="ShopUI" parent="UILayer" instance=ExtResource("14_shop")]
+## ShopUI (centered instance)
+[node name="ShopUI" parent="UILayer/UISafeArea" instance=ExtResource("14_shop")]
 visible = false
 
 [node name="Pierre" parent="." instance=ExtResource("6_pierre")]
