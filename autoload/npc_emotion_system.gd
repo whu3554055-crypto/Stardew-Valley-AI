@@ -198,7 +198,7 @@ func trigger_emotion(npc_id: String, event_type: String, context: Dictionary = {
 		var base_intensity = trigger.intensity
 		
 		# Modify by personality traits
-		var sensitivity = personality.traits.get("sensitivity", 0.5)
+		var sensitivity = personality.get("traits", {}).get("sensitivity", 0.5)
 		var modified_intensity = base_intensity * (0.5 + sensitivity * 0.5)
 		
 		# Apply context modifiers
@@ -216,7 +216,7 @@ func update_emotions(delta: float):
 		if state.duration <= 0:
 			# Return to base mood
 			var personality = get_personality(npc_id)
-			if personality:
+			if personality and personality.has("base_mood"):
 				state.current_emotion = personality.base_mood
 				state.intensity *= 0.5  # Gradual decay
 				state.duration = 60.0
@@ -326,7 +326,7 @@ func record_emotion_change(npc_id: String, emotion: BasicEmotion, cause: String)
 	emotion_history[npc_id].append({
 		"emotion": emotion,
 		"cause": cause,
-		"day": GameManager.player_data.day,
+		"day": GameManager.player_data.get("day", 1),
 		"time": GameManager.current_time
 	})
 	

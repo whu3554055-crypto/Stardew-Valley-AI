@@ -40,7 +40,7 @@ func _process(delta):
 	var scur: float = float(player_data.get("stamina", smax))
 	var regen_mult: float = float(player_data.get("stamina_regen_mult", 1.0))
 	if scur < smax:
-		player_data.stamina = minf(smax, scur + delta * 0.35 * regen_mult)
+		player_data["stamina"] = minf(smax, scur + delta * 0.35 * regen_mult)
 
 	if current_time >= 24.0:
 		current_time = 0.0
@@ -49,24 +49,24 @@ func _process(delta):
 	time_changed.emit(current_time)
 
 func advance_day():
-	player_data.day += 1
-	day_changed.emit(player_data.day)
+	player_data["day"] += 1
+	day_changed.emit(player_data["day"])
 
-	if player_data.day > 28:
-		player_data.day = 1
+	if player_data["day"] > 28:
+		player_data["day"] = 1
 		advance_season()
 
 func advance_season():
 	var seasons = ["spring", "summer", "fall", "winter"]
-	var sid: String = str(player_data.season).to_lower().strip_edges()
+	var sid: String = str(player_data.get("season", "spring")).to_lower().strip_edges()
 	var current_index: int = seasons.find(sid)
 	if current_index < 0:
 		current_index = 0
-		player_data.season = seasons[0]
+		player_data["season"] = seasons[0]
 	current_index = (current_index + 1) % 4
-	player_data.season = seasons[current_index]
-	player_data.year += 1
-	season_changed.emit(player_data.season)
+	player_data["season"] = seasons[current_index]
+	player_data["year"] += 1
+	season_changed.emit(player_data["season"])
 
 func try_consume_stamina(amount: float) -> bool:
 	if amount <= 0.0:
@@ -74,7 +74,7 @@ func try_consume_stamina(amount: float) -> bool:
 	var s: float = float(player_data.get("stamina", 0.0))
 	if s < amount:
 		return false
-	player_data.stamina = s - amount
+	player_data["stamina"] = s - amount
 	return true
 
 func restore_stamina(amount: float) -> void:

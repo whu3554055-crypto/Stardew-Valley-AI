@@ -96,7 +96,7 @@ func change_world(scene_path: String, spawn_id: String = "default") -> void:
 	pending_spawn_id = resolved_spawn
 	var err: Error = get_tree().change_scene_to_file(resolved_scene)
 	if err != OK:
-		push_error("WorldRouter: change_world failed: %s" % resolved_scene)
+		push_error("WorldRouter: change_world failed: %s (err %d)" % [resolved_scene, err])
 		pending_spawn_id = ""
 		return
 	world_changed.emit(resolved_scene)

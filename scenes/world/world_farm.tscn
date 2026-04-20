@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://worldfarmreal01"]
+﻿[gd_scene load_steps=17 format=3 uid="uid://worldfarmreal01"]
 
 [ext_resource type="Script" path="res://scripts/world/world_farm_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="7_tex"]
 [ext_resource type="Script" path="res://scripts/world/foreground_occlusion_area.gd" id="8_occ"]
 [ext_resource type="Script" path="res://scripts/world/farm_tileset_builder.gd" id="9_tilesetbuilder"]
-[ext_resource type="Texture2D" path="res://assets/sprites/buildings/sunnyside_buildings_full.png" id="10_house"]
+[ext_resource type="Texture2D" path="res://assets/sprites/buildings/house_precise.png" id="10_house"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(32, 32)
@@ -62,8 +62,6 @@ z_index = -2
 position = Vector2(560, 212)
 texture_filter = 0
 texture = ExtResource("10_house")
-region_enabled = true
-region_rect = Rect2(16, 16, 96, 128)
 scale = Vector2(1.0, 1.0)
 
 
@@ -183,7 +181,7 @@ offset_top = 12.0
 offset_right = 720.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Farm — ← Main · → Town · Town also has ↓ Farm · Esc: save"
+text = "Farm 鈥?鈫?Main 路 鈫?Town 路 Town also has 鈫?Farm 路 Esc: save"
 
 [node name="PortalToMain" type="Area2D" parent="."]
 position = Vector2(56, 360)
@@ -203,7 +201,7 @@ offset_top = -64.0
 offset_right = 80.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "→ Main hub"
+text = "鈫?Main hub"
 horizontal_alignment = 1
 
 [node name="PortalToTown" type="Area2D" parent="."]
@@ -224,5 +222,5 @@ offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "→ Town"
+text = "鈫?Town"
 horizontal_alignment = 1

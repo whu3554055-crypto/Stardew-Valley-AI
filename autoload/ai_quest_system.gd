@@ -298,7 +298,7 @@ func attempt_generate_quests():
 
 func apply_daily_narrative_context():
 	"""Inject lightweight daily narrative context into local thread cache."""
-	var day_key = "day_" + str(GameManager.player_data.day if GameManager and GameManager.player_data else 1)
+	var day_key = "day_" + str(GameManager.player_data.get("day", 1) if GameManager and GameManager.player_data else 1)
 	if daily_narrative_cache.has(day_key):
 		return
 	
