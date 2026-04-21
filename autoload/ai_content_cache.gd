@@ -97,7 +97,7 @@ func _process(_delta: float) -> void:
 # === 公共方法 ===
 
 ## Get cached content (returns null if not found or expired)
-func get(key: String) -> Variant:
+func get_cached(key: String) -> Variant:
 	if not cache.has(key):
 		total_misses += 1
 		emit_signal("cache_miss", key)
@@ -124,7 +124,7 @@ func get(key: String) -> Variant:
 	return entry.data
 
 ## Store content in cache with optional TTL
-func set(key: String, data: Variant, ttl_seconds: float = DEFAULT_TTL) -> void:
+func set_cached(key: String, data: Variant, ttl_seconds: float = DEFAULT_TTL) -> void:
 	# Remove existing entry if present
 	if cache.has(key):
 		_evict_entry(key, "replaced")
@@ -143,7 +143,7 @@ func set(key: String, data: Variant, ttl_seconds: float = DEFAULT_TTL) -> void:
 		])
 
 ## Check if key exists and is valid
-func has(key: String) -> bool:
+func has_cached(key: String) -> bool:
 	if not cache.has(key):
 		return false
 	
@@ -155,7 +155,7 @@ func has(key: String) -> bool:
 	return true
 
 ## Remove specific entry from cache
-func remove(key: String) -> bool:
+func remove_cached(key: String) -> bool:
 	if cache.has(key):
 		_evict_entry(key, "manual_removal")
 		return true
