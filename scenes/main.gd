@@ -27,15 +27,15 @@ extends Node2D
 @onready var right_journal_tabs: TabContainer = $UILayer/UISafeArea/RightJournalTabs
 
 var current_npc = null
-var ai_config_scene = preload("res://scenes/ai_config_ui.tscn")
+var ai_config_scene = preload("res://scenes/ui/ai_config_ui.tscn")
 var ai_config_instance = null
 var world_event_feed: Array[String] = []
 var managed_chain_status_banner: String = ""
 var active_story_hotspot: Dictionary = {}
-const WEATHER_OVERLAY_SCENE := preload("res://scenes/weather_overlay.tscn")
-const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/audio_mix_panel.tscn")
-const PLAYER_CREATION_SCENE := preload("res://scenes/player_creation_panel.tscn")
-const PLAYER_JOURNAL_SCENE := preload("res://scenes/player_journal_panel.tscn")
+const WEATHER_OVERLAY_SCENE := preload("res://scenes/ui/weather_overlay.tscn")
+const AUDIO_MIX_PANEL_SCENE := preload("res://scenes/ui/audio_mix_panel.tscn")
+const PLAYER_CREATION_SCENE := preload("res://scenes/ui/player_creation_panel.tscn")
+const PLAYER_JOURNAL_SCENE := preload("res://scenes/ui/player_journal_panel.tscn")
 const PERF_OVERLAY_SCENE := preload("res://scripts/world/perf_overlay.gd")
 const ALIGNMENT_PROFILE_PATH := "res://data/presentation/stardew_alignment_profile.json"
 var audio_mix_panel: CanvasLayer = null
