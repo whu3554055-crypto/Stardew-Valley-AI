@@ -41,7 +41,9 @@ var _continuity_hint: String = ""
 signal generation_started(reason: String)
 signal generation_published(chain_id: String, mode: String)
 signal generation_failed(reason: String)
+signal generation_degraded(reason: String)
 signal runtime_status_updated(snapshot: Dictionary)
+signal guardrail_blocked(reason: String, snapshot: Dictionary)
 
 # === 生命周期方法 ===
 
