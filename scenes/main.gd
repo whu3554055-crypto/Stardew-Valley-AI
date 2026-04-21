@@ -153,6 +153,9 @@ func _ready():
 	if OS.is_debug_build():
 		add_child(PERF_OVERLAY_SCENE.new())
 
+	# 监听视口大小变化，实现响应式 UI
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+
 	_load_alignment_profile()
 	_apply_a3_ui_polish()
 	_apply_alignment_profile()
@@ -417,11 +420,12 @@ func _apply_a3_ui_polish() -> void:
 		var hud_bg := Panel.new()
 		hud_bg.name = "HUDBackdrop"
 		hud_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# 使用锚点预设 + 相对偏移，而非硬编码绝对值
 		hud_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		hud_bg.offset_left = 4.0
 		hud_bg.offset_top = 4.0
-		hud_bg.offset_right = 432.0
-		hud_bg.offset_bottom = 124.0
+		hud_bg.offset_right = 432.0  # TODO: 改为响应式宽度
+		hud_bg.offset_bottom = 124.0  # TODO: 改为响应式高度
 		var hsb := StyleBoxFlat.new()
 		hsb.bg_color = Color(0.04, 0.05, 0.075, 0.58)
 		hsb.set_border_width_all(1)
@@ -444,11 +448,12 @@ func _apply_ui_label_style(lb: Label, font_size: int, shadow: Color) -> void:
 		q_bg.visible = false
 		q_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		q_bg.z_index = 51
-		q_bg.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		q_bg.offset_left = 924.0
+		# 使用右上角锚点，右侧面板
+		q_bg.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		q_bg.offset_left = -352.0  # 从右边缘向左偏移
 		q_bg.offset_top = 44.0
-		q_bg.offset_right = 1276.0
-		q_bg.offset_bottom = 632.0
+		q_bg.offset_right = -4.0
+		q_bg.offset_bottom = 632.0  # TODO: 改为响应式高度
 		var qsb := StyleBoxFlat.new()
 		qsb.bg_color = Color(0.04, 0.06, 0.08, 0.56)
 		qsb.set_border_width_all(1)
@@ -532,25 +537,36 @@ func _apply_ui_label_style(lb: Label, font_size: int, shadow: Color) -> void:
 
 
 func _sync_hud_backdrop_layout() -> void:
+	# 响应式布局同步 - 根据屏幕尺寸调整 UI 元素
 	if not ui_layer:
 		return
+	
+	var viewport_size = get_viewport().get_visible_rect().size
+	var hud_width_ratio = 0.34  # HUD 占据屏幕宽度的 34%
+	var quest_panel_width = 352.0  # 任务面板固定宽度
+	
+	# HUD 背景 - 左上角
 	var h: Panel = ui_layer.get_node_or_null("HUDBackdrop") as Panel
 	if h:
 		h.offset_left = 4.0
 		h.offset_top = 4.0
-		h.offset_right = 432.0
-		h.offset_bottom = 124.0
+		h.offset_right = (viewport_size.x * hud_width_ratio) - 4.0
+		h.offset_bottom = 124.0  # TODO: 基于内容动态计算
+	
+	# 任务日志背景 - 右上角（使用锚点自动适配）
 	var qb: Panel = ui_layer.get_node_or_null("QuestLogBackdrop") as Panel
 	if qb:
-		qb.offset_left = 924.0
+		qb.offset_left = -(quest_panel_width + 4.0)
 		qb.offset_top = 44.0
-		qb.offset_right = 1276.0
-		qb.offset_bottom = 632.0
+		qb.offset_right = -4.0
+		qb.offset_bottom = 632.0  # TODO: 改为响应式高度
+	
+	# 活动区域背景 - 左下角
 	var ab: Panel = ui_layer.get_node_or_null("ActivityZoneBackdrop") as Panel
 	if ab:
 		ab.offset_left = 8.0
 		ab.offset_top = 128.0
-		ab.offset_right = 416.0
+		ab.offset_right = (viewport_size.x * hud_width_ratio) - 16.0
 		ab.offset_bottom = 158.0
 
 
@@ -2725,6 +2741,16 @@ func _on_quick_tip_timeout() -> void:
 	var qtb: Panel = ui_layer.get_node_or_null("QuickTipBackdrop") as Panel if ui_layer else null
 	if qtb:
 		qtb.visible = false
+
+
+# ============================================
+# 响应式 UI 布局
+# ============================================
+
+func _on_viewport_size_changed() -> void:
+	"""视口大小变化时重新调整 UI 布局"""
+	_sync_hud_backdrop_layout()
+	print("[Main] Viewport resized, UI layout updated")
 
 func _play_fx_fish() -> void:
 	if fx_fish:
