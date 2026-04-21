@@ -1,4 +1,19 @@
 extends Node
+## QuestSystem - Global quest management singleton.
+## Handles quest tracking, progression, completion, and rewards.
+## Supports both static quests and AI-generated dynamic quests.
+##
+## Usage Example:
+## ```gdscript
+## # Get active quests
+## var quests = QuestSystem.get_active_quests()
+##
+## # Complete a quest
+## QuestSystem.complete_quest("quest_id")
+##
+## # Connect signals
+## QuestSystem.quest_completed.connect(_on_quest_completed)
+## ```
 
 enum QuestStatus {
 	NOT_STARTED,
