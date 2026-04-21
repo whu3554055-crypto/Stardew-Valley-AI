@@ -108,7 +108,7 @@ func _process(delta):
 	check_environmental_triggers()
 
 func build_ai_config():
-	"""构建 AI 配置"""
+	# 构建 AI 配置
 	var sched: Dictionary = daily_schedule.duplicate(true)
 	if sched.is_empty() and NpcSimpleScheduleCatalog:
 		sched = NpcSimpleScheduleCatalog.to_advanced_ai_schedule(npc_id)
@@ -134,7 +134,7 @@ func build_ai_config():
 	}
 
 func update_timers(delta: float):
-	"""更新定时器"""
+	# 更新定时器
 	wander_timer -= delta
 	state_check_timer -= delta
 	
@@ -147,7 +147,7 @@ func update_timers(delta: float):
 		check_state_changes()
 
 func decide_next_action():
-	"""决定下一步行动"""
+	# 决定下一步行动
 	# 如果有日程安排，优先执行
 	if not daily_schedule.is_empty() and AdvancedAIAgentManager:
 		var current_time = GameManager.current_time if GameManager else 10.0
@@ -162,7 +162,7 @@ func decide_next_action():
 		start_wandering()
 
 func start_wandering():
-	"""开始游荡"""
+	# 开始游荡
 	var wander_dir = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
 	var target_pos = global_position + wander_dir * 100.0
 	
@@ -175,7 +175,7 @@ func start_wandering():
 	set_action("wandering")
 
 func update_movement():
-	"""更新移动"""
+	# 更新移动
 	if not current_state.is_moving or current_state.in_conversation:
 		velocity = Vector2.ZERO
 		return
@@ -201,7 +201,7 @@ func update_movement():
 		sprite.flip_h = true
 
 func set_action(new_action: String):
-	"""设置当前动作"""
+	# 设置当前动作
 	if current_state.action != new_action:
 		var old_action = current_state.action
 		current_state.action = new_action
@@ -213,7 +213,7 @@ func set_action(new_action: String):
 		play_action_animation(new_action)
 
 func play_action_animation(action: String):
-	"""播放动作动画"""
+	# 播放动作动画
 	# 这里可以扩展为实际的动画播放
 	match action:
 		"wandering":
@@ -229,14 +229,14 @@ func play_action_animation(action: String):
 			pass  # 播放休息动画
 
 func play_initialization_sound():
-	"""播放初始化音效"""
+	# 播放初始化音效
 	if NPCAudioManager and EnhancedPersonalitySystem:
 		var audio_profile = EnhancedPersonalitySystem.get_npc_audio_profile(npc_id)
 		if audio_profile.has("greeting"):
 			NPCAudioManager.play_emotion_sound(npc_id, current_state.emotion)
 
 func play_activity_sound(activity: String):
-	"""播放活动音效"""
+	# 播放活动音效
 	if NPCAudioManager and EnhancedPersonalitySystem:
 		var activity_sounds = EnhancedPersonalitySystem.get_activity_sounds(npc_id, activity)
 		if not activity_sounds.is_empty():
@@ -244,14 +244,14 @@ func play_activity_sound(activity: String):
 			NPCAudioManager.play_activity_sound(npc_id, sound_path, 0.7)
 
 func update_visual_indicators():
-	"""更新视觉指示器"""
+	# 更新视觉指示器
 	# 显示情绪
 	if emotion_indicator and NPCEmotionSystem:
 		var emotion_desc = NPCEmotionSystem.get_emotion_description(npc_id)
 		# 可以显示情绪图标或颜色
 
 func check_environmental_triggers():
-	"""检查环境触发器"""
+	# 检查环境触发器
 	# 天气变化
 	if WeatherSystem and randf() < 0.01:
 		var weather = WeatherSystem.get_weather_name().to_lower()
@@ -263,7 +263,7 @@ func check_environmental_triggers():
 		play_ambient_sound()
 
 func play_ambient_sound():
-	"""播放环境音效"""
+	# 播放环境音效
 	var location = get_current_location_name()
 	var ambient_sounds = EnhancedPersonalitySystem.get_ambient_sounds(npc_id, location)
 	if not ambient_sounds.is_empty():
@@ -271,7 +271,7 @@ func play_ambient_sound():
 		NPCAudioManager.play_ambient_sound(npc_id, sound_path, 0.4)
 
 func maybe_react_to_weather(weather: String):
-	"""对天气做出反应"""
+	# 对天气做出反应
 	match weather:
 		"rain":
 			if randf() < 0.7:
@@ -285,7 +285,7 @@ func maybe_react_to_weather(weather: String):
 					NPCAudioManager.play_emotion_sound(npc_id, "neutral")
 
 func get_weather_comment(weather: String) -> String:
-	"""获取天气评论"""
+	# 获取天气评论
 	match weather:
 		"rain":
 			var comments = [
@@ -297,7 +297,7 @@ func get_weather_comment(weather: String) -> String:
 	return ""
 
 func check_state_changes():
-	"""检查状态变化"""
+	# 检查状态变化
 	# 能量恢复
 	if current_state.action == "resting":
 		current_state.energy = min(1.0, current_state.energy + 0.05)
@@ -313,7 +313,7 @@ func check_state_changes():
 # ============================================
 
 func interact(player_message: String = "") -> String:
-	"""与玩家互动"""
+	# 与玩家互动
 	current_state.in_conversation = true
 	
 	if use_ai_dialogue and AdvancedAIAgentManager:
@@ -322,7 +322,7 @@ func interact(player_message: String = "") -> String:
 		return get_fallback_dialogue()
 
 func generate_ai_response(player_message: String) -> String:
-	"""生成 AI 响应"""
+	# 生成 AI 响应
 	var context = build_interaction_context(player_message)
 	
 	var callback = func(agent_id, response):
@@ -346,7 +346,7 @@ func generate_ai_response(player_message: String) -> String:
 	return "..."  # 等待异步响应
 
 func build_interaction_context(player_message: String) -> Dictionary:
-	"""构建交互上下文"""
+	# 构建交互上下文
 	var nearby_npcs = get_nearby_npcs()
 	
 	return {
@@ -365,7 +365,7 @@ func build_interaction_context(player_message: String) -> Dictionary:
 	}
 
 func extract_keywords(message: String) -> Array:
-	"""提取关键词"""
+	# 提取关键词
 	var keywords = []
 	var important_words = ["crop", "farm", "weather", "festival", "gift", "friend", "work"]
 	
@@ -376,7 +376,7 @@ func extract_keywords(message: String) -> Array:
 	return keywords
 
 func get_fallback_dialogue() -> String:
-	"""备用对话"""
+	# 备用对话
 	var fallbacks = [
 		"Hello there!",
 		"Nice day, isn't it?",
@@ -386,7 +386,7 @@ func get_fallback_dialogue() -> String:
 	return fallbacks[randi() % fallbacks.size()]
 
 func _on_ai_response(agent_id: String, response: Dictionary):
-	"""处理 AI 响应"""
+	# 处理 AI 响应
 	if agent_id != npc_id:
 		return
 	
@@ -399,7 +399,7 @@ func _on_ai_response(agent_id: String, response: Dictionary):
 		current_state.emotion = response.emotion.to_lower()
 
 func execute_action(action_text: String):
-	"""执行动作"""
+	# 执行动作
 	action_text = action_text.to_lower()
 	
 	if "walk" in action_text or "move" in action_text:
@@ -414,7 +414,7 @@ func execute_action(action_text: String):
 		set_action("resting")
 
 func parse_and_set_emotion(emotion_text: String):
-	"""解析并设置情绪"""
+	# 解析并设置情绪
 	emotion_text = emotion_text.to_lower()
 	
 	if "happy" in emotion_text or "cheerful" in emotion_text:
@@ -433,7 +433,7 @@ func parse_and_set_emotion(emotion_text: String):
 # ============================================
 
 func start_conversation_with(other_npc: AdvancedNPC, topic: String = ""):
-	"""主动与其他 NPC 对话"""
+	# 主动与其他 NPC 对话
 	if current_state.in_conversation:
 		return
 	
@@ -460,7 +460,7 @@ func start_conversation_with(other_npc: AdvancedNPC, topic: String = ""):
 		AdvancedAIAgentManager.generate_dialogue_async(npc_id, context, callback, 5)
 
 func get_relationship_with(other_npc_id: String) -> Dictionary:
-	"""获取与另一个 NPC 的关系"""
+	# 获取与另一个 NPC 的关系
 	if AdvancedAIAgentManager:
 		return AdvancedAIAgentManager.get_relationship_between(npc_id, other_npc_id)
 	return {"type": "acquaintance", "strength": 0.5}
@@ -470,7 +470,7 @@ func get_relationship_with(other_npc_id: String) -> Dictionary:
 # ============================================
 
 func get_nearby_npcs(radius: float = 200.0) -> Array:
-	"""获取附近的 NPC"""
+	# 获取附近的 NPC
 	var nearby = []
 	
 	# 需要从场景中查找
@@ -483,7 +483,7 @@ func get_nearby_npcs(radius: float = 200.0) -> Array:
 	return nearby
 
 func get_current_location_name() -> String:
-	"""获取当前位置名称"""
+	# 获取当前位置名称
 	var pos = global_position
 	
 	if pos.x < 300:
@@ -496,20 +496,20 @@ func get_current_location_name() -> String:
 		return "town"
 
 func _on_move_request(requested_npc_id: String, target: Vector2):
-	"""处理移动请求"""
+	# 处理移动请求
 	if requested_npc_id == npc_id:
 		current_state.target_position = target
 		current_state.is_moving = true
 
 func _on_spontaneous_interaction(npc1_id: String, npc2_id: String, type: String):
-	"""处理自发互动"""
+	# 处理自发互动
 	if npc1_id == npc_id or npc2_id == npc_id:
 		# 参与互动
 		var other_id = npc2_id if npc1_id == npc_id else npc1_id
 		participate_in_interaction(other_id, type)
 
 func participate_in_interaction(other_npc_id: String, interaction_type: String):
-	"""参与互动"""
+	# 参与互动
 	current_state.in_conversation = true
 	current_state.conversation_partners.append(other_npc_id)
 	
@@ -523,7 +523,7 @@ func _on_interaction_area_mouse_exited():
 		name_label.visible = false
 
 func _exit_tree():
-	"""清理"""
+	# 清理
 	if AdvancedAIAgentManager:
 		AdvancedAIAgentManager.unregister_agent(npc_id)
 	
@@ -535,7 +535,7 @@ func _exit_tree():
 # ============================================
 
 func update_catchphrases(delta: float):
-	"""更新口头禅显示"""
+	# 更新口头禅显示
 	if not NPCPersonalitySystem and not EnhancedPersonalitySystem:
 		return
 	
@@ -555,7 +555,7 @@ func update_catchphrases(delta: float):
 			play_greeting_sound(situation)
 
 func update_habitual_actions(delta: float):
-	"""更新习惯动作"""
+	# 更新习惯动作
 	if not NPCPersonalitySystem:
 		return
 	
@@ -572,7 +572,7 @@ func update_habitual_actions(delta: float):
 			execute_habit_action(habit_action)
 
 func show_catchphrase_bubble(text: String):
-	"""显示口头禅气泡"""
+	# 显示口头禅气泡
 	# 如果有 catchphrase_label，显示文本
 	if has_node("CatchphraseLabel"):
 		catchphrase_label.text = text
@@ -583,7 +583,7 @@ func show_catchphrase_bubble(text: String):
 		catchphrase_label.visible = false
 
 func execute_habit_action(action: String):
-	"""执行习惯动作"""
+	# 执行习惯动作
 	# 这里可以触发动画或特效
 	print("[NPC:%s] Habit: %s" % [npc_name, action])
 	
@@ -603,7 +603,7 @@ func execute_habit_action(action: String):
 		sprite.rotation += PI
 
 func play_greeting_sound(situation: String):
-	"""播放问候音效"""
+	# 播放问候音效
 	if NPCAudioManager and EnhancedPersonalitySystem:
 		var greeting_sounds = EnhancedPersonalitySystem.get_greeting_sounds(npc_id, situation)
 		if not greeting_sounds.is_empty():
@@ -611,12 +611,12 @@ func play_greeting_sound(situation: String):
 			NPCAudioManager.play_greeting_sound(npc_id, sound_path, 0.8)
 
 func play_emotion_sound(emotion: String):
-	"""播放情绪音效"""
+	# 播放情绪音效
 	if NPCAudioManager:
 		NPCAudioManager.play_emotion_sound(npc_id, emotion)
 
 func detect_situation() -> String:
-	"""检测当前情境"""
+	# 检测当前情境
 	if current_state.energy < 0.3:
 		return "tired"
 	
@@ -634,7 +634,7 @@ func detect_situation() -> String:
 	return "greeting"
 
 func get_current_mood_category() -> String:
-	"""获取当前情绪分类"""
+	# 获取当前情绪分类
 	match current_state.emotion:
 		"happy", "excited", "cheerful":
 			return "happy"
@@ -648,7 +648,7 @@ func get_current_mood_category() -> String:
 			return "idle"
 
 func react_to_gift(gift_id: String) -> Dictionary:
-	"""对礼物做出反应"""
+	# 对礼物做出反应
 	if not NPCPersonalitySystem and not EnhancedPersonalitySystem:
 		return {"level": "neutral", "points": 20}
 	
@@ -680,7 +680,7 @@ func react_to_gift(gift_id: String) -> Dictionary:
 	return reaction
 
 func trigger_emotion_reaction(reaction_type: String):
-	"""触发情绪反应"""
+	# 触发情绪反应
 	var special_reaction = ""
 	if EnhancedPersonalitySystem:
 		special_reaction = EnhancedPersonalitySystem.get_special_reaction(npc_id, reaction_type)

@@ -26,8 +26,8 @@ func _ready():
     monitor_timer.start()
 
 func create_debug_overlay():
-    """Create on-screen debug display"""
-    var canvas = CanvasLayer.new()
+	# Create on-screen debug display
+	var canvas = CanvasLayer.new()
     add_child(canvas)
 
     debug_label = Label.new()
@@ -51,8 +51,8 @@ func toggle_debug_overlay():
     debug_label.visible = show_debug_overlay
 
 func take_performance_sample():
-    """Record current performance metrics"""
-    var current_fps = Engine.get_frames_per_second()
+	# Record current performance metrics
+	var current_fps = Engine.get_frames_per_second()
     var current_memory = OS.get_static_memory_usage() / 1_000_000.0  # Convert to MB
 
     fps_history.append(current_fps)
@@ -71,8 +71,8 @@ func take_performance_sample():
         update_debug_overlay()
 
 func update_debug_overlay():
-    """Update on-screen debug information"""
-    var avg_fps = get_average_fps()
+	# Update on-screen debug information
+	var avg_fps = get_average_fps()
     var current_memory = get_memory_usage_mb()
     var peak_memory = get_peak_memory_mb()
 
@@ -92,8 +92,8 @@ func update_debug_overlay():
     debug_label.text = info_text
 
 func check_performance_warnings(fps: float, memory_mb: float):
-    """Log warnings when performance drops below thresholds"""
-    if fps < CRITICAL_FPS:
+	# Log warnings when performance drops below thresholds
+	if fps < CRITICAL_FPS:
         push_error("CRITICAL: FPS dropped to %.1f (threshold: %d)" % [fps, CRITICAL_FPS])
     elif fps < WARN_FPS:
         push_warning("WARNING: FPS low at %.1f (threshold: %d)" % [fps, WARN_FPS])
@@ -104,8 +104,8 @@ func check_performance_warnings(fps: float, memory_mb: float):
         push_warning("WARNING: Memory usage high at %.1f MB" % memory_mb)
 
 func get_status_color(fps: float, memory_mb: float) -> String:
-    """Get color code based on performance status"""
-    if fps < CRITICAL_FPS or memory_mb > CRITICAL_MEMORY_MB:
+	# Get color code based on performance status
+	if fps < CRITICAL_FPS or memory_mb > CRITICAL_MEMORY_MB:
         return "red"
     elif fps < WARN_FPS or memory_mb > WARN_MEMORY_MB:
         return "yellow"
@@ -113,42 +113,42 @@ func get_status_color(fps: float, memory_mb: float) -> String:
         return "lime"
 
 func get_average_fps() -> float:
-    """Calculate average FPS over last minute"""
-    if fps_history.is_empty():
+	# Calculate average FPS over last minute
+	if fps_history.is_empty():
         return 0.0
     return fps_history.reduce(func(a, b): return a + b, 0.0) / fps_history.size()
 
 func get_memory_usage_mb() -> float:
-    """Get current memory usage in MB"""
-    return OS.get_static_memory_usage() / 1_000_000.0
+	# Get current memory usage in MB
+	return OS.get_static_memory_usage() / 1_000_000.0
 
 func get_peak_memory_mb() -> float:
-    """Get peak memory usage from samples"""
-    if memory_samples.is_empty():
+	# Get peak memory usage from samples
+	if memory_samples.is_empty():
         return 0.0
     return memory_samples.max()
 
 func get_active_npc_count() -> int:
-    """Get number of currently active NPCs"""
-    if Engine.has_singleton("NPCBehaviorController"):
+	# Get number of currently active NPCs
+	if Engine.has_singleton("NPCBehaviorController"):
         return NPCBehaviorController.active_npcs.size()
     return 0
 
 func get_cache_size() -> int:
-    """Get AI response cache size"""
-    if Engine.has_singleton("AIAgentManager"):
+	# Get AI response cache size
+	if Engine.has_singleton("AIAgentManager"):
         return AIAgentManager.response_cache.size()
     return 0
 
 func get_rendered_chunks() -> int:
-    """Get number of currently rendered tilemap chunks"""
-    if Engine.has_singleton("GameTilemap") and GameTilemap.has_method("get_visible_chunk_count"):
+	# Get number of currently rendered tilemap chunks
+	if Engine.has_singleton("GameTilemap") and GameTilemap.has_method("get_visible_chunk_count"):
         return GameTilemap.get_visible_chunk_count()
     return 0
 
 func generate_performance_report() -> Dictionary:
-    """Generate comprehensive performance report for debugging"""
-    return {
+	# Generate comprehensive performance report for debugging
+	return {
         "fps": {
             "current": Engine.get_frames_per_second(),
             "average": get_average_fps(),
@@ -176,8 +176,8 @@ func generate_performance_report() -> Dictionary:
     }
 
 func print_performance_report():
-    """Print formatted performance report to console"""
-    var report = generate_performance_report()
+	# Print formatted performance report to console
+	var report = generate_performance_report()
 
     print("\n" + "=".repeat(50))
     print("PERFORMANCE REPORT")
@@ -191,8 +191,8 @@ func print_performance_report():
     print("=".repeat(50) + "\n")
 
 func export_performance_report(filepath: String = "user://performance_report.json"):
-    """Export performance report to JSON file"""
-    var report = generate_performance_report()
+	# Export performance report to JSON file
+	var report = generate_performance_report()
     var json_string = JSON.stringify(report, "  ")
 
     var file = FileAccess.open(filepath, FileAccess.WRITE)
@@ -205,8 +205,8 @@ func export_performance_report(filepath: String = "user://performance_report.jso
 
 # Utility: Benchmark specific operations
 func benchmark_operation(operation_name: String, callable: Callable) -> float:
-    """Measure execution time of an operation"""
-    var start_time = Time.get_ticks_msec()
+	# Measure execution time of an operation
+	var start_time = Time.get_ticks_msec()
 
     callable.call()
 
@@ -217,8 +217,8 @@ func benchmark_operation(operation_name: String, callable: Callable) -> float:
 
 # Utility: Monitor specific metric over time
 func monitor_metric(metric_name: String, duration_seconds: float = 10.0, sample_interval: float = 0.1):
-    """Monitor a metric over time and print statistics"""
-    var samples = []
+	# Monitor a metric over time and print statistics
+	var samples = []
     var elapsed = 0.0
 
     print("[MONITOR] Tracking %s for %.1f seconds..." % [metric_name, duration_seconds])
