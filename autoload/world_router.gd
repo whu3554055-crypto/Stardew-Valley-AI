@@ -1,31 +1,42 @@
 extends Node
-
-## Scene transitions + spawn_id alignment for multi-world workflow.
+## WorldRouter - Scene transition and spawn point management.
+## Handles multi-world workflow with spawn_id alignment.
 ## See `scenes/world/ARCHITECTURE.md`.
 
-const MAIN_SCENE := "res://scenes/main.tscn"
-const WORLD_FARM_SCENE := "res://scenes/world/world_farm.tscn"
-const WORLD_TOWN_SCENE := "res://scenes/world/world_town.tscn"
-const WORLD_FOREST_SCENE := "res://scenes/world/world_forest.tscn"
-const WORLD_BEACH_SCENE := "res://scenes/world/world_beach.tscn"
-const WORLD_MINE_SCENE := "res://scenes/world/world_mine.tscn"
-const WORLD_CAVE_SCENE := "res://scenes/world/world_cave.tscn"
-const PLAYGROUND_SCENE := "res://scenes/world/world_playground.tscn"
-const FARM_STUB_SCENE := "res://scenes/world/world_farm_stub.tscn"
-const TOWN_STUB_SCENE := "res://scenes/world/world_town_stub.tscn"
-const FOREST_STUB_SCENE := "res://scenes/world/world_forest_stub.tscn"
-const BEACH_STUB_SCENE := "res://scenes/world/world_beach_stub.tscn"
-const MINE_STUB_SCENE := "res://scenes/world/world_mine_stub.tscn"
+# === 常量 ===
 
+const MAIN_SCENE: String = "res://scenes/main.tscn"
+const WORLD_FARM_SCENE: String = "res://scenes/world/world_farm.tscn"
+const WORLD_TOWN_SCENE: String = "res://scenes/world/world_town.tscn"
+const WORLD_FOREST_SCENE: String = "res://scenes/world/world_forest.tscn"
+const WORLD_BEACH_SCENE: String = "res://scenes/world/world_beach.tscn"
+const WORLD_MINE_SCENE: String = "res://scenes/world/world_mine.tscn"
+const WORLD_CAVE_SCENE: String = "res://scenes/world/world_cave.tscn"
+const PLAYGROUND_SCENE: String = "res://scenes/world/world_playground.tscn"
+const FARM_STUB_SCENE: String = "res://scenes/world/world_farm_stub.tscn"
+const TOWN_STUB_SCENE: String = "res://scenes/world/world_town_stub.tscn"
+const FOREST_STUB_SCENE: String = "res://scenes/world/world_forest_stub.tscn"
+const BEACH_STUB_SCENE: String = "res://scenes/world/world_beach_stub.tscn"
+const MINE_STUB_SCENE: String = "res://scenes/world/world_mine_stub.tscn"
+
+# === 成员变量 ===
+
+## Pending spawn ID to apply after scene load
 var pending_spawn_id: String = ""
 
 var _bundle_world_path: String = ""
 var _bundle_spawn_id: String = ""
 var _saved_world_consumed_at_boot: bool = false
 
+# === 信号 ===
+
+## Emitted when world scene changes
 signal world_changed(scene_path: String)
 
 
+# === 公共方法 ===
+
+## Set world state from save bundle
 func set_world_state_from_bundle(world: Variant) -> void:
 	_bundle_world_path = ""
 	_bundle_spawn_id = "default"
@@ -36,6 +47,7 @@ func set_world_state_from_bundle(world: Variant) -> void:
 	_bundle_spawn_id = str(d.get("spawn_id", "default")).strip_edges()
 
 
+## Build world save dictionary for persistence
 func build_world_save_dict() -> Dictionary:
 	var scene_path: String = MAIN_SCENE
 	if get_tree() and get_tree().current_scene:
@@ -48,6 +60,7 @@ func build_world_save_dict() -> Dictionary:
 	return {"path": scene_path, "spawn_id": sid}
 
 
+## Consume saved world state after boot (called once)
 func consume_saved_world_after_boot() -> void:
 	if _saved_world_consumed_at_boot:
 		return
@@ -82,6 +95,7 @@ func consume_saved_world_after_boot() -> void:
 	world_changed.emit(target)
 
 
+## Change to a different world scene
 func change_world(scene_path: String, spawn_id: String = "default") -> void:
 	print("[WorldRouter] change_world called: scene=", scene_path, ", spawn=", spawn_id)
 	_autosave_before_leave_if_needed()
@@ -129,10 +143,14 @@ func change_world(scene_path: String, spawn_id: String = "default") -> void:
 	world_changed.emit(resolved_scene)
 
 
+## Apply pending spawn to player (public wrapper)
 func apply_pending_spawn_to_player() -> void:
 	_apply_spawn_to_player()
 
 
+# === 私有方法 ===
+
+## Apply spawn position to player node
 func _apply_spawn_to_player() -> void:
 	if pending_spawn_id.is_empty():
 		return
@@ -146,11 +164,13 @@ func _apply_spawn_to_player() -> void:
 		GameManager.player_data["last_spawn_id"] = pending_spawn_id
 
 
+## Apply pending spawn and clear the pending state
 func apply_pending_spawn_and_clear() -> void:
 	_apply_spawn_to_player()
 	pending_spawn_id = ""
 
 
+## Autosave current world state before leaving
 func _autosave_before_leave_if_needed() -> void:
 	var cur: Node = get_tree().current_scene
 	if cur == null:
@@ -170,6 +190,7 @@ func _autosave_before_leave_if_needed() -> void:
 		)
 
 
+## Find spawn point node by ID
 func find_spawn_point(spawn_id: String) -> Node2D:
 	if spawn_id.is_empty():
 		return null
