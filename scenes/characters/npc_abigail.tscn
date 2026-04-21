@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://npc_abigail"]
+[gd_scene load_steps=3 format=3 uid="uid://npc_abigail"]
 
 [ext_resource type="Script" path="res://scripts/npc.gd" id="1_npc"]
+[ext_resource type="Script" path="res://scripts/npc_visibility_controller.gd" id="2_vis"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_npc"]
 size = Vector2(32, 32)
@@ -40,3 +41,6 @@ visible = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
 shape = SubResource("RectangleShape2D_npc")
+
+[node name="VisibilityController" type="Node2D" parent="."]
+script = ExtResource("2_vis")
