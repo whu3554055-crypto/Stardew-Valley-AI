@@ -1,19 +1,41 @@
 extends Node
+## InventoryManager - Global inventory management singleton.
+## Handles item storage, stacking, durability, and serialization.
 
-# Inventory system
-const INVENTORY_SIZE = 36
+# === 常量 ===
 
-var inventory = []
-var selected_slot = 0
+## Maximum number of inventory slots
+const INVENTORY_SIZE: int = 36
 
-signal inventory_updated
-signal selected_slot_changed(slot)
+# === 成员变量 ===
 
-func _ready():
+## Array of item dictionaries or null (36 slots)
+var inventory: Array[Variant] = []
+
+## Currently selected slot index (0-35)
+var selected_slot: int = 0
+
+# === 信号 ===
+
+## Emitted when inventory contents change
+signal inventory_updated()
+
+## Emitted when selected slot changes
+signal selected_slot_changed(slot: int)
+
+# === 生命周期方法 ===
+
+func _ready() -> void:
 	# Initialize empty inventory
 	for i in range(INVENTORY_SIZE):
 		inventory.append(null)
 
+# === 公共方法 ===
+
+## Add item to inventory. Returns false if inventory is full.
+# === 公共方法 ===
+
+## Add item to inventory. Returns false if inventory is full.
 func add_item(item_data: Dictionary) -> bool:
 	# Try to stack with existing items first
 	for i in range(INVENTORY_SIZE):
@@ -57,6 +79,8 @@ func can_add_quantity(template: Dictionary, qty: int) -> bool:
 				return true
 	return remaining <= 0
 
+## Remove items from a specific slot
+## Remove items from a specific slot
 func remove_item(slot: int, amount: int = 1) -> bool:
 	if slot >= 0 and slot < INVENTORY_SIZE and inventory[slot] != null:
 		inventory[slot].stack -= amount
@@ -66,30 +90,37 @@ func remove_item(slot: int, amount: int = 1) -> bool:
 		return true
 	return false
 
+## Get item at specified slot
+## Get item at specified slot
 func get_item(slot: int) -> Variant:
 	if slot >= 0 and slot < INVENTORY_SIZE:
 		return inventory[slot]
 	return null
 
-func set_selected_slot(slot: int):
+## Set the currently selected slot
+func set_selected_slot(slot: int) -> void:
 	if slot >= 0 and slot < INVENTORY_SIZE:
 		selected_slot = slot
 		selected_slot_changed.emit(slot)
 
+## Get the currently selected item
+## Get the currently selected item
 func get_selected_item() -> Variant:
 	return get_item(selected_slot)
 
+## Count total quantity of a specific item across all slots
 func count_item(item_id: String) -> int:
-	var n := 0
+	var n: int = 0
 	for i in range(INVENTORY_SIZE):
 		if inventory[i] != null and inventory[i].id == item_id:
 			n += inventory[i].stack
 	return n
 
+## Damage a tool in specified slot. Returns false if slot invalid.
 func damage_tool_slot(slot: int, amount: int = 1) -> bool:
 	if slot < 0 or slot >= INVENTORY_SIZE:
 		return false
-	var item = inventory[slot]
+	var item: Variant = inventory[slot]
 	if item == null or not item.has("max_durability"):
 		return true
 	if not item.has("durability"):
@@ -100,6 +131,8 @@ func damage_tool_slot(slot: int, amount: int = 1) -> bool:
 	inventory_updated.emit()
 	return true
 
+## Consume items by ID across all slots
+## Consume items by ID across all slots
 func consume_item_by_id(item_id: String, amount: int = 1) -> bool:
 	if count_item(item_id) < amount:
 		return false
@@ -117,14 +150,16 @@ func consume_item_by_id(item_id: String, amount: int = 1) -> bool:
 	inventory_updated.emit()
 	return true
 
-func clear_inventory():
+## Clear all items from inventory
+func clear_inventory() -> void:
 	for i in range(INVENTORY_SIZE):
 		inventory[i] = null
 	inventory_updated.emit()
 
 
+## Save inventory state for persistence
 func save_snapshot() -> Dictionary:
-	var slots: Array = []
+	var slots: Array[Variant] = []
 	for i in range(INVENTORY_SIZE):
 		if inventory[i] == null:
 			slots.append(null)
@@ -136,6 +171,8 @@ func save_snapshot() -> Dictionary:
 	}
 
 
+## Load inventory state from saved data
+## Load inventory state from saved data
 func load_snapshot(data: Variant) -> void:
 	if data is Dictionary:
 		var d: Dictionary = data
