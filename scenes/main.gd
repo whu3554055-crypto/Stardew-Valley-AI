@@ -205,13 +205,14 @@ func _finish_boot_after_profile() -> void:
 
 
 func _print_boot_banner() -> void:
-	print("======================================")
-	print("  Stardew Valley Clone - AI Edition")
-	print("======================================")
-	print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
-	print("NPCs with AI: Pierre, Abigail, Lewis")
-	print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | V barn | L events/quests | O journal | F10 audio")
-	print("======================================")
+	if OS.is_debug_build():
+		print("======================================")
+		print("  Stardew Valley Clone - AI Edition")
+		print("======================================")
+		print("AI Model: ", AIAgentManager.api_config.model if AIAgentManager else "Not loaded")
+		print("NPCs with AI: Pierre, Abigail, Lewis")
+		print("Press E: NPCs | harvest | kitchen/smelter/workbench | fish | mine | chop | eat | V barn | L events/quests | O journal | F10 audio")
+		print("======================================")
 
 
 func _exit_tree() -> void:
@@ -2750,7 +2751,8 @@ func _on_quick_tip_timeout() -> void:
 func _on_viewport_size_changed() -> void:
 	"""视口大小变化时重新调整 UI 布局"""
 	_sync_hud_backdrop_layout()
-	print("[Main] Viewport resized, UI layout updated")
+	if OS.is_debug_build():
+		print("[Main] Viewport resized, UI layout updated")
 
 func _play_fx_fish() -> void:
 	if fx_fish:
