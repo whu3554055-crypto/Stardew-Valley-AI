@@ -78,6 +78,12 @@ func _connect_signals() -> void:
 	"""Connect to module signals"""
 	if performance_monitor:
 		performance_monitor.breaker_state_changed.connect(_on_breaker_state_changed)
+	
+	if fallback_generator:
+		fallback_generator.generation_degraded.connect(_on_generation_degraded)
+	
+	if chain_validator:
+		chain_validator.guardrail_triggered.connect(_on_guardrail_triggered)
 
 # === 公共方法 ===
 
@@ -330,6 +336,21 @@ func _on_breaker_state_changed(old_state: String, new_state: String) -> void:
 	
 	if new_state == "open":
 		_last_block_reason = ""
+
+func _on_generation_degraded(reason: String) -> void:
+	"""Relay generation degradation signal"""
+	emit_signal("generation_degraded", reason)
+	
+	if OS.is_debug_build():
+		print("[AgenticContentOrchestrator] Generation degraded: %s" % reason)
+
+func _on_guardrail_triggered(chain_id: String, rule: String) -> void:
+	"""Handle guardrail trigger and emit compatibility signal"""
+	var snapshot = get_status()
+	emit_signal("guardrail_blocked", rule, snapshot)
+	
+	if OS.is_debug_build():
+		print("[AgenticContentOrchestrator] Guardrail triggered: %s for chain %s" % [rule, chain_id])
 
 func _compute_generation_reason(narrative: Dictionary) -> Dictionary:
 	"""Compute why we should generate content"""

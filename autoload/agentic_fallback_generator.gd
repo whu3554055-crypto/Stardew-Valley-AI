@@ -24,6 +24,7 @@ signal ai_generation_started(theme: String, objective: String)
 signal ai_generation_completed(success: bool, chain: Dictionary)
 signal procedural_fallback_used(theme: String)
 signal safe_fallback_used(theme: String)
+signal generation_degraded(reason: String)  # For compatibility with orchestrator
 
 # === 生命周期方法 ===
 
@@ -90,8 +91,20 @@ func _generate_chain_via_ai(theme: String, objective: String) -> Dictionary:
 	#     var ai_manager = get_node("/root/AdvancedAIAgentManager")
 	#     var prompt = _build_ai_prompt(theme, objective)
 	#     var result = await ai_manager.generate_with_timeout(prompt, AI_TIMEOUT)
-	#     return _parse_ai_response(result)
+	#     
+	#     if not result.success:
+	#         emit_signal("generation_degraded", "llm_request_failed:%s" % result.error)
+	#         return {}
+	#     
+	#     var parsed = _parse_ai_response(result.data)
+	#     if parsed.is_empty():
+	#         emit_signal("generation_degraded", "llm_invalid_json")
+	#         return {}
+	#     
+	#     return parsed
 	
+	# Current behavior: AI not implemented, emit degradation and return empty
+	emit_signal("generation_degraded", "ai_not_implemented")
 	return {}
 
 func _build_procedural_chain(theme: String, objective: String) -> Dictionary:
