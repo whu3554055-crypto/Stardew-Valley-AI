@@ -1,21 +1,14 @@
-ï»¿[gd_scene load_steps=17 format=3 uid="uid://worldfarmreal01"]
+[gd_scene format=3 uid="uid://df8dt6p8g1gj6"]
 
-[ext_resource type="Script" path="res://scripts/world/world_farm_root.gd" id="1_root"]
-[ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
-[ext_resource type="Script" path="res://scripts/player.gd" id="3_player"]
-[ext_resource type="Script" path="res://scripts/world/world_spawn_point.gd" id="4_spawn"]
-[ext_resource type="Script" path="res://scripts/farm_manager.gd" id="5_farm"]
-[ext_resource type="Script" path="res://scripts/game_tilemap.gd" id="6_gtmap"]
-[ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="7_tex"]
-[ext_resource type="Script" path="res://scripts/world/foreground_occlusion_area.gd" id="8_occ"]
-[ext_resource type="Script" path="res://scripts/world/farm_tileset_builder.gd" id="9_tilesetbuilder"]
-[ext_resource type="Texture2D" path="res://assets/sprites/buildings/house_precise.png" id="10_house"]
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(32, 32)
-
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_portal"]
-size = Vector2(72, 96)
+[ext_resource type="Script" uid="uid://cn6cuswncuhiw" path="res://scripts/world/world_farm_root.gd" id="1_root"]
+[ext_resource type="Script" uid="uid://bc2k8uwyue7b3" path="res://scripts/world/world_portal_area.gd" id="2_portal"]
+[ext_resource type="Script" uid="uid://c43e4acoxjsu8" path="res://scripts/player.gd" id="3_player"]
+[ext_resource type="Script" uid="uid://bk6q2l2c8o6n1" path="res://scripts/world/world_spawn_point.gd" id="4_spawn"]
+[ext_resource type="Script" uid="uid://d3iidvtr1vngs" path="res://scripts/farm_manager.gd" id="5_farm"]
+[ext_resource type="Texture2D" uid="uid://ba7xw1iw060gi" path="res://assets/sprites/characters/player.png" id="7_tex"]
+[ext_resource type="Script" uid="uid://dh5kmsnvomu77" path="res://scripts/world/foreground_occlusion_area.gd" id="8_occ"]
+[ext_resource type="Script" uid="uid://cnqbgi07c30pm" path="res://scripts/world/farm_tileset_builder.gd" id="9_tilesetbuilder"]
+[ext_resource type="Texture2D" uid="uid://b2hi531n0wbts" path="res://assets/sprites/buildings/house_precise.png" id="10_house"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_farmhouse"]
 size = Vector2(170, 108)
@@ -32,116 +25,118 @@ size = Vector2(170, 76)
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_farmhouse"]
 polygon = PackedVector2Array(-84, -50, 84, -50, 84, 18, -84, 18)
 
-[node name="WorldFarm" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_portal"]
+size = Vector2(72, 96)
+
+[node name="WorldFarm" type="Node2D" unique_id=1379225533]
 y_sort_enabled = true
 script = ExtResource("1_root")
 
-[node name="Ambient" type="CanvasModulate" parent="."]
-color = Color(1.0, 0.92, 0.82, 1.0)
+[node name="Ambient" type="CanvasModulate" parent="." unique_id=921313799]
+color = Color(1, 0.92, 0.82, 1)
 
-[node name="TileMap" type="TileMap" parent="."]
+[node name="TileMap" type="TileMap" parent="." unique_id=2013500800]
 z_index = -3
+format = 2
 
-[node name="FarmTileSetBuilder" type="Node2D" parent="TileMap"]
+[node name="FarmTileSetBuilder" type="Node2D" parent="TileMap" unique_id=1303679524]
 script = ExtResource("9_tilesetbuilder")
 
-[node name="TileMapDeco" type="TileMap" parent="."]
+[node name="TileMapDeco" type="TileMap" parent="." unique_id=1666397532]
 z_index = -2
+format = 2
 
-[node name="TileMapOcclusion" type="TileMap" parent="."]
+[node name="TileMapOcclusion" type="TileMap" parent="." unique_id=771000611]
 z_index = -1
+format = 2
 
-[node name="FarmManager" type="Node2D" parent="."]
+[node name="FarmManager" type="Node2D" parent="." unique_id=2018483644]
 script = ExtResource("5_farm")
 
-[node name="FarmBackdrop" type="Node2D" parent="."]
-y_sort_enabled = true
+[node name="FarmBackdrop" type="Node2D" parent="." unique_id=834055993]
 z_index = -2
+y_sort_enabled = true
 
-[node name="FarmhouseSprite" type="Sprite2D" parent="FarmBackdrop"]
+[node name="FarmhouseSprite" type="Sprite2D" parent="FarmBackdrop" unique_id=147171529]
 position = Vector2(560, 212)
-texture_filter = 0
 texture = ExtResource("10_house")
-scale = Vector2(1.0, 1.0)
 
+[node name="FarmCollisionSemantics" type="Node2D" parent="." unique_id=2023191108]
 
-
-[node name="FarmCollisionSemantics" type="Node2D" parent="."]
-
-[node name="FarmhouseSolid" type="StaticBody2D" parent="FarmCollisionSemantics"]
+[node name="FarmhouseSolid" type="StaticBody2D" parent="FarmCollisionSemantics" unique_id=1323982441]
 position = Vector2(560, 232)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/FarmhouseSolid"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/FarmhouseSolid" unique_id=1425434593]
 shape = SubResource("RectangleShape2D_farmhouse")
 
-[node name="FenceSolid" type="StaticBody2D" parent="FarmCollisionSemantics"]
+[node name="FenceSolid" type="StaticBody2D" parent="FarmCollisionSemantics" unique_id=563575220]
 position = Vector2(360, 428)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/FenceSolid"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/FenceSolid" unique_id=735374547]
 shape = SubResource("RectangleShape2D_fence")
 
-[node name="WorldWallLeft" type="StaticBody2D" parent="FarmCollisionSemantics"]
+[node name="WorldWallLeft" type="StaticBody2D" parent="FarmCollisionSemantics" unique_id=1821387579]
 position = Vector2(14, 360)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/WorldWallLeft"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/WorldWallLeft" unique_id=108048754]
 shape = SubResource("RectangleShape2D_world_wall")
 
-[node name="WorldWallRight" type="StaticBody2D" parent="FarmCollisionSemantics"]
+[node name="WorldWallRight" type="StaticBody2D" parent="FarmCollisionSemantics" unique_id=2030244407]
 position = Vector2(1010, 360)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/WorldWallRight"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/WorldWallRight" unique_id=937074031]
 shape = SubResource("RectangleShape2D_world_wall")
 
-[node name="HouseFrontOcclusion" type="Area2D" parent="FarmCollisionSemantics"]
+[node name="HouseFrontOcclusion" type="Area2D" parent="FarmCollisionSemantics" unique_id=582955161]
 position = Vector2(560, 210)
-monitoring = true
-monitorable = true
 script = ExtResource("8_occ")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/HouseFrontOcclusion"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FarmCollisionSemantics/HouseFrontOcclusion" unique_id=1579467882]
 shape = SubResource("RectangleShape2D_occ_house")
 
-[node name="FarmhouseLightOccluder" type="LightOccluder2D" parent="FarmCollisionSemantics"]
+[node name="FarmhouseLightOccluder" type="LightOccluder2D" parent="FarmCollisionSemantics" unique_id=1309104893]
 position = Vector2(560, 246)
 occluder = SubResource("OccluderPolygon2D_farmhouse")
 
-[node name="FarmhouseDoorLight" type="PointLight2D" parent="FarmCollisionSemantics"]
+[node name="FarmhouseDoorLight" type="PointLight2D" parent="FarmCollisionSemantics" unique_id=897206366]
 position = Vector2(560, 264)
-enabled = true
-texture_scale = 2.6
 color = Color(1, 0.87, 0.62, 1)
 energy = 0.72
 shadow_enabled = true
+texture_scale = 2.6
 
-[node name="Player" type="CharacterBody2D" parent="."]
+[node name="Player" type="CharacterBody2D" parent="." unique_id=1806743770]
 position = Vector2(640, 360)
 script = ExtResource("3_player")
 walk_direction_columns = 3
 
-[node name="GroundShadow" type="Polygon2D" parent="Player"]
+[node name="GroundShadow" type="Polygon2D" parent="Player" unique_id=646617075]
 z_index = -2
 position = Vector2(0, 14)
 color = Color(0.08, 0.06, 0.05, 0.42)
 polygon = PackedVector2Array(-16, -3, 16, -3, 14, 5, 0, 9, -14, 5)
 
-[node name="Sprite2D" type="Sprite2D" parent="Player"]
-z_index = 0
+[node name="Sprite2D" type="Sprite2D" parent="Player" unique_id=1643186152]
 position = Vector2(0, -2)
 scale = Vector2(0.55, 0.55)
 texture = ExtResource("7_tex")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=219224070]
 shape = SubResource("RectangleShape2D_player")
 
-[node name="InteractionArea" type="Area2D" parent="Player"]
+[node name="InteractionArea" type="Area2D" parent="Player" unique_id=2131438809]
 
-[node name="Camera2D" type="Camera2D" parent="Player"]
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=1861626486]
 position_smoothing_enabled = true
 position_smoothing_speed = 10.0
 
-[node name="FarmHud" type="CanvasLayer" parent="."]
+[node name="FarmHud" type="CanvasLayer" parent="." unique_id=1347928369]
 
-[node name="FarmMessage" type="Label" parent="FarmHud"]
+[node name="FarmMessage" type="Label" parent="FarmHud" unique_id=402937445]
+layout_mode = 1
 visible = false
 anchors_preset = 7
 anchor_left = 0.5
@@ -158,69 +153,67 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="SpawnPoints" type="Node2D" parent="."]
+[node name="SpawnPoints" type="Node2D" parent="." unique_id=2008899987]
 
-[node name="Spawn_default" type="Marker2D" parent="SpawnPoints"]
+[node name="Spawn_default" type="Marker2D" parent="SpawnPoints" unique_id=1251782740]
 position = Vector2(640, 360)
 script = ExtResource("4_spawn")
-spawn_id = "default"
 
-[node name="Spawn_from_main" type="Marker2D" parent="SpawnPoints"]
+[node name="Spawn_from_main" type="Marker2D" parent="SpawnPoints" unique_id=812175331]
 position = Vector2(120, 360)
 script = ExtResource("4_spawn")
 spawn_id = "from_main"
 
-[node name="Spawn_from_world_town" type="Marker2D" parent="SpawnPoints"]
+[node name="Spawn_from_world_town" type="Marker2D" parent="SpawnPoints" unique_id=407756969]
 position = Vector2(900, 360)
 script = ExtResource("4_spawn")
 spawn_id = "from_world_town"
 
-[node name="Hint" type="Label" parent="."]
+[node name="Hint" type="Label" parent="." unique_id=1369113862]
+layout_mode = 1
 offset_left = 16.0
 offset_top = 12.0
 offset_right = 720.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Farm éˆ¥?éˆ«?Main è·¯ éˆ«?Town è·¯ Town also has éˆ«?Farm è·¯ Esc: save"
+text = "Farm éˆ?éˆ?Main è·?éˆ?Town è·?Town also has éˆ?Farm è·?Esc: save"
 
-[node name="PortalToMain" type="Area2D" parent="."]
+[node name="PortalToMain" type="Area2D" parent="." unique_id=800416294]
 position = Vector2(56, 360)
 collision_layer = 0
-collision_mask = 1
-monitoring = true
 script = ExtResource("2_portal")
 target_scene = "res://scenes/main.tscn"
 target_spawn_id = "from_world_farm"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMain"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToMain" unique_id=321104449]
 shape = SubResource("RectangleShape2D_portal")
 
-[node name="PortalLabel" type="Label" parent="PortalToMain"]
+[node name="PortalLabel" type="Label" parent="PortalToMain" unique_id=1967045147]
+layout_mode = 1
 offset_left = -80.0
 offset_top = -64.0
 offset_right = 80.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "éˆ«?Main hub"
+text = "éˆ?Main hub"
 horizontal_alignment = 1
 
-[node name="PortalToTown" type="Area2D" parent="."]
+[node name="PortalToTown" type="Area2D" parent="." unique_id=1290720766]
 position = Vector2(968, 360)
 collision_layer = 0
-collision_mask = 1
-monitoring = true
 script = ExtResource("2_portal")
 target_scene = "res://scenes/world/world_town.tscn"
 target_spawn_id = "from_world_farm"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToTown"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PortalToTown" unique_id=1102400230]
 shape = SubResource("RectangleShape2D_portal")
 
-[node name="PortalLabel" type="Label" parent="PortalToTown"]
+[node name="PortalLabel" type="Label" parent="PortalToTown" unique_id=1235743655]
+layout_mode = 1
 offset_left = -100.0
 offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "éˆ«?Town"
+text = "éˆ?Town"
 horizontal_alignment = 1

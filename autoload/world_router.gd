@@ -83,6 +83,7 @@ func consume_saved_world_after_boot() -> void:
 
 
 func change_world(scene_path: String, spawn_id: String = "default") -> void:
+	print("[WorldRouter] change_world called: scene=", scene_path, ", spawn=", spawn_id)
 	_autosave_before_leave_if_needed()
 	var resolved_scene: String = scene_path
 	var resolved_spawn: String = spawn_id
@@ -91,14 +92,40 @@ func change_world(scene_path: String, spawn_id: String = "default") -> void:
 		resolved_scene = WORLD_FARM_SCENE
 		if resolved_spawn == "default":
 			resolved_spawn = "from_main"
+	print("[WorldRouter] Resolved: scene=", resolved_scene, ", spawn=", resolved_spawn)
 	if GameManager and GameManager.player_data:
 		GameManager.player_data["last_spawn_id"] = resolved_spawn
 	pending_spawn_id = resolved_spawn
-	var err: Error = get_tree().change_scene_to_file(resolved_scene)
-	if err != OK:
-		push_error("WorldRouter: change_world failed: %s (err %d)" % [resolved_scene, err])
+	print("[WorldRouter] Calling get_tree().change_scene_to_file(", resolved_scene, ")")
+	
+	# 检查场景文件是否存在
+	if not FileAccess.file_exists(resolved_scene):
+		push_error("WorldRouter: Scene file does not exist: " + resolved_scene)
 		pending_spawn_id = ""
 		return
+	
+	var err: Error = get_tree().change_scene_to_file(resolved_scene)
+	print("[WorldRouter] change_scene_to_file returned error code: ", err)
+	
+	# 提供错误代码的详细解释
+	if err != OK:
+		var error_msg = ""
+		match err:
+			19:
+				error_msg = "ERR_FILE_CORRUPT - 场景文件解析错误，可能是依赖资源有问题"
+				print("[WorldRouter] 建议：尝试在编辑器中打开并重新保存该场景")
+				print("[WorldRouter] 建议：检查场景依赖的所有脚本是否有语法错误")
+			23:
+				error_msg = "ERR_FILE_NOT_FOUND - 场景文件不存在"
+				print("[WorldRouter] 请确认文件路径正确: " + resolved_scene)
+			_:
+				error_msg = "Unknown error code"
+		
+		push_error("WorldRouter: change_world failed: %s (err %d - %s)" % [resolved_scene, err, error_msg])
+		pending_spawn_id = ""
+		return
+	
+	print("[WorldRouter] Scene change initiated successfully, emitting world_changed signal")
 	world_changed.emit(resolved_scene)
 
 
