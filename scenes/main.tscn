@@ -87,12 +87,13 @@ target_spawn_id = "default"
 shape = SubResource("RectangleShape2D_portal_pg")
 
 [node name="PortalHint" type="Label" parent="PortalToPlayground"]
+layout_mode = 1
 offset_left = -100.0
 offset_top = -76.0
 offset_right = 100.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 11
-text = "â†“ Playground (test)"
+text = "â†?Playground (test)"
 horizontal_alignment = 1
 
 [node name="PortalToWorldFarm" type="Area2D" parent="."]
@@ -108,12 +109,13 @@ target_spawn_id = "default"
 shape = SubResource("RectangleShape2D_portal_pg")
 
 [node name="PortalHint" type="Label" parent="PortalToWorldFarm"]
+layout_mode = 1
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†“ Farm"
+text = "â†?Farm"
 horizontal_alignment = 1
 
 [node name="PortalToWorldTown" type="Area2D" parent="."]
@@ -129,12 +131,13 @@ target_spawn_id = "default"
 shape = SubResource("RectangleShape2D_portal_pg")
 
 [node name="PortalHint" type="Label" parent="PortalToWorldTown"]
+layout_mode = 1
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†“ Town"
+text = "â†?Town"
 horizontal_alignment = 1
 
 [node name="PortalToWorldForest" type="Area2D" parent="."]
@@ -150,12 +153,13 @@ target_spawn_id = "default"
 shape = SubResource("RectangleShape2D_portal_pg")
 
 [node name="PortalHint" type="Label" parent="PortalToWorldForest"]
+layout_mode = 1
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†“ Forest"
+text = "â†?Forest"
 horizontal_alignment = 1
 
 [node name="PortalToWorldBeach" type="Area2D" parent="."]
@@ -171,12 +175,13 @@ target_spawn_id = "default"
 shape = SubResource("RectangleShape2D_portal_pg")
 
 [node name="PortalHint" type="Label" parent="PortalToWorldBeach"]
+layout_mode = 1
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†“ Beach"
+text = "â†?Beach"
 horizontal_alignment = 1
 
 [node name="PortalToWorldMine" type="Area2D" parent="."]
@@ -192,12 +197,13 @@ target_spawn_id = "default"
 shape = SubResource("RectangleShape2D_portal_pg")
 
 [node name="PortalHint" type="Label" parent="PortalToWorldMine"]
+layout_mode = 1
 offset_left = -70.0
 offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†“ Mine"
+text = "â†?Mine"
 horizontal_alignment = 1
 
 [node name="Player" type="CharacterBody2D" parent="."]
@@ -314,38 +320,46 @@ custom_minimum_size = Vector2(0, 60)
 theme_override_constants/separation = 12
 
 [node name="TimeLabel" type="Label" parent="UILayer/UISafeArea/TopBar"]
+layout_mode = 1
 layout_mode = 2
 text = "06:00 AM"
 
 [node name="GoldLabel" type="Label" parent="UILayer/UISafeArea/TopBar"]
+layout_mode = 1
 layout_mode = 2
 text = "Gold: 500"
 
 [node name="StaminaLabel" type="Label" parent="UILayer/UISafeArea/TopBar"]
+layout_mode = 1
 layout_mode = 2
 text = "Stamina: 100 / 100"
 
 [node name="DayLabel" type="Label" parent="UILayer/UISafeArea"]
+layout_mode = 1
 layout_mode = 2
 text = "Day 1, Year 1"
 autowrap_mode = 2
 
 [node name="SeasonLabel" type="Label" parent="UILayer/UISafeArea"]
+layout_mode = 1
 visible = false
 layout_mode = 2
 text = "Season: Spring"
 
 [node name="WeatherLabel" type="Label" parent="UILayer/UISafeArea"]
+layout_mode = 1
 visible = false
 layout_mode = 2
 text = "Weather: Sunny"
 
 [node name="CenterArea" type="Control" parent="UILayer/UISafeArea"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="DialogueBox" type="Panel" parent="UILayer/UISafeArea/CenterArea"]
+layout_mode = 1
 visible = false
 layout_mode = 1
 anchors_preset = 7
@@ -360,6 +374,7 @@ offset_bottom = 0.0
 
 [node name="Label" type="Label" parent="UILayer/UISafeArea/CenterArea/DialogueBox"]
 layout_mode = 1
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -371,6 +386,7 @@ text = "Dialogue text here..."
 autowrap_mode = 2
 
 [node name="InventoryUI" type="Panel" parent="UILayer/UISafeArea/CenterArea"]
+layout_mode = 1
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -411,6 +427,7 @@ layout_mode = 2
 columns = 9
 
 [node name="AlmanacPanel" type="Panel" parent="UILayer/UISafeArea/CenterArea"]
+layout_mode = 1
 visible = false
 layout_mode = 1
 anchors_preset = 8
@@ -437,11 +454,13 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 
 [node name="Title" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
+layout_mode = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Gathering â€” Collection (J)"
+text = "Gathering â€?Collection (J)"
 
 [node name="FishLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
+layout_mode = 1
 layout_mode = 2
 text = "Fish"
 
@@ -451,6 +470,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 120)
 
 [node name="MineralLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
+layout_mode = 1
 layout_mode = 2
 text = "Minerals"
 
@@ -460,6 +480,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 120)
 
 [node name="SmeltLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
+layout_mode = 1
 layout_mode = 2
 text = "Smelted bars"
 
@@ -469,6 +490,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 100)
 
 [node name="MealLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
+layout_mode = 1
 layout_mode = 2
 text = "Cooked meals"
 
@@ -478,6 +500,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 100)
 
 [node name="AIConfigButton" type="Button" parent="UILayer/UISafeArea"]
+layout_mode = 1
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -496,6 +519,7 @@ alignment = 1
 theme_override_constants/separation = 12
 
 [node name="ActivityZoneLabel" type="Label" parent="UILayer/UISafeArea/BottomBar"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_alignment = 1
@@ -503,6 +527,7 @@ vertical_alignment = 1
 text = ""
 
 [node name="QuickTipLabel" type="Label" parent="UILayer/UISafeArea/BottomBar"]
+layout_mode = 1
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
@@ -528,6 +553,7 @@ offset_right = 0.0
 offset_bottom = -40.0
 
 [node name="Events" type="Panel" parent="UILayer/UISafeArea/RightJournalTabs"]
+layout_mode = 1
 layout_mode = 2
 
 [node name="EventScroll" type="ScrollContainer" parent="UILayer/UISafeArea/RightJournalTabs/Events"]
@@ -545,6 +571,7 @@ horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
 [node name="Content" type="Label" parent="UILayer/UISafeArea/RightJournalTabs/Events/EventScroll"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(300, 200)
@@ -553,6 +580,7 @@ text = "No events yet."
 autowrap_mode = 2
 
 [node name="Quests" type="Panel" parent="UILayer/UISafeArea/RightJournalTabs"]
+layout_mode = 1
 layout_mode = 2
 
 [node name="QuestLogScroll" type="ScrollContainer" parent="UILayer/UISafeArea/RightJournalTabs/Quests"]
@@ -570,6 +598,7 @@ horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
 [node name="QuestLogLabel" type="Label" parent="UILayer/UISafeArea/RightJournalTabs/Quests/QuestLogScroll"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(308, 200)

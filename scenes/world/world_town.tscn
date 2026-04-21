@@ -122,12 +122,13 @@ script = ExtResource("4_spawn")
 spawn_id = "from_world_forest"
 
 [node name="Hint" type="Label" parent="."]
+layout_mode = 1
 offset_left = 16.0
 offset_top = 12.0
 offset_right = 720.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Town — ← Main · ↓ Farm · Pierre + B · → Forest · Esc: save"
+text = "Town �?�?Main · �?Farm · Pierre + B · �?Forest · Esc: save"
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 360)
@@ -172,12 +173,13 @@ target_spawn_id = "from_world_town"
 shape = SubResource("RectangleShape2D_portal")
 
 [node name="PortalLabel" type="Label" parent="PortalToMain"]
+layout_mode = 1
 offset_left = -80.0
 offset_top = -64.0
 offset_right = 80.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "→ Main"
+text = "�?Main"
 horizontal_alignment = 1
 
 [node name="PortalToForest" type="Area2D" parent="."]
@@ -193,12 +195,13 @@ target_spawn_id = "from_world_town"
 shape = SubResource("RectangleShape2D_portal")
 
 [node name="PortalLabel" type="Label" parent="PortalToForest"]
+layout_mode = 1
 offset_left = -100.0
 offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "→ Forest"
+text = "�?Forest"
 horizontal_alignment = 1
 
 [node name="PortalToFarm" type="Area2D" parent="."]
@@ -214,12 +217,13 @@ target_spawn_id = "from_world_town"
 shape = SubResource("RectangleShape2D_portal")
 
 [node name="PortalLabel" type="Label" parent="PortalToFarm"]
+layout_mode = 1
 offset_left = -80.0
 offset_top = -64.0
 offset_right = 80.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "↓ Farm"
+text = "�?Farm"
 horizontal_alignment = 1
 
 [node name="TownHud" type="CanvasLayer" parent="."]
@@ -227,6 +231,7 @@ horizontal_alignment = 1
 [node name="ShopUI" parent="TownHud" instance=ExtResource("7_shop")]
 
 [node name="TownMessage" type="Label" parent="TownHud"]
+layout_mode = 1
 visible = false
 anchors_preset = 7
 anchor_left = 0.5
