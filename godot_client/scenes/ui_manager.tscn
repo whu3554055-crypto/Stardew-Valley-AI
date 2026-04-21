@@ -7,11 +7,13 @@ script = ExtResource("1_ui")
 
 # HUD Layer
 [node name="HUD" type="Control" parent="."]
+layout_mode = 1
 layout_mode = 0
 offset_right = 1280.0
 offset_bottom = 720.0
 
 [node name="GoldLabel" type="Label" parent="HUD"]
+layout_mode = 1
 layout_mode = 0
 offset_left = 10.0
 offset_top = 10.0
@@ -21,6 +23,7 @@ theme_override_font_sizes/font_size = 18
 text = "500g"
 
 [node name="TimeLabel" type="Label" parent="HUD"]
+layout_mode = 1
 layout_mode = 0
 offset_left = 10.0
 offset_top = 40.0
@@ -30,13 +33,14 @@ theme_override_font_sizes/font_size = 16
 text = "08:00"
 
 [node name="SeasonLabel" type="Label" parent="HUD"]
+layout_mode = 1
 layout_mode = 0
 offset_left = 10.0
 offset_top = 70.0
 offset_right = 150.0
 offset_bottom = 95.0
 theme_override_font_sizes/font_size = 16
-text = "春季 第1天"
+text = "春季 �?�?
 
 # Inventory Panel
 [node name="InventoryPanel" type="PanelContainer" parent="."]
@@ -64,6 +68,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 text = "背包"
@@ -71,6 +76,7 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
 
 [node name="GoldDisplay" type="Label" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 text = "金钱: 500g"
@@ -82,6 +88,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 350)
 
 [node name="CloseButton" type="Button" parent="InventoryPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 text = "关闭 (ESC)"
@@ -112,6 +119,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="QuestLogPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 text = "任务日志"
@@ -124,6 +132,7 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 400)
 
 [node name="CloseButton" type="Button" parent="QuestLogPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
 text = "关闭 (ESC)"
@@ -154,13 +163,15 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="StatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 size_flags_horizontal = 3
-text = "状态"
+text = "状�?
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 18
 
 [node name="EnergyLabel" type="Label" parent="StatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 text = "体力:"
 
@@ -171,6 +182,7 @@ max_value = 100.0
 value = 100.0
 
 [node name="HealthLabel" type="Label" parent="StatusPanel/MarginContainer/VBoxContainer"]
+layout_mode = 1
 layout_mode = 2
 text = "生命:"
 

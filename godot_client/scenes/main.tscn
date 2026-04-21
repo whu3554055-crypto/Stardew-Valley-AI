@@ -30,20 +30,22 @@ limit_bottom = 2000
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="InteractionPrompt" type="Label" parent="UI"]
+layout_mode = 1
 offset_left = 640.0
 offset_top = 650.0
 offset_right = 640.0
 offset_bottom = 680.0
-text = "按 E 互动"
+text = "�?E 互动"
 horizontal_alignment = 1
 vertical_alignment = 1
 modulate = Color(1, 1, 1, 0)
 
 [node name="TimeDisplay" type="Label" parent="UI"]
+layout_mode = 1
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 200.0
 offset_bottom = 40.0
-text = "春季 第1天 08:00"
+text = "春季 �?�?08:00"
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 18

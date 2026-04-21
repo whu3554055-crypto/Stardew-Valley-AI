@@ -13,6 +13,7 @@ position = Vector2(0, -32)
 texture = ExtResource("2_pierre")
 
 [node name="NameLabel" type="Label" parent="."]
+layout_mode = 1
 offset_left = -40.0
 offset_top = -80.0
 offset_right = 40.0
