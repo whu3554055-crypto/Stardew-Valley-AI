@@ -16,7 +16,7 @@ size = Vector2(72, 96)
 [node name="WorldForest" type="Node2D"]
 script = ExtResource("1_root")
 region_kind = 0
-banner_title = "森林"
+banner_title = "妫灄"
 
 [node name="Ambient" type="CanvasModulate" parent="."]
 color = Color(0.84, 0.92, 0.84, 1)
@@ -27,6 +27,7 @@ color = Color(0.14, 0.36, 0.19, 1)
 polygon = PackedVector2Array(0, 0, 1024, 0, 1024, 720, 0, 720)
 
 [node name="TileLayers" type="Node2D" parent="."]
+y_sort_enabled = true
 z_index = -2
 
 [node name="LayerGround" type="TileMapLayer" parent="TileLayers"]
@@ -76,7 +77,7 @@ offset_top = 12.0
 offset_right = 760.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Forest �?axe in green band · �?Cave · �?Town · �?Beach · Esc: save"
+text = "Forest 鈥?axe in green band 路 鈫?Cave 路 鈫?Town 路 鈫?Beach 路 Esc: save"
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 360)
@@ -123,7 +124,7 @@ offset_top = -64.0
 offset_right = 90.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "�?Town"
+text = "鈫?Town"
 horizontal_alignment = 1
 
 [node name="PortalToCave" type="Area2D" parent="."]
@@ -145,7 +146,7 @@ offset_top = 48.0
 offset_right = 100.0
 offset_bottom = 76.0
 theme_override_font_sizes/font_size = 11
-text = "�?Cave"
+text = "鈫?Cave"
 horizontal_alignment = 1
 
 [node name="PortalToBeach" type="Area2D" parent="."]
@@ -167,7 +168,7 @@ offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "�?Beach"
+text = "鈫?Beach"
 horizontal_alignment = 1
 
 [node name="RegionHud" type="CanvasLayer" parent="."]

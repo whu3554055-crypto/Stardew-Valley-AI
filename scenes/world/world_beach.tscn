@@ -16,7 +16,7 @@ size = Vector2(72, 96)
 [node name="WorldBeach" type="Node2D"]
 script = ExtResource("1_root")
 region_kind = 1
-banner_title = "海滩"
+banner_title = "娴锋哗"
 
 [node name="Ambient" type="CanvasModulate" parent="."]
 color = Color(0.94, 0.91, 0.8, 1)
@@ -32,6 +32,7 @@ color = Color(0.22, 0.42, 0.58, 1)
 polygon = PackedVector2Array(0, 400, 1024, 400, 1024, 720, 0, 720)
 
 [node name="TileLayers" type="Node2D" parent="."]
+y_sort_enabled = true
 z_index = -2
 
 [node name="LayerGround" type="TileMapLayer" parent="TileLayers"]
@@ -76,7 +77,7 @@ offset_top = 12.0
 offset_right = 780.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Beach �?rod in blue water band · �?Forest · �?Mine · Esc: save"
+text = "Beach 鈥?rod in blue water band 路 鈫?Forest 路 鈫?Mine 路 Esc: save"
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 320)
@@ -123,7 +124,7 @@ offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "�?Forest"
+text = "鈫?Forest"
 horizontal_alignment = 1
 
 [node name="PortalToMine" type="Area2D" parent="."]
@@ -145,7 +146,7 @@ offset_top = -64.0
 offset_right = 90.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "�?Mine"
+text = "鈫?Mine"
 horizontal_alignment = 1
 
 [node name="RegionHud" type="CanvasLayer" parent="."]

@@ -37,6 +37,7 @@ color = Color(0.42, 0.38, 0.32, 1)
 polygon = PackedVector2Array(0, 0, 1024, 0, 1024, 720, 0, 720)
 
 [node name="TileLayers" type="Node2D" parent="."]
+y_sort_enabled = true
 z_index = -2
 
 [node name="LayerGround" type="TileMapLayer" parent="TileLayers"]
@@ -128,7 +129,7 @@ offset_top = 12.0
 offset_right = 720.0
 offset_bottom = 44.0
 theme_override_font_sizes/font_size = 11
-text = "Town â€?â†?Main Â· â†?Farm Â· Pierre + B Â· â†?Forest Â· Esc: save"
+text = "Town ï¿½?ï¿½?Main Â· ï¿½?Farm Â· Pierre + B Â· ï¿½?Forest Â· Esc: save"
 
 [node name="Player" type="CharacterBody2D" parent="."]
 position = Vector2(512, 360)
@@ -179,7 +180,7 @@ offset_top = -64.0
 offset_right = 80.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "â†?Main"
+text = "ï¿½?Main"
 horizontal_alignment = 1
 
 [node name="PortalToForest" type="Area2D" parent="."]
@@ -201,7 +202,7 @@ offset_top = -64.0
 offset_right = 100.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "â†?Forest"
+text = "ï¿½?Forest"
 horizontal_alignment = 1
 
 [node name="PortalToFarm" type="Area2D" parent="."]
@@ -223,7 +224,7 @@ offset_top = -64.0
 offset_right = 80.0
 offset_bottom = -36.0
 theme_override_font_sizes/font_size = 11
-text = "â†?Farm"
+text = "ï¿½?Farm"
 horizontal_alignment = 1
 
 [node name="TownHud" type="CanvasLayer" parent="."]
