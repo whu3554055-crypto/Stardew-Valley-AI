@@ -13,6 +13,8 @@ extends Node
 # === 常量 ===
 
 const CONFIG_PATH := "user://agentic_content_config.json"
+const ChainSchemaTranslator = preload("res://autoload/agentic_chain_schema_translator.gd")
+const RuntimeStatusService = preload("res://autoload/agentic_runtime_status_service.gd")
 
 # === 成员变量 ===
 
@@ -73,6 +75,13 @@ func _initialize_modules() -> void:
 	
 	if not missing.is_empty():
 		push_error("[AgenticContentOrchestrator] Missing modules: %s" % ", ".join(missing))
+	
+	# Keep generation strategy in sync with orchestrator config.
+	if fallback_generator and fallback_generator.has_method("set_generation_preferences"):
+		fallback_generator.set_generation_preferences(
+			bool(config.get("use_ai_first", true)),
+			bool(config.get("allow_procedural_fallback", true))
+		)
 
 func _connect_signals() -> void:
 	"""Connect to module signals"""
@@ -119,10 +128,6 @@ func maybe_generate_for_day(narrative: Dictionary = {}) -> void:
 	if not _check_daily_limit(today_key):
 		return
 	
-	# Record attempt
-	if performance_monitor:
-		performance_monitor.record_success()  # Will be adjusted if fails
-	
 	emit_signal("generation_started", reason.get("reason", "unknown"))
 	
 	# Try manual chains first
@@ -150,6 +155,26 @@ func get_status() -> Dictionary:
 		status.merge(performance_monitor.get_stats())
 	
 	return status
+
+func get_status_line() -> String:
+	var stats: Dictionary = performance_monitor.get_stats() if performance_monitor else {}
+	var queue_size: int = 0
+	var chain_count: int = 0
+	if chain_storage and chain_storage.has_method("get_manual_queue_size"):
+		queue_size = int(chain_storage.get_manual_queue_size())
+	if chain_storage and chain_storage.has_method("get_runtime_chain_ids"):
+		chain_count = int((chain_storage.get_runtime_chain_ids() as Array).size())
+	return RuntimeStatusService.build_status_line(
+		str(get_status().get("breaker_state", "unknown")),
+		queue_size,
+		chain_count,
+		int(stats.get("published", 0)),
+		int(stats.get("failed", 0)),
+		_last_block_reason
+	)
+
+func get_recovery_hint(reason: String) -> String:
+	return RuntimeStatusService.recovery_hint_for_reason(reason)
 
 # === 私有方法 ===
 
@@ -205,13 +230,13 @@ func _try_manual_chain(today_key: String) -> bool:
 	var manual_chain = chain_storage.take_manual_chain()
 	if manual_chain.is_empty():
 		return false
+	manual_chain = ChainSchemaTranslator.normalize_for_registration(manual_chain)
 	
 	# Validate manual chain
-	if chain_validator:
-		var validation = chain_validator.validate_chain_template(manual_chain)
-		if not validation.ok:
-			_on_generation_failure("manual_chain_invalid")
-			return false
+	var validation = ChainSchemaTranslator.validate_registration_shape(manual_chain)
+	if not bool(validation.get("ok", false)):
+		_on_generation_failure("manual_chain_invalid:" + str(validation.get("error", "unknown")))
+		return false
 	
 	# Register with QuestSystem
 	var qs = get_node("/root/QuestSystem")
@@ -260,13 +285,13 @@ func _generate_and_publish_chain(reason: Dictionary, today_key: String) -> void:
 	if chain_data.is_empty():
 		_on_generation_failure("all_generation_methods_failed")
 		return
+	chain_data = ChainSchemaTranslator.normalize_for_registration(chain_data)
 	
 	# Validate generated chain
-	if chain_validator:
-		var validation = chain_validator.validate_chain_template(chain_data)
-		if not validation.ok:
-			_on_generation_failure("validation_failed: " + str(validation.errors))
-			return
+	var validation = ChainSchemaTranslator.validate_registration_shape(chain_data)
+	if not bool(validation.get("ok", false)):
+		_on_generation_failure("validation_failed:" + str(validation.get("error", "unknown")))
+		return
 	
 	# Register with QuestSystem
 	var qs = get_node("/root/QuestSystem")

@@ -124,15 +124,15 @@ func _ready():
 			DailyNarrativeSystem.backend_generation_fallback.connect(_on_narrative_backend_fallback)
 	if AIQuestSystem:
 		AIQuestSystem.ai_quest_request_failed.connect(_on_ai_quest_generation_failed)
-	if AgenticContentOrchestrator:
-		AgenticContentOrchestrator.generation_started.connect(_on_agentic_chain_generation_started)
-		AgenticContentOrchestrator.generation_published.connect(_on_agentic_chain_generation_published)
-		AgenticContentOrchestrator.generation_failed.connect(_on_agentic_chain_generation_failed)
-		AgenticContentOrchestrator.generation_degraded.connect(_on_agentic_chain_generation_degraded)
-		if AgenticContentOrchestrator.has_signal("runtime_status_updated"):
-			AgenticContentOrchestrator.runtime_status_updated.connect(_on_agentic_runtime_status_updated)
-		if AgenticContentOrchestrator.has_signal("guardrail_blocked"):
-			AgenticContentOrchestrator.guardrail_blocked.connect(_on_agentic_guardrail_blocked)
+	if AgenticOrchestratorFacade:
+		AgenticOrchestratorFacade.generation_started.connect(_on_agentic_chain_generation_started)
+		AgenticOrchestratorFacade.generation_published.connect(_on_agentic_chain_generation_published)
+		AgenticOrchestratorFacade.generation_failed.connect(_on_agentic_chain_generation_failed)
+		AgenticOrchestratorFacade.generation_degraded.connect(_on_agentic_chain_generation_degraded)
+		if AgenticOrchestratorFacade.has_signal("runtime_status_updated"):
+			AgenticOrchestratorFacade.runtime_status_updated.connect(_on_agentic_runtime_status_updated)
+		if AgenticOrchestratorFacade.has_signal("guardrail_blocked"):
+			AgenticOrchestratorFacade.guardrail_blocked.connect(_on_agentic_guardrail_blocked)
 	if shop_ui:
 		shop_ui.purchase_confirmed.connect(_on_shop_purchase)
 	add_child(WEATHER_OVERLAY_SCENE.instantiate())
@@ -1106,10 +1106,10 @@ func initialize_playable_first_loop():
 			_apply_narrative_daily_quest(narrative)
 			if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative"):
 				QuestSystem.activate_chain_for_narrative(narrative)
-			if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
-				await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
-				if is_inside_tree() and AgenticContentOrchestrator.has_method("get_runtime_status_line"):
-					record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
+			if AgenticOrchestratorFacade and AgenticOrchestratorFacade.has_method("maybe_generate_for_day"):
+				await AgenticOrchestratorFacade.maybe_generate_for_day(narrative)
+				if is_inside_tree() and AgenticOrchestratorFacade.has_method("get_status_line"):
+					record_world_event(AgenticOrchestratorFacade.get_status_line())
 
 func give_starter_items():
 	var hoe_item = ItemDatabase.get_item("hoe")
@@ -1493,10 +1493,10 @@ func _on_day_changed(new_day):
 		_apply_narrative_daily_quest(narrative)
 		if QuestSystem and QuestSystem.has_method("activate_chain_for_narrative") and _consume_daily_budget("chain_activation"):
 			QuestSystem.activate_chain_for_narrative(narrative)
-		if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("maybe_generate_for_day"):
-			await AgenticContentOrchestrator.maybe_generate_for_day(narrative)
-			if is_inside_tree() and AgenticContentOrchestrator.has_method("get_runtime_status_line"):
-				record_world_event(AgenticContentOrchestrator.get_runtime_status_line())
+		if AgenticOrchestratorFacade and AgenticOrchestratorFacade.has_method("maybe_generate_for_day"):
+			await AgenticOrchestratorFacade.maybe_generate_for_day(narrative)
+			if is_inside_tree() and AgenticOrchestratorFacade.has_method("get_status_line"):
+				record_world_event(AgenticOrchestratorFacade.get_status_line())
 
 
 func _apply_rc_beginner_guidance() -> void:
@@ -2588,16 +2588,16 @@ func _on_agentic_chain_generation_published(chain_id: String, mode: String) -> v
 
 func _on_agentic_chain_generation_failed(reason: String) -> void:
 	record_world_event("Agentic runtime generation failed: %s" % reason)
-	if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("get_recovery_guidance"):
-		var hint: String = str(AgenticContentOrchestrator.get_recovery_guidance(reason))
+	if AgenticOrchestratorFacade and AgenticOrchestratorFacade.has_method("get_recovery_hint"):
+		var hint: String = str(AgenticOrchestratorFacade.get_recovery_hint(reason))
 		if not hint.is_empty():
 			record_world_event("Recovery hint: %s" % hint)
 			show_quick_tip("Recovery: " + hint, 2.1)
 
 func _on_agentic_chain_generation_degraded(reason: String) -> void:
 	_record_ai_fallback_event("agentic_runtime", reason, "static_chain_templates")
-	if AgenticContentOrchestrator and AgenticContentOrchestrator.has_method("get_recovery_guidance"):
-		var hint2: String = str(AgenticContentOrchestrator.get_recovery_guidance(reason))
+	if AgenticOrchestratorFacade and AgenticOrchestratorFacade.has_method("get_recovery_hint"):
+		var hint2: String = str(AgenticOrchestratorFacade.get_recovery_hint(reason))
 		if not hint2.is_empty():
 			record_world_event("Recovery hint: %s" % hint2)
 

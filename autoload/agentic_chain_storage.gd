@@ -12,6 +12,7 @@ extends Node
 
 const RUNTIME_STORE_PATH := "user://runtime_chain_templates.json"
 const MANUAL_INBOX_PATH := "user://manual_chain_inbox.json"
+const STORAGE_SCHEMA_VERSION := 2
 
 # === 成员变量 ===
 
@@ -109,14 +110,34 @@ func _load_runtime_store() -> void:
 	file.close()
 	
 	var data = JSON.parse_string(content)
-	if data is Dictionary and data.has("runtime_chain_ids"):
-		_runtime_chain_ids = data.runtime_chain_ids as Array[String]
-		emit_signal("storage_loaded")
+	if not (data is Dictionary):
+		return
+	
+	var root: Dictionary = data
+	var schema_version: int = int(root.get("schema_version", 1))
+	var loaded_ids: Array = []
+	if root.has("runtime_chain_ids"):
+		loaded_ids = root.get("runtime_chain_ids", [])
+	elif root.has("chain_ids"):
+		loaded_ids = root.get("chain_ids", [])
+	
+	_runtime_chain_ids.clear()
+	for value in loaded_ids:
+		var chain_id := str(value).strip_edges()
+		if not chain_id.is_empty():
+			_runtime_chain_ids.append(chain_id)
+	
+	if schema_version < STORAGE_SCHEMA_VERSION:
+		_save_runtime_store()
+	
+	emit_signal("storage_loaded")
 
 func _save_runtime_store() -> void:
 	"""Save runtime chain IDs to disk"""
 	var data = {
+		"schema_version": STORAGE_SCHEMA_VERSION,
 		"runtime_chain_ids": _runtime_chain_ids,
+		"chain_ids": _runtime_chain_ids, # New canonical key; keep runtime_chain_ids for compatibility.
 		"saved_at": Time.get_datetime_string_from_system()
 	}
 	
@@ -143,13 +164,31 @@ func _load_manual_inbox() -> void:
 	file.close()
 	
 	var data = JSON.parse_string(content)
-	if data is Dictionary and data.has("queue"):
-		_manual_queue = data.queue as Array[Dictionary]
+	if not (data is Dictionary):
+		return
+	
+	var root: Dictionary = data
+	var schema_version: int = int(root.get("schema_version", 1))
+	var loaded_queue: Array = []
+	if root.has("queue"):
+		loaded_queue = root.get("queue", [])
+	elif root.has("chains"):
+		loaded_queue = root.get("chains", [])
+	
+	_manual_queue.clear()
+	for row in loaded_queue:
+		if row is Dictionary:
+			_manual_queue.append((row as Dictionary).duplicate(true))
+	
+	if schema_version < STORAGE_SCHEMA_VERSION:
+		_save_manual_inbox()
 
 func _save_manual_inbox() -> void:
 	"""Save manual chain inbox to disk"""
 	var data = {
+		"schema_version": STORAGE_SCHEMA_VERSION,
 		"queue": _manual_queue,
+		"chains": _manual_queue, # New canonical key; keep queue for compatibility.
 		"size": _manual_queue.size(),
 		"saved_at": Time.get_datetime_string_from_system()
 	}
