@@ -5,13 +5,13 @@
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
 [ext_resource type="Script" path="res://autoload/game_manager.gd" id="3_gamemanager"]
 [ext_resource type="Script" path="res://autoload/inventory_manager.gd" id="4_inventory"]
-[ext_resource type="PackedScene" path="res://scenes/npc_pierre.tscn" id="6_pierre"]
-[ext_resource type="PackedScene" path="res://scenes/npc_abigail.tscn" id="7_abigail"]
-[ext_resource type="PackedScene" path="res://scenes/npc_lewis.tscn" id="8_lewis"]
+[ext_resource type="PackedScene" path="res://scenes/characters/npc_pierre.tscn" id="6_pierre"]
+[ext_resource type="PackedScene" path="res://scenes/characters/npc_abigail.tscn" id="7_abigail"]
+[ext_resource type="PackedScene" path="res://scenes/characters/npc_lewis.tscn" id="8_lewis"]
 [ext_resource type="Script" path="res://scripts/inventory_ui.gd" id="10_inv"]
-[ext_resource type="PackedScene" path="res://scenes/recipe_picker.tscn" id="11_rp"]
+[ext_resource type="PackedScene" path="res://scenes/ui/recipe_picker.tscn" id="11_rp"]
 [ext_resource type="Texture2D" path="res://assets/sprites/characters/player.png" id="13_playertex"]
-[ext_resource type="PackedScene" path="res://scenes/shop_ui.tscn" id="14_shop"]
+[ext_resource type="PackedScene" path="res://scenes/ui/shop_ui.tscn" id="14_shop"]
 [ext_resource type="Script" path="res://scripts/world/world_spawn_point.gd" id="15_spawn"]
 [ext_resource type="Script" path="res://scripts/world/world_portal_area.gd" id="16_portal"]
 
@@ -93,7 +93,7 @@ offset_top = -76.0
 offset_right = 100.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 11
-text = "â†?Playground (test)"
+text = "-> Playground (test)"
 horizontal_alignment = 1
 
 [node name="PortalToWorldFarm" type="Area2D" parent="."]
@@ -115,7 +115,7 @@ offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†?Farm"
+text = "-> Farm"
 horizontal_alignment = 1
 
 [node name="PortalToWorldTown" type="Area2D" parent="."]
@@ -137,7 +137,7 @@ offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†?Town"
+text = "-> Town"
 horizontal_alignment = 1
 
 [node name="PortalToWorldForest" type="Area2D" parent="."]
@@ -159,7 +159,7 @@ offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†?Forest"
+text = "-> Forest"
 horizontal_alignment = 1
 
 [node name="PortalToWorldBeach" type="Area2D" parent="."]
@@ -181,7 +181,7 @@ offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†?Beach"
+text = "-> Beach"
 horizontal_alignment = 1
 
 [node name="PortalToWorldMine" type="Area2D" parent="."]
@@ -203,7 +203,7 @@ offset_top = -76.0
 offset_right = 70.0
 offset_bottom = -44.0
 theme_override_font_sizes/font_size = 10
-text = "â†?Mine"
+text = "-> Mine"
 horizontal_alignment = 1
 
 [node name="Player" type="CharacterBody2D" parent="."]
@@ -457,7 +457,7 @@ layout_mode = 2
 layout_mode = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Gathering â€?Collection (J)"
+text = "Gathering / Collection (J)"
 
 [node name="FishLabel" type="Label" parent="UILayer/UISafeArea/CenterArea/AlmanacPanel/Margin/VBox"]
 layout_mode = 1

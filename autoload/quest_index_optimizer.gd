@@ -137,7 +137,7 @@ func get_index_stats() -> Dictionary:
 
 # === 事件处理器 ===
 
-func _on_quest_started(quest_id: String, quest_data: Dictionary) -> void:
+func _on_quest_started(quest_id: String, quest_data: Dictionary = {}) -> void:
 	"""Handle quest start event"""
 	_index_quest(quest_id, quest_data)
 	
@@ -147,7 +147,7 @@ func _on_quest_started(quest_id: String, quest_data: Dictionary) -> void:
 	if OS.is_debug_build():
 		print("[QuestIndexOptimizer] Indexed started quest: %s" % quest_id)
 
-func _on_quest_completed(quest_id: String, quest_data: Dictionary) -> void:
+func _on_quest_completed(quest_id: String, quest_data: Dictionary = {}) -> void:
 	"""Handle quest completion event"""
 	_update_quest_status(quest_id, "completed")
 	
@@ -162,11 +162,11 @@ func _on_quest_completed(quest_id: String, quest_data: Dictionary) -> void:
 	if OS.is_debug_build():
 		print("[QuestIndexOptimizer] Indexed completed quest: %s" % quest_id)
 
-func _on_quest_updated(quest_id: String, quest_data: Dictionary) -> void:
+func _on_quest_updated(quest_id: String, quest_data: Dictionary = {}) -> void:
 	"""Handle quest update event"""
 	_update_quest_index(quest_id, quest_data)
 
-func _on_quest_failed(quest_id: String, quest_data: Dictionary) -> void:
+func _on_quest_failed(quest_id: String, quest_data: Dictionary = {}) -> void:
 	"""Handle quest failure event"""
 	_update_quest_status(quest_id, "failed")
 	

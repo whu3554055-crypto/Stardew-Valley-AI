@@ -136,8 +136,8 @@ func _load_crop_catalog() -> bool:
 		emit_signal("catalog_load_failed", "Invalid JSON")
 		return false
 	
-	if not data is Dictionary:
-		push_error("[AgenticCropCatalog] Crop data is not a dictionary")
+	if not (data is Dictionary or data is Array):
+		push_error("[AgenticCropCatalog] Crop data must be dictionary or array")
 		emit_signal("catalog_load_failed", "Invalid format")
 		return false
 	
@@ -152,31 +152,41 @@ func _load_crop_catalog() -> bool:
 	
 	return true
 
-func _process_crop_data(data: Dictionary) -> void:
+func _process_crop_data(data: Variant) -> void:
 	"""Process raw crop data into optimized structures"""
 	_crop_seasons_by_id.clear()
 	_crop_data_by_id.clear()
 	
 	# Handle different data formats
-	var crops = data
+	var crops: Variant = data
 	
 	# If data has a "crops" key, use that
-	if data.has("crops") and data.crops is Dictionary:
+	if data is Dictionary and data.has("crops") and data.crops is Dictionary:
 		crops = data.crops
-	
-	for crop_id in crops.keys():
-		var crop_info = crops[crop_id]
-		
-		if not crop_info is Dictionary:
-			continue
-		
-		# Extract season information
-		var season = crop_info.get("season", "")
-		if season.is_empty():
-			season = crop_info.get("growing_season", "")
-		
-		if not season.is_empty():
-			_crop_seasons_by_id[crop_id] = season
-		
-		# Store full crop data
-		_crop_data_by_id[crop_id] = crop_info
+
+	if crops is Dictionary:
+		for crop_id in crops.keys():
+			var crop_info: Variant = crops[crop_id]
+			if crop_info is Dictionary:
+				_register_crop_data(String(crop_id), crop_info)
+	elif crops is Array:
+		for crop_info in crops:
+			if crop_info is Dictionary:
+				var crop_id: String = String(crop_info.get("id", ""))
+				if crop_id.is_empty():
+					continue
+				_register_crop_data(crop_id, crop_info)
+
+func _register_crop_data(crop_id: String, crop_info: Dictionary) -> void:
+	var season: Variant = crop_info.get("season", "")
+	if season is String and season.is_empty():
+		season = crop_info.get("growing_season", "")
+	if season is String and season.is_empty():
+		season = crop_info.get("seasons", [])
+
+	if season is String and not season.is_empty():
+		_crop_seasons_by_id[crop_id] = season
+	elif season is Array and not season.is_empty():
+		_crop_seasons_by_id[crop_id] = season
+
+	_crop_data_by_id[crop_id] = crop_info

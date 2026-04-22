@@ -200,10 +200,10 @@ func get_keys() -> Array[String]:
 ## Pre-warm cache with common content
 func prewarm(common_keys: Array[String], fetch_func: Callable) -> void:
 	for key in common_keys:
-		if not has(key):
+		if not has_cached(key):
 			var data = fetch_func.call(key)
 			if data != null:
-				set(key, data)
+				set_cached(key, data)
 	
 	if OS.is_debug_build():
 		print("[AIContentCache] Pre-warmed with %d entries" % common_keys.size())
