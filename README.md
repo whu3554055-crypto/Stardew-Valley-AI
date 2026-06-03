@@ -1,4 +1,4 @@
-# 星露谷物语AI克隆版 - Stardew Valley AI Clone
+# 星露谷物语AI版 - Stardew Valley AI
 
 > **会思考的NPC，永不重复的故事**  
 > An AI-driven farming simulation with intelligent NPCs and dynamic narratives
